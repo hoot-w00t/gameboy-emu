@@ -19,6 +19,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "gb_defs.h"
 #include "memory_banks.h"
+#include "cartridge.h"
 #include "logger.h"
 #include <stddef.h>
 #include <string.h>
@@ -115,15 +116,12 @@ bool gb_write_byte(uint16_t address, byte_t value, bool bypass_ro, gb_system_t *
     return false;
 }
 
-// Load GameBoy ROM in memory
-// TODO: correctly implement ROM loading, as of now it does a linear load,
-// which not only doesn't work on large games but also is not the right way
-// of loading ROMs
+// Load GameBoy ROM
 int gb_load_rom(const char *filename, gb_system_t *gb)
 {
-    int fd = open(filename, O_RDONLY);
+    int fd;
 
-    if (fd < 0) {
+    if ((fd = open(filename, O_RDONLY)) < 0) {
         logger(LOG_ERROR, "Unable to open: %s: %s",
                           filename,
                           strerror(errno));
@@ -136,6 +134,30 @@ int gb_load_rom(const char *filename, gb_system_t *gb)
     int n;
 
     while ((n = read(fd, buffer, sizeof(buffer))) > 0) {
+        if (address == CARTRIDGE_HEADER_LADDR) {
+            decode_cartridge_header(buffer, &gb->cartridge);
+
+            logger(LOG_DEBUG, "Computed header checksum: 0x%02X", compute_header_checksum(buffer));
+            logger(LOG_DEBUG, "Computed global checksum: 0x%04X", compute_global_checksum(buffer));
+            dump_cartridge_header(&gb->cartridge);
+
+            if (compute_header_checksum(buffer) != gb->cartridge.header_checksum) {
+                logger(LOG_CRIT, "Cartridge Header Checksum is invalid");
+                close(fd);
+                return -3;
+            }
+
+            gb->memory.rom_banks.bank_size = GB_ROM_BANK_SIZE;
+            gb->memory.rom_banks.maxsize = gb->cartridge.rom_banks;
+            gb->memory.ram_banks.bank_size = gb->cartridge.ram_size;
+            gb->memory.ram_banks.maxsize = gb->cartridge.ram_banks;
+
+            if (!gb_allocate_membank(&gb->memory.rom_banks) || !gb_allocate_membank(&gb->memory.ram_banks)) {
+                close(fd);
+                return -3;
+            }
+        }
+
         for (int i = 0; i < n; ++i) {
             if (address >= ROM_BANK_N_UADDR) {
                 address = ROM_BANK_N_LADDR;

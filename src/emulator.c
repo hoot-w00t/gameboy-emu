@@ -39,7 +39,7 @@ void free_gb_system(gb_system_t *gb, bool include_ptr)
 }
 
 // Allocate and initialize gb_system_t
-gb_system_t *create_gb_system(byte_t rom_banks)
+gb_system_t *create_gb_system(void)
 {
     gb_system_t *gb = malloc(sizeof(gb_system_t));
 
@@ -47,15 +47,6 @@ gb_system_t *create_gb_system(byte_t rom_banks)
         return NULL;
 
     memset(gb, 0, sizeof(gb_system_t));
-    gb->memory.rom_banks.bank_size = GB_ROM_BANK_SIZE;
-    gb->memory.rom_banks.maxsize = rom_banks;
-    gb->memory.ram_banks.bank_size = GB_RAM_BANK_SIZE;
-    gb->memory.ram_banks.maxsize = 7;
-
-    if (!gb_allocate_membank(&gb->memory.rom_banks) || !gb_allocate_membank(&gb->memory.ram_banks)) {
-        free(gb);
-        return NULL;
-    }
 
     gb->pc = CARTRIDGE_HEADER_LADDR;
     gb->sp = HRAM_UADDR;
@@ -63,9 +54,9 @@ gb_system_t *create_gb_system(byte_t rom_banks)
     return gb;
 }
 
-void parse_args(int ac, char **av, char **filename, int *rom_banks)
+void parse_args(int ac, char **av, char **filename)
 {
-    const char shortopts[] = "l:b:";
+    const char shortopts[] = "l:";
     int opt;
 
     while ((opt = getopt(ac, av, shortopts)) >= 0) {
@@ -76,11 +67,6 @@ void parse_args(int ac, char **av, char **filename, int *rom_banks)
                     exit(EXIT_FAILURE);
                 }
                 break;
-
-            case 'b':
-                *rom_banks = atoi(optarg);
-                break;
-
             default: exit(EXIT_FAILURE);
         }
     }
@@ -97,18 +83,15 @@ int main(int ac, char **av)
 {
     gb_system_t *gb;
     char *filename;
-    int rom_banks = 1;
 
-    parse_args(ac, av, &filename, &rom_banks);
-    if ((gb = create_gb_system((byte_t) rom_banks)) == NULL) {
+    parse_args(ac, av, &filename);
+    if ((gb = create_gb_system()) == NULL) {
         fprintf(stderr, "Memory allocation failed");
         return EXIT_FAILURE;
     }
 
     if (gb_load_rom(filename, gb) < 0)
         return EXIT_FAILURE;
-
-    
 
     free(gb);
     return 0;

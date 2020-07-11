@@ -8,7 +8,8 @@ BIN_NAME	=	gameboy
 SRC	=	src/logger.c		\
 		src/emulator.c		\
 		src/memory.c		\
-		src/memory_banks.c
+		src/memory_banks.c	\
+		src/cartridge.c
 
 OBJ	=	$(SRC:.c=.o)
 DEP	=	$(OBJ:.o=.d)
