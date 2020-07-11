@@ -85,13 +85,42 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define GB_OAM_SIZE (GB_MAX_SPRITES * 4)
 #define GB_HRAM_SIZE (127)
 
+// Cartridge definitions
+#define GB_CR_LOGO_ADDR              (0x0104)
+#define GB_CR_TITLE_ADDR             (0x0134)
+#define GB_CR_LICENSEE_CODE_ADDR     (0x0144)
+#define GB_CR_OLD_LICENSEE_CODE_ADDR (0x014B)
+#define GB_CR_MBC_TYPE_ADDR          (0x0147)
+#define GB_CR_ROM_SIZE_ADDR          (0x0148)
+#define GB_CR_RAM_SIZE_ADDR          (0x0149)
+#define GB_CR_DEST_CODE_ADDR         (0x014A)
+#define GB_CR_ROM_VERSION_ADDR       (0x014C)
+#define GB_CR_HEADER_CHECKSUM_ADDR   (0x014D)
+#define GB_CR_GLOBAL_CHECKSUM_ADDR   (0x014E)
+
 // Type definitions
 typedef uint8_t byte_t;
 typedef struct gb_system gb_system_t;
 typedef struct gb_memory gb_memory_t;
 typedef struct gb_membank gb_membank_t;
+typedef struct gb_cartridge_hdr gb_cartridge_hdr_t;
 
 // Structure definitions
+struct gb_cartridge_hdr {
+    byte_t logo[48];          // Nintendo Logo Bitmap
+    char title[17];           // Up to 16 characters + trailing zero
+    char licensee_code[2];    // Licensee code formeat
+    bool old_licensee_code;   // It is the old licensee code format
+    byte_t mbc_type;          // MBC Type
+    uint16_t rom_banks;       // Number of ROM banks on the cartridge
+    byte_t ram_banks;         // Number of RAM banks on the cartridge
+    uint16_t ram_size;        // RAM bank size
+    byte_t destination_code;  // Destination code
+    byte_t rom_version;       // Mask ROM Version Number
+    byte_t header_checksum;   // Header Checksum
+    uint16_t global_checksum; // Global Checksum
+};
+
 struct gb_membank {
     byte_t **banks;       // Memory banks
     byte_t index;         // Selected memory bank index
@@ -110,10 +139,11 @@ struct gb_memory {
 };
 
 struct gb_system {
-    struct gb_memory memory; // Memory areas
-    byte_t registers[8];     // CPU Registers
-    uint16_t pc;             // Program Counter (Initialized with CARTRIDGE_HEADER_LADDR)
-    uint16_t sp;             // Stack pointer (Initialized with HRAM_UADDR)
+    struct gb_cartridge_hdr cartridge; // Cartridge information
+    struct gb_memory memory;           // Memory areas
+    byte_t registers[8];               // CPU Registers
+    uint16_t pc;                       // Program Counter (Initialized with CARTRIDGE_HEADER_LADDR)
+    uint16_t sp;                       // Stack pointer (Initialized with HRAM_UADDR)
 };
 
 #endif
