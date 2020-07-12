@@ -1,6 +1,6 @@
 /*
-memory.h
-Header file for memory.c
+memory_banks.h
+Header file for memory_banks.c
 
 Copyright (C) 2020 akrocynova
 
@@ -17,14 +17,16 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "gb_defs.h"
+#include "gb/defs.h"
 
-#ifndef _GB_MEMORY_H
-#define _GB_MEMORY_H
+#ifndef _GB_MEMORY_BANKS_H
+#define _GB_MEMORY_BANKS_H
 
-byte_t gb_read_byte(uint16_t address, gb_system_t *gb);
-bool gb_write_byte(uint16_t address, byte_t value, bool bypass_ro, gb_system_t *gb);
-int gb_load_rom(const char *filename, gb_system_t *gb);
-bool gb_test_memory(uint16_t address, byte_t value, bool bypass_ro, gb_system_t *gb);
+void gb_free_membank(gb_membank_t *membank);
+bool gb_allocate_membank(gb_membank_t *membank);
+bool gb_switch_membank(byte_t index, gb_membank_t *membank);
+bool gb_increment_membank(gb_membank_t *membank);
+byte_t gb_read_byte_from_membank(uint16_t address, gb_membank_t *membank);
+bool gb_write_byte_to_membank(uint16_t address, byte_t value, gb_membank_t *membank);
 
 #endif

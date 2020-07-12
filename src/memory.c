@@ -17,9 +17,9 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "gb_defs.h"
-#include "memory_banks.h"
-#include "cartridge.h"
+#include "gb/defs.h"
+#include "gb/memory_banks.h"
+#include "gb/cartridge.h"
 #include "logger.h"
 #include <stddef.h>
 #include <string.h>

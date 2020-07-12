@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "gb_defs.h"
+#include "gb/defs.h"
 #include "logger.h"
 #include <string.h>
 

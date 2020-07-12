@@ -17,9 +17,9 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "gb_defs.h"
+#include "gb/defs.h"
+#include "gb/memory.h"
 #include "logger.h"
-#include "memory.h"
 
 // Enable/disable the given interrupt bit in *dest
 void set_interrupt_bit(byte_t interrupt, byte_t *dest, bool enable)
