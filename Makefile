@@ -10,7 +10,8 @@ SRC	=	src/logger.c		\
 		src/memory.c		\
 		src/memory_banks.c	\
 		src/cartridge.c		\
-		src/interrupts.c
+		src/interrupts.c	\
+		src/registers.c
 
 OBJ	=	$(SRC:.c=.o)
 DEP	=	$(OBJ:.o=.d)
