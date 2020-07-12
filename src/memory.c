@@ -155,6 +155,12 @@ int gb_load_rom(const char *filename, gb_system_t *gb)
             logger(LOG_DEBUG, "Computed global checksum: 0x%04X", compute_global_checksum(buffer));
             dump_cartridge_header(&gb->cartridge);
 
+            if (!valid_nintendo_logo(&gb->cartridge)) {
+                logger(LOG_CRIT, "Invalid Nintendo Logo bitmap");
+                close(fd);
+                return -3;
+            }
+
             if (compute_header_checksum(buffer) != gb->cartridge.header_checksum) {
                 logger(LOG_CRIT, "Cartridge Header Checksum is invalid");
                 close(fd);

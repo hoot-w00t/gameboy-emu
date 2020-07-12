@@ -21,6 +21,15 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "logger.h"
 #include <string.h>
 
+const byte_t nintendo_logo[48] = {
+    0xCE, 0xED, 0x66, 0x66, 0xCC, 0x0D, 0x00, 0x0B,
+    0x03, 0x73, 0x00, 0x83, 0x00, 0x0C, 0x00, 0x0D,
+    0x00, 0x08, 0x11, 0x1F, 0x88, 0x89, 0x00, 0x0E,
+    0xDC, 0xCC, 0x6E, 0xE6, 0xDD, 0xDD, 0xD9, 0x99,
+    0xBB, 0xBB, 0x67, 0x63, 0x6E, 0x0E, 0xEC, 0xCC,
+    0xDD, 0xDC, 0x99, 0x9F, 0xBB, 0xB9, 0x33, 0x3E
+};
+
 // Try to decode the cartridge header starting at *data and place those
 // in *cartridge
 void decode_cartridge_header(byte_t *data, gb_cartridge_hdr_t *cartridge)
@@ -148,10 +157,33 @@ uint16_t compute_global_checksum(byte_t *data)
     return x;
 }
 
+// Return true if Nintendo Logo bitmap is valid
+bool valid_nintendo_logo(gb_cartridge_hdr_t *cartridge)
+{
+    for (byte_t i = 0; i < sizeof(nintendo_logo); ++i) {
+        if (cartridge->logo[i] != nintendo_logo[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 // Dump cartridge header to LOG_DEBUG
 void dump_cartridge_header(gb_cartridge_hdr_t *cartridge)
 {
     logger(LOG_DEBUG, "Cartridge Header");
+    logger(LOG_DEBUG, "Nintendo Logo bitmap:");
+    for (byte_t i = 0; i < sizeof(cartridge->logo); i += 16) {
+        logger(
+            LOG_DEBUG,
+            "    %02X %02X %02X %02X %02X %02X %02X %02X   %02X %02X %02X %02X %02X %02X %02X %02X",
+            cartridge->logo[i], cartridge->logo[i + 1], cartridge->logo[i + 2], cartridge->logo[i + 3],
+            cartridge->logo[i + 4], cartridge->logo[i + 5], cartridge->logo[i + 6], cartridge->logo[i + 7],
+            cartridge->logo[i + 8], cartridge->logo[i + 9], cartridge->logo[i + 10], cartridge->logo[i + 11],
+            cartridge->logo[i + 12], cartridge->logo[i + 13], cartridge->logo[i + 14], cartridge->logo[i + 15]
+        );
+    }
     logger(LOG_DEBUG, "Title: %s", cartridge->title);
     if (cartridge->old_licensee_code) {
         logger(LOG_DEBUG, "Licensee code: 0x%02X", cartridge->licensee_code[0]);
