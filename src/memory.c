@@ -193,17 +193,17 @@ int gb_load_rom(const char *filename, gb_system_t *gb)
         loaded_bytes += n;
     }
 
-    logger(LOG_DEBUG, "Computed global checksum: 0x%04X", compute_global_checksum(gb));
-
-    gb_switch_membank(0, &gb->memory.rom_banks);
-    close(fd);
-
     if (n < 0) {
         logger(LOG_ERROR, "Error while reading: %s: %s",
                           filename,
                           strerror(errno));
         return -2;
     }
+
+    logger(LOG_DEBUG, "Computed global checksum: 0x%04X", compute_global_checksum(gb));
+
+    gb_switch_membank(0, &gb->memory.rom_banks);
+    close(fd);
 
     return loaded_bytes;
 }
