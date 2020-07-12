@@ -152,7 +152,6 @@ int gb_load_rom(const char *filename, gb_system_t *gb)
             decode_cartridge_header(buffer, &gb->cartridge);
 
             logger(LOG_DEBUG, "Computed header checksum: 0x%02X", compute_header_checksum(buffer));
-            logger(LOG_DEBUG, "Computed global checksum: 0x%04X", compute_global_checksum(buffer));
             dump_cartridge_header(&gb->cartridge);
 
             if (!valid_nintendo_logo(&gb->cartridge)) {
@@ -193,6 +192,8 @@ int gb_load_rom(const char *filename, gb_system_t *gb)
         address += n;
         loaded_bytes += n;
     }
+
+    logger(LOG_DEBUG, "Computed global checksum: 0x%04X", compute_global_checksum(gb));
 
     gb_switch_membank(0, &gb->memory.rom_banks);
     close(fd);

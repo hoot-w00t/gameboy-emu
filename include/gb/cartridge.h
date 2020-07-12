@@ -24,7 +24,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 void decode_cartridge_header(byte_t *data, gb_cartridge_hdr_t *cartridge);
 byte_t compute_header_checksum(byte_t *data);
-uint16_t compute_global_checksum(byte_t *data);
+uint16_t compute_global_checksum(gb_system_t *gb);
 bool valid_nintendo_logo(gb_cartridge_hdr_t *cartridge);
 void dump_cartridge_header(gb_cartridge_hdr_t *cartridge);
 

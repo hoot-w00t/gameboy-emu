@@ -146,12 +146,22 @@ byte_t compute_header_checksum(byte_t *data)
 }
 
 // Calculate the global checksum
-uint16_t compute_global_checksum(byte_t *data)
+uint16_t compute_global_checksum(gb_system_t *gb)
 {
     uint16_t x = 0;
 
-    for (uint16_t i = CARTRIDGE_HEADER_LADDR; i < GB_CR_GLOBAL_CHECKSUM_ADDR; ++i) {
-        x += data[i];
+    for (uint16_t i = 0; i < sizeof(gb->memory.rom_bank_0); ++i) {
+        if (i == GB_CR_GLOBAL_CHECKSUM_ADDR) {
+            ++i;
+            continue;
+        }
+
+        x += gb->memory.rom_bank_0[i];
+    }
+    for (uint16_t b = 0; b < gb->memory.rom_banks.maxsize; ++b) {
+        for (uint16_t i = 0; i < gb->memory.rom_banks.bank_size; ++i) {
+            x += gb->memory.rom_banks.banks[b][i];
+        }
     }
 
     return x;
