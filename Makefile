@@ -9,7 +9,8 @@ SRC	=	src/logger.c		\
 		src/emulator.c		\
 		src/memory.c		\
 		src/memory_banks.c	\
-		src/cartridge.c
+		src/cartridge.c		\
+		src/interrupts.c
 
 OBJ	=	$(SRC:.c=.o)
 DEP	=	$(OBJ:.o=.d)

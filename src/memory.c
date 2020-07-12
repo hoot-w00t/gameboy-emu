@@ -54,8 +54,14 @@ byte_t gb_read_byte(uint16_t address, gb_system_t *gb)
     } else if (address >= OAM_LADDR && address <= OAM_UADDR) {
         return gb->memory.oam[address - OAM_LADDR];
 
+    } else if (address >= IO_REGISTERS_LADDR && address <= IO_REGISTERS_UADDR) {
+        return gb->memory.io_registers[address - IO_REGISTERS_LADDR];
+
     } else if (address >= HRAM_LADDR && address <= HRAM_UADDR) {
         return gb->memory.hram[address - HRAM_LADDR];
+
+    } else if (address == INTERRUPT_ENABLE) {
+        return gb->memory.int_enable;
 
     }
 
@@ -106,8 +112,16 @@ bool gb_write_byte(uint16_t address, byte_t value, bool bypass_ro, gb_system_t *
         gb->memory.oam[address - OAM_LADDR] = value;
         return true;
 
+    } else if (address >= IO_REGISTERS_LADDR && address <= IO_REGISTERS_UADDR) {
+        gb->memory.io_registers[address - IO_REGISTERS_LADDR] = value;
+        return true;
+
     } else if (address >= HRAM_LADDR && address <= HRAM_UADDR) {
         gb->memory.hram[address - HRAM_LADDR] = value;
+        return true;
+
+    } else if (address == INTERRUPT_ENABLE) {
+        gb->memory.int_enable = value;
         return true;
 
     }
@@ -128,13 +142,13 @@ int gb_load_rom(const char *filename, gb_system_t *gb)
         return -1;
     }
 
-    uint16_t address = CARTRIDGE_HEADER_LADDR;
+    uint16_t address = 0x0;
     uint16_t loaded_bytes = 0;
     byte_t buffer[1024];
     int n;
 
     while ((n = read(fd, buffer, sizeof(buffer))) > 0) {
-        if (address == CARTRIDGE_HEADER_LADDR) {
+        if (address == 0x0) {
             decode_cartridge_header(buffer, &gb->cartridge);
 
             logger(LOG_DEBUG, "Computed header checksum: 0x%02X", compute_header_checksum(buffer));

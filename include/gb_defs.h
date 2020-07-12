@@ -51,7 +51,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define IO_REGISTERS_UADDR           (0xFF7F)
 #define HRAM_LADDR                   (0xFF80)
 #define HRAM_UADDR                   (0xFFFE)
-#define INTERRUPT_ENABLE             (0xFFFF)
+#define INTERRUPT_FLAG               (0xFF0F) // RW
+#define INTERRUPT_ENABLE             (0xFFFF) // RW
 
 // Registers index in struct gb_system
 #define REG_A (0) // Accumulator
@@ -83,6 +84,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define GB_TILE_MEM_SIZE (TILE_UADDR - TILE_LADDR + 1)
 #define GB_BG_MAP_SIZE (1024)
 #define GB_OAM_SIZE (GB_MAX_SPRITES * 4)
+#define GB_IO_REGS_SIZE (IO_REGISTERS_UADDR - IO_REGISTERS_LADDR + 1)
 #define GB_HRAM_SIZE (127)
 
 // Cartridge definitions
@@ -97,6 +99,13 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define GB_CR_ROM_VERSION_ADDR       (0x014C)
 #define GB_CR_HEADER_CHECKSUM_ADDR   (0x014D)
 #define GB_CR_GLOBAL_CHECKSUM_ADDR   (0x014E)
+
+// Interrupt definitions
+#define INTERRUPT_VBLANK (0x40)
+#define INTERRUPT_LCD_STAT (0x48)
+#define INTERRUPT_TIMER (0x50)
+#define INTERRUPT_SERIAL (0x58)
+#define INTERRUPT_JOYPAD (0x60)
 
 // Type definitions
 typedef uint8_t byte_t;
@@ -135,7 +144,9 @@ struct gb_memory {
     struct gb_membank ram_banks;                        // Switchable RAM banks
     byte_t vram[GB_TILE_MEM_SIZE + GB_BG_MAP_SIZE * 2]; // Video RAM (Tiles + the 2 BG Maps)
     byte_t oam[GB_OAM_SIZE];                            // Object Attribute Memory
+    byte_t io_registers[GB_IO_REGS_SIZE];               // IO Registers
     byte_t hram[GB_HRAM_SIZE];                          // HRAM
+    byte_t int_enable;                                  // Interrupt Enable Register
 };
 
 struct gb_system {
@@ -144,6 +155,7 @@ struct gb_system {
     byte_t registers[8];               // CPU Registers
     uint16_t pc;                       // Program Counter (Initialized with CARTRIDGE_HEADER_LADDR)
     uint16_t sp;                       // Stack pointer (Initialized with HRAM_UADDR)
+    byte_t ime;                        // Interrupt Master Enable Flag
 };
 
 #endif
