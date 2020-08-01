@@ -69,6 +69,13 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define REG_DE REG_D
 #define REG_HL REG_H
 
+// Register Flags
+#define FLAG_Z  (7)      // Zero Flag Bit
+#define FLAG_N  (6)      // Add/Sub Flag Bit
+#define FLAG_H  (5)      // Half Carry Flag Bit
+#define FLAG_CY (4)      // Carry Flag Bit
+#define FLAG_C  FLAG_CY  // Carry Flag Bit
+
 // Screen and video definitions
 #define GB_SCREEN_WIDTH (160)
 #define GB_SCREEN_HEIGHT (144)
