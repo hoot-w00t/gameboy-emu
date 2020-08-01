@@ -43,3 +43,25 @@ void gb_register_write_u16(byte_t reg, uint16_t value, gb_system_t *gb)
     gb->registers[reg] = value << 8;
     gb->registers[reg + 1] = value & 0xff;
 }
+
+// Return true if flag is set, false if flag is clear
+bool gb_flag(byte_t flag, gb_system_t *gb)
+{
+    return (gb_register_read_byte(REG_F, gb) & (1 << flag)) ? true : false;
+}
+
+// Set flag
+void gb_flag_set(byte_t flag, gb_system_t *gb)
+{
+    byte_t reg_value = gb_register_read_byte(REG_F, gb);
+
+    gb_register_write_byte(REG_F, (reg_value | (1 << flag)), gb);
+}
+
+// Clear flag
+void gb_flag_clear(byte_t flag, gb_system_t *gb)
+{
+    byte_t reg_value = gb_register_read_byte(REG_F, gb);
+
+    gb_register_write_byte(REG_F, (reg_value ^ (1 << flag)), gb);
+}

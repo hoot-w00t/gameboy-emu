@@ -22,9 +22,19 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _GB_REGISTERS_H
 #define _GB_REGISTERS_H
 
+// Flags
+#define FLAG_Z  (7)      // Zero Flag Bit
+#define FLAG_N  (6)      // Add/Sub Flag Bit
+#define FLAG_H  (5)      // Half Carry Flag Bit
+#define FLAG_CY (4)      // Carry Flag Bit
+#define FLAG_C  FLAG_CY  // Carry Flag Bit
+
 byte_t gb_register_read_byte(byte_t reg, gb_system_t *gb);
 void gb_register_write_byte(byte_t reg, byte_t value, gb_system_t *gb);
 uint16_t gb_register_read_u16(byte_t reg, gb_system_t *gb);
 void gb_register_write_u16(byte_t reg, uint16_t value, gb_system_t *gb);
+bool gb_flag(byte_t flag, gb_system_t *gb);
+bool gb_flag_set(byte_t flag, gb_system_t *gb);
+bool gb_flag_clear(byte_t flag, gb_system_t *gb);
 
 #endif
