@@ -109,6 +109,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 // Type definitions
 typedef uint8_t byte_t;
+typedef int8_t sbyte_t;
 typedef struct gb_system gb_system_t;
 typedef struct gb_memory gb_memory_t;
 typedef struct gb_membank gb_membank_t;
@@ -167,6 +168,7 @@ struct gb_system {
     byte_t registers[8];               // CPU Registers
     uint16_t pc;                       // Program Counter (Initialized with CARTRIDGE_HEADER_LADDR)
     uint16_t sp;                       // Stack pointer (Initialized with HRAM_UADDR)
+    uint16_t idle_cycles;              // Remaining cycles to idle (decrease at every cycle)
     byte_t ime;                        // Interrupt Master Enable Flag
 };
 

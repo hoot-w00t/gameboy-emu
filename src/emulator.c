@@ -21,6 +21,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "gb/memory.h"
 #include "gb/memory_banks.h"
 #include "gb/registers.h"
+#include "gb/cpu.h"
+#include "gb/opcodes.h"
 #include "logger.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,6 +135,12 @@ int main(int ac, char **av)
     if (gb_load_rom(filename, gb) < 0)
         return EXIT_FAILURE;
 
-    free(gb);
+    int last_status;
+
+    while ((last_status = gb_cpu_cycle(gb)) >= 0) {
+        continue;
+    }
+
+    free_gb_system(gb, true);
     return 0;
 }
