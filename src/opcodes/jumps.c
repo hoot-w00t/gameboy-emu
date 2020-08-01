@@ -20,6 +20,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "gb/opcodes.h"
 #include "gb/memory.h"
 #include "gb/registers.h"
+#include "gb/cpu.h"
 #include "logger.h"
 
 // JP instruction
@@ -106,6 +107,53 @@ int gb_opcode_jr(const gb_opcode_t *opcode, gb_system_t *gb)
         case 0x38:
             if (gb_flag(FLAG_C, gb)) {
                 gb->pc += (sbyte_t) gb_read_byte(gb->pc + 1, gb);
+                return OPCODE_ACTION | OPCODE_NOPC;
+            } else {
+                return OPCODE_NOACTION;
+            }
+
+        default:
+            return OPCODE_ILLEGAL;
+    }
+}
+
+// CALL instruction
+int gb_opcode_call(const gb_opcode_t *opcode, gb_system_t *gb)
+{
+    uint16_t address = gb_read_uint16(gb->pc + 1, gb);
+
+    switch (opcode->opcode) {
+        case 0xC4:
+            if (!gb_flag(FLAG_Z, gb)) {
+                gb_cpu_call(address, gb);
+                return OPCODE_ACTION | OPCODE_NOPC;
+            } else {
+                return OPCODE_NOACTION;
+            }
+
+        case 0xCC:
+            if (gb_flag(FLAG_Z, gb)) {
+                gb_cpu_call(address, gb);
+                return OPCODE_ACTION | OPCODE_NOPC;
+            } else {
+                return OPCODE_NOACTION;
+            }
+
+        case 0xCD:
+            gb_cpu_call(address, gb);
+            return OPCODE_ACTION | OPCODE_NOPC;
+
+        case 0xD4:
+            if (!gb_flag(FLAG_C, gb)) {
+                gb_cpu_call(address, gb);
+                return OPCODE_ACTION | OPCODE_NOPC;
+            } else {
+                return OPCODE_NOACTION;
+            }
+
+        case 0xDC:
+            if (gb_flag(FLAG_C, gb)) {
+                gb_cpu_call(address, gb);
                 return OPCODE_ACTION | OPCODE_NOPC;
             } else {
                 return OPCODE_NOACTION;

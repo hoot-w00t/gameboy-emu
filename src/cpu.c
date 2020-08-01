@@ -143,6 +143,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_jp
     },
     {
+        .mnemonic     = "CALL NZ,a16",
+        .opcode       = 0xC4,
+        .length       = 3,
+        .cycles_true  = 24,
+        .cycles_false = 12,
+        .comment      = "Call 16 bit address if Zero Flag is clear",
+        .handler      = &gb_opcode_call
+    },
+    {
         .mnemonic     = "JP Z,a16",
         .opcode       = 0xCA,
         .length       = 3,
@@ -150,6 +159,24 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 12,
         .comment      = "Jump to 16 bit address if Zero Flag is set",
         .handler      = &gb_opcode_jp
+    },
+    {
+        .mnemonic     = "CALL Z,a16",
+        .opcode       = 0xCC,
+        .length       = 3,
+        .cycles_true  = 24,
+        .cycles_false = 12,
+        .comment      = "Call 16 bit address if Zero Flag is set",
+        .handler      = &gb_opcode_call
+    },
+    {
+        .mnemonic     = "CALL a16",
+        .opcode       = 0xCD,
+        .length       = 3,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Call 16 bit address",
+        .handler      = &gb_opcode_call
     },
     {
         .mnemonic     = "JP NC,a16",
@@ -161,6 +188,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_jp
     },
     {
+        .mnemonic     = "CALL NC,a16",
+        .opcode       = 0xD4,
+        .length       = 3,
+        .cycles_true  = 24,
+        .cycles_false = 12,
+        .comment      = "Call 16 bit address if Carry Flag is clear",
+        .handler      = &gb_opcode_call
+    },
+    {
         .mnemonic     = "JP C,a16",
         .opcode       = 0xDA,
         .length       = 3,
@@ -168,6 +204,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 12,
         .comment      = "Jump to 16 bit address if Carry Flag is set",
         .handler      = &gb_opcode_jp
+    },
+    {
+        .mnemonic     = "CALL C,a16",
+        .opcode       = 0xDC,
+        .length       = 3,
+        .cycles_true  = 24,
+        .cycles_false = 12,
+        .comment      = "Call 16 bit address if Carry Flag is set",
+        .handler      = &gb_opcode_call
     },
     {
         .mnemonic     = "JP (HL)",
