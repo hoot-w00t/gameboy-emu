@@ -28,19 +28,19 @@ int gb_opcode_jp(const gb_opcode_t *opcode, gb_system_t *gb)
     switch (opcode->opcode) {
         case 0xC2:
             if (!gb_flag(FLAG_Z, gb)) { // NZ
-                gb->pc = gb_read_address(gb->pc + 1, gb);
+                gb->pc = gb_read_uint16(gb->pc + 1, gb);
                 return OPCODE_ACTION | OPCODE_NOPC;
             } else {
                 return OPCODE_NOACTION;
             }
 
         case 0xC3:
-            gb->pc = gb_read_address(gb->pc + 1, gb);
+            gb->pc = gb_read_uint16(gb->pc + 1, gb);
             return OPCODE_ACTION | OPCODE_NOPC;
 
         case 0xCA:
             if (gb_flag(FLAG_Z, gb)) { // Z
-                gb->pc = gb_read_address(gb->pc + 1, gb);
+                gb->pc = gb_read_uint16(gb->pc + 1, gb);
                 return OPCODE_ACTION | OPCODE_NOPC;
             } else {
                 return OPCODE_NOACTION;
@@ -48,7 +48,7 @@ int gb_opcode_jp(const gb_opcode_t *opcode, gb_system_t *gb)
 
         case 0xD2:
             if (!gb_flag(FLAG_C, gb)) { // NC
-                gb->pc = gb_read_address(gb->pc + 1, gb);
+                gb->pc = gb_read_uint16(gb->pc + 1, gb);
                 return OPCODE_ACTION | OPCODE_NOPC;
             } else {
                 return OPCODE_NOACTION;
@@ -56,7 +56,7 @@ int gb_opcode_jp(const gb_opcode_t *opcode, gb_system_t *gb)
 
         case 0xDA:
             if (gb_flag(FLAG_C, gb)) { // C
-                gb->pc = gb_read_address(gb->pc + 1, gb);
+                gb->pc = gb_read_uint16(gb->pc + 1, gb);
                 return OPCODE_ACTION | OPCODE_NOPC;
             } else {
                 return OPCODE_NOACTION;
