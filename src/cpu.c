@@ -125,6 +125,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_jr
     },
     {
+        .mnemonic     = "RET NZ",
+        .opcode       = 0xC0,
+        .length       = 1,
+        .cycles_true  = 20,
+        .cycles_false = 8,
+        .comment      = "Return if Zero Flag is clear",
+        .handler      = &gb_opcode_ret
+    },
+    {
         .mnemonic     = "JP NZ,a16",
         .opcode       = 0xC2,
         .length       = 3,
@@ -150,6 +159,24 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 12,
         .comment      = "Call 16 bit address if Zero Flag is clear",
         .handler      = &gb_opcode_call
+    },
+    {
+        .mnemonic     = "RET Z",
+        .opcode       = 0xC8,
+        .length       = 1,
+        .cycles_true  = 20,
+        .cycles_false = 8,
+        .comment      = "Return if Zero Flag is set",
+        .handler      = &gb_opcode_ret
+    },
+    {
+        .mnemonic     = "RET",
+        .opcode       = 0xC9,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Return",
+        .handler      = &gb_opcode_ret
     },
     {
         .mnemonic     = "JP Z,a16",
@@ -179,6 +206,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_call
     },
     {
+        .mnemonic     = "RET NC",
+        .opcode       = 0xD0,
+        .length       = 1,
+        .cycles_true  = 20,
+        .cycles_false = 8,
+        .comment      = "Return if Carry Flag is clear",
+        .handler      = &gb_opcode_ret
+    },
+    {
         .mnemonic     = "JP NC,a16",
         .opcode       = 0xD2,
         .length       = 3,
@@ -195,6 +231,24 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 12,
         .comment      = "Call 16 bit address if Carry Flag is clear",
         .handler      = &gb_opcode_call
+    },
+    {
+        .mnemonic     = "RET C",
+        .opcode       = 0xD8,
+        .length       = 1,
+        .cycles_true  = 20,
+        .cycles_false = 8,
+        .comment      = "Return if Carry Flag is set",
+        .handler      = &gb_opcode_ret
+    },
+    {
+        .mnemonic     = "RETI",
+        .opcode       = 0xD9,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Return and enable interrupts",
+        .handler      = &gb_opcode_ret
     },
     {
         .mnemonic     = "JP C,a16",

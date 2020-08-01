@@ -55,6 +55,7 @@ int gb_opcode_ei(__attribute__((unused)) const gb_opcode_t *opcode, gb_system_t 
 int gb_opcode_jp(const gb_opcode_t *opcode, gb_system_t *gb);
 int gb_opcode_jr(const gb_opcode_t *opcode, gb_system_t *gb);
 int gb_opcode_call(const gb_opcode_t *opcode, gb_system_t *gb);
+int gb_opcode_ret(const gb_opcode_t *opcode, gb_system_t *gb);
 
 // opcodes/ld.c
 int gb_opcode_ld_rr_d16(const gb_opcode_t *opcode, gb_system_t *gb);

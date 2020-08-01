@@ -163,3 +163,53 @@ int gb_opcode_call(const gb_opcode_t *opcode, gb_system_t *gb)
             return OPCODE_ILLEGAL;
     }
 }
+
+// RET instructions
+int gb_opcode_ret(const gb_opcode_t *opcode, gb_system_t *gb)
+{
+    switch (opcode->opcode) {
+        case 0xC0:
+            if (!gb_flag(FLAG_Z, gb)) {
+                gb_cpu_ret(gb);
+                return OPCODE_ACTION;
+            } else {
+                return OPCODE_NOACTION;
+            }
+
+        case 0xC8:
+            if (gb_flag(FLAG_Z, gb)) {
+                gb_cpu_ret(gb);
+                return OPCODE_ACTION;
+            } else {
+                return OPCODE_NOACTION;
+            }
+
+        case 0xC9:
+            gb_cpu_ret(gb);
+            return OPCODE_ACTION;
+
+        case 0xD0:
+            if (!gb_flag(FLAG_C, gb)) {
+                gb_cpu_ret(gb);
+                return OPCODE_ACTION;
+            } else {
+                return OPCODE_NOACTION;
+            }
+
+        case 0xD8:
+            if (gb_flag(FLAG_C, gb)) {
+                gb_cpu_ret(gb);
+                return OPCODE_ACTION;
+            } else {
+                return OPCODE_NOACTION;
+            }
+
+        case 0xD9:
+            gb_cpu_ret(gb);
+            gb->ime = 1;
+            return OPCODE_ACTION;
+
+        default:
+            return OPCODE_NOACTION;
+    }
+}
