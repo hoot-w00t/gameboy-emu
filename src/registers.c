@@ -65,3 +65,13 @@ void gb_flag_clear(byte_t flag, gb_system_t *gb)
 
     gb_register_write_byte(REG_F, (reg_value ^ (1 << flag)), gb);
 }
+
+// Set or clear N flag (Subtract flag)
+void gb_flag_n(bool subtract, gb_system_t *gb)
+{
+    if (subtract) {
+        gb_flag_set(FLAG_N, gb);
+    } else {
+        gb_flag_clear(FLAG_N, gb);
+    }
+}

@@ -29,5 +29,6 @@ void gb_register_write_u16(byte_t reg, uint16_t value, gb_system_t *gb);
 bool gb_flag(byte_t flag, gb_system_t *gb);
 bool gb_flag_set(byte_t flag, gb_system_t *gb);
 bool gb_flag_clear(byte_t flag, gb_system_t *gb);
+void gb_flag_n(bool subtract, gb_system_t *gb);
 
 #endif
