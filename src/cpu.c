@@ -188,6 +188,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_di
     },
     {
+        .mnemonic     = "LD HL,SP+r8",
+        .opcode       = 0xF8,
+        .length       = 2,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Load 16 bit register HL into SP",
+        .handler      = &gb_opcode_ld_hl_sp_r8
+    },
+    {
         .mnemonic     = "LD SP,HL",
         .opcode       = 0xF9,
         .length       = 1,

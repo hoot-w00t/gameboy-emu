@@ -54,3 +54,20 @@ int gb_opcode_ld_sp_hl(__attribute__((unused)) const gb_opcode_t *opcode, gb_sys
 
     return OPCODE_ACTION;
 }
+
+// LD SP,HL+r8 instruction
+int gb_opcode_ld_hl_sp_r8(__attribute__((unused)) const gb_opcode_t *opcode, gb_system_t *gb)
+{
+    sbyte_t r8 = (sbyte_t) gb_read_byte(gb->pc + 1, gb);
+    uint16_t value = gb->sp + r8;
+
+    gb_register_write_u16(REG_HL, value, gb);
+    gb_flag_clear(FLAG_Z, gb);
+    gb_flag_clear(FLAG_N, gb);
+    gb_flag_n(r8 < 0, gb);
+    if ((r8 < 0 && value > gb->sp) || (r8 >= 0 && value < gb->sp)) {
+        gb_flag_set(FLAG_H, gb);
+    }
+
+    return OPCODE_ACTION;
+}
