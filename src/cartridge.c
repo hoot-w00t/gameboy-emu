@@ -61,39 +61,40 @@ void decode_cartridge_header(byte_t *data, gb_cartridge_hdr_t *cartridge)
     cartridge->mbc_type = data[GB_CR_MBC_TYPE_ADDR];
 
     // Decode ROM size
+    // ROM banks number is 1 less because there is already ROM bank 0
     switch (data[GB_CR_ROM_SIZE_ADDR]) {
         case 0x00:
             cartridge->rom_banks = 1;
             break;
         case 0x01:
-            cartridge->rom_banks = 4;
+            cartridge->rom_banks = 3;
             break;
         case 0x02:
-            cartridge->rom_banks = 8;
+            cartridge->rom_banks = 7;
             break;
         case 0x03:
-            cartridge->rom_banks = 16;
+            cartridge->rom_banks = 15;
             break;
         case 0x04:
-            cartridge->rom_banks = 32;
+            cartridge->rom_banks = 31;
             break;
         case 0x05:
-            cartridge->rom_banks = 64;
+            cartridge->rom_banks = 63;
             break;
         case 0x06:
-            cartridge->rom_banks = 128;
+            cartridge->rom_banks = 127;
             break;
         case 0x07:
-            cartridge->rom_banks = 256;
+            cartridge->rom_banks = 255;
             break;
         case 0x52:
-            cartridge->rom_banks = 72;
+            cartridge->rom_banks = 71;
             break;
         case 0x53:
-            cartridge->rom_banks = 80;
+            cartridge->rom_banks = 79;
             break;
         case 0x54:
-            cartridge->rom_banks = 96;
+            cartridge->rom_banks = 95;
             break;
         default:
             logger(LOG_CRIT, "Invalid ROM Size in cartridge header: 0x%02X", data[GB_CR_ROM_SIZE_ADDR]);
@@ -158,7 +159,7 @@ uint16_t compute_global_checksum(gb_system_t *gb)
 
         x += gb->memory.rom_bank_0[i];
     }
-    for (uint16_t b = 0; b < gb->memory.rom_banks.maxsize; ++b) {
+    for (uint16_t b = 0; b < gb->memory.rom_banks.max_bank_nb; ++b) {
         for (uint16_t i = 0; i < gb->memory.rom_banks.bank_size; ++i) {
             x += gb->memory.rom_banks.banks[b][i];
         }

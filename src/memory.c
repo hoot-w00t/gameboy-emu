@@ -20,6 +20,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "gb/defs.h"
 #include "gb/memory_banks.h"
 #include "gb/cartridge.h"
+#include "gb/mbc.h"
 #include "logger.h"
 #include <stddef.h>
 #include <string.h>
@@ -30,6 +31,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 // Read byte from given address
 byte_t gb_read_byte(uint16_t address, gb_system_t *gb)
 {
+    if (gb->memory.mbc_read && (*gb->memory.mbc_read)(address, gb)) {
+        return true;
+    }
+
     if (address <= ROM_BANK_0_UADDR) {
         return gb->memory.rom_bank_0[address];
 
@@ -70,10 +75,14 @@ byte_t gb_read_byte(uint16_t address, gb_system_t *gb)
 }
 
 // Write byte at given address
-// If bypass_ro is true, allow writing to read-only areas
+// If bypass_ro is true, allow writing to read-only areas (also bypassing MBC)
 // bypass_ro is used for loading ROMs
 bool gb_write_byte(uint16_t address, byte_t value, bool bypass_ro, gb_system_t *gb)
 {
+    if (!bypass_ro && gb->memory.mbc_write && (*gb->memory.mbc_write)(address, value, gb)) {
+        return true;
+    }
+
     if (address <= ROM_BANK_0_UADDR) {
         if (bypass_ro) {
             gb->memory.rom_bank_0[address] = value;
@@ -147,12 +156,15 @@ int gb_load_rom(const char *filename, gb_system_t *gb)
     byte_t buffer[1024];
     int n;
 
+    gb->cartridge.filename = (char *) filename;
+
     while ((n = read(fd, buffer, sizeof(buffer))) > 0) {
         if (address == 0x0) {
             decode_cartridge_header(buffer, &gb->cartridge);
 
-            logger(LOG_DEBUG, "Computed header checksum: 0x%02X", compute_header_checksum(buffer));
+            byte_t header_checksum = compute_header_checksum(buffer);
             dump_cartridge_header(&gb->cartridge);
+            logger(LOG_DEBUG, "Computed header checksum: 0x%02X", header_checksum);
 
             if (!valid_nintendo_logo(&gb->cartridge)) {
                 logger(LOG_CRIT, "Invalid Nintendo Logo bitmap");
@@ -160,21 +172,26 @@ int gb_load_rom(const char *filename, gb_system_t *gb)
                 return -3;
             }
 
-            if (compute_header_checksum(buffer) != gb->cartridge.header_checksum) {
+            if (header_checksum != gb->cartridge.header_checksum) {
                 logger(LOG_CRIT, "Cartridge Header Checksum is invalid");
                 close(fd);
                 return -3;
             }
 
             gb->memory.rom_banks.bank_size = GB_ROM_BANK_SIZE;
-            gb->memory.rom_banks.maxsize = gb->cartridge.rom_banks;
+            gb->memory.rom_banks.max_bank_nb = gb->cartridge.rom_banks;
+            gb->memory.rom_banks.current_bank_nb = gb->cartridge.rom_banks;
             gb->memory.ram_banks.bank_size = gb->cartridge.ram_size;
-            gb->memory.ram_banks.maxsize = gb->cartridge.ram_banks;
+            gb->memory.ram_banks.max_bank_nb = gb->cartridge.ram_banks;
+            gb->memory.ram_banks.current_bank_nb = gb->cartridge.ram_banks;
 
             if (!gb_allocate_membank(&gb->memory.rom_banks) || !gb_allocate_membank(&gb->memory.ram_banks)) {
                 close(fd);
                 return -3;
             }
+
+            gb->memory.mbc_read = get_mbc_readb_fptr(&gb->cartridge);
+            gb->memory.mbc_write = get_mbc_writeb_fptr(&gb->cartridge);
         }
 
         for (int i = 0; i < n; ++i) {

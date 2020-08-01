@@ -26,9 +26,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 void gb_free_membank(gb_membank_t *membank)
 {
     if (membank->banks) {
-        for (byte_t i = 0; i < membank->maxsize; ++i) {
+        for (uint16_t i = 0; i < membank->max_bank_nb; ++i) {
             free(membank->banks[i]);
         }
+
         free(membank->banks);
     }
 }
@@ -36,14 +37,14 @@ void gb_free_membank(gb_membank_t *membank)
 // Dynamically allocate memory for the banks
 bool gb_allocate_membank(gb_membank_t *membank)
 {
-    membank->banks = malloc(sizeof(byte_t *) * membank->maxsize);
+    membank->banks = malloc(sizeof(byte_t *) * membank->max_bank_nb);
     if (!membank->banks) {
         logger(LOG_CRIT, "Memory allocation failed");
         return false;
     }
 
-    memset(membank->banks, 0, sizeof(byte_t *) * membank->maxsize);
-    for (byte_t i = 0; i < membank->maxsize; ++i) {
+    memset(membank->banks, 0, sizeof(byte_t *) * membank->max_bank_nb);
+    for (uint16_t i = 0; i < membank->max_bank_nb; ++i) {
         membank->banks[i] = malloc(membank->bank_size);
         if (!membank->banks[i]) {
             logger(LOG_CRIT, "Memory allocation failed");
@@ -54,18 +55,19 @@ bool gb_allocate_membank(gb_membank_t *membank)
         memset(membank->banks[i], 0, membank->bank_size);
     }
 
+    membank->enabled = true;
     return true;
 }
 
 // Switch to bank at index
 bool gb_switch_membank(byte_t index, gb_membank_t *membank)
 {
-    if (index >= membank->maxsize) {
+    if (index >= membank->current_bank_nb) {
         logger(
             LOG_CRIT,
             "Unable to switch to memory bank #%u: only %u banks available",
             index + 1,
-            membank->maxsize
+            membank->current_bank_nb
         );
         return false;
     }
@@ -77,12 +79,12 @@ bool gb_switch_membank(byte_t index, gb_membank_t *membank)
 // Increment bank index by 1
 bool gb_increment_membank(gb_membank_t *membank)
 {
-    if (membank->index + 1 >= membank->maxsize) {
+    if (membank->index + 1 >= membank->current_bank_nb) {
         logger(
             LOG_CRIT,
             "Unable to increment to memory bank #%u: only %u banks available",
             membank->index + 2,
-            membank->maxsize
+            membank->current_bank_nb
         );
         return false;
     }
@@ -94,23 +96,31 @@ bool gb_increment_membank(gb_membank_t *membank)
 // Read byte at address from selected memory bank
 byte_t gb_read_byte_from_membank(uint16_t address, gb_membank_t *membank)
 {
+    if (!membank->enabled) {
+        logger(
+            LOG_CRIT,
+            "Unable to read from memory bank: it is disabled"
+        );
+        return 0;
+    }
+
     if (address >= membank->bank_size) {
         logger(
             LOG_CRIT,
-            "Unable to read from memory bank, address 0x%04X is out of bounds",
+            "Unable to read from memory bank: address 0x%04X is out of bounds",
             address
         );
         return 0;
     }
 
-    if (membank->index < membank->maxsize) {
+    if (membank->index < membank->current_bank_nb) {
         return membank->banks[membank->index][address];
     } else {
         logger(
             LOG_CRIT,
             "Unable to read from memory bank #%u: only %u banks available",
             membank->index + 1,
-            membank->maxsize
+            membank->current_bank_nb
         );
         return 0;
     }
@@ -119,16 +129,24 @@ byte_t gb_read_byte_from_membank(uint16_t address, gb_membank_t *membank)
 // Write byte at address to selected memory bank
 bool gb_write_byte_to_membank(uint16_t address, byte_t value, gb_membank_t *membank)
 {
+    if (!membank->enabled) {
+        logger(
+            LOG_CRIT,
+            "Unable to write to memory bank: it is disabled"
+        );
+        return 0;
+    }
+
     if (address >= membank->bank_size) {
         logger(
             LOG_CRIT,
-            "Unable to write to memory bank, address 0x%04X is out of bounds",
+            "Unable to write to memory bank: address 0x%04X is out of bounds",
             address
         );
         return false;
     }
 
-    if (membank->index < membank->maxsize) {
+    if (membank->index < membank->current_bank_nb) {
         membank->banks[membank->index][address] = value;
         return true;
     } else {
@@ -136,7 +154,7 @@ bool gb_write_byte_to_membank(uint16_t address, byte_t value, gb_membank_t *memb
             LOG_CRIT,
             "Unable to write to memory bank #%u: only %u banks available",
             membank->index + 1,
-            membank->maxsize
+            membank->current_bank_nb
         );
         return false;
     }

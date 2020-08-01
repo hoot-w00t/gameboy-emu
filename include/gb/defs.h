@@ -114,6 +114,12 @@ typedef struct gb_memory gb_memory_t;
 typedef struct gb_membank gb_membank_t;
 typedef struct gb_cartridge_hdr gb_cartridge_hdr_t;
 
+// These MBC functions return true if the read/write operation was processed by the MBC
+// and false otherwise. If it returns false then the operation should be processed
+// by the normal memory read/write functions
+typedef bool (*mbc_writeb_t)(uint16_t, byte_t, gb_system_t *); // Function prototype for MBC write byte
+typedef bool (*mbc_readb_t)(uint16_t, gb_system_t *); // Function prototype for MBC read byte
+
 // Structure definitions
 struct gb_cartridge_hdr {
     byte_t logo[48];          // Nintendo Logo Bitmap
@@ -121,20 +127,23 @@ struct gb_cartridge_hdr {
     char licensee_code[2];    // Licensee code formeat
     bool old_licensee_code;   // It is the old licensee code format
     byte_t mbc_type;          // MBC Type
-    uint16_t rom_banks;       // Number of ROM banks on the cartridge
+    byte_t rom_banks;         // Number of ROM banks on the cartridge
     byte_t ram_banks;         // Number of RAM banks on the cartridge
     uint16_t ram_size;        // RAM bank size
     byte_t destination_code;  // Destination code
     byte_t rom_version;       // Mask ROM Version Number
     byte_t header_checksum;   // Header Checksum
     uint16_t global_checksum; // Global Checksum
+    char *filename;           // Path to the ROM file
 };
 
 struct gb_membank {
-    byte_t **banks;       // Memory banks
-    byte_t index;         // Selected memory bank index
-    byte_t maxsize;       // Maximum number of memory banks
-    uint16_t bank_size;   // Size in bytes of each memory bank
+    byte_t **banks;            // Memory banks
+    uint16_t index;            // Index of the selected memory bank
+    uint16_t max_bank_nb;      // Maximum number of memory banks
+    uint16_t current_bank_nb;  // Current number of accessible memory banks
+    uint16_t bank_size;        // Size in bytes of one memory bank
+    bool enabled;              // Is the memory bank enabled
 };
 
 struct gb_memory {
@@ -147,6 +156,9 @@ struct gb_memory {
     byte_t io_registers[GB_IO_REGS_SIZE];               // IO Registers
     byte_t hram[GB_HRAM_SIZE];                          // HRAM
     byte_t int_enable;                                  // Interrupt Enable Register
+    bool ram_battery; // Does the external RAM have a battery
+    mbc_readb_t mbc_read;                               // MBC read byte function pointer
+    mbc_writeb_t mbc_write;                             // MBC write byte function pointer
 };
 
 struct gb_system {

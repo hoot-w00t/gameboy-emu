@@ -9,6 +9,8 @@ SRC	=	src/logger.c		\
 		src/emulator.c		\
 		src/memory.c		\
 		src/memory_banks.c	\
+		src/mbc/mbc.c		\
+		src/mbc/mbc3.c		\
 		src/cartridge.c		\
 		src/interrupts.c	\
 		src/registers.c
