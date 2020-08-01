@@ -16,7 +16,8 @@ SRC	=	src/logger.c			\
 		src/registers.c			\
 		src/cpu.c				\
 		src/opcodes/control.c	\
-		src/opcodes/jumps.c
+		src/opcodes/jumps.c		\
+		src/opcodes/ld.c
 
 OBJ	=	$(SRC:.c=.o)
 DEP	=	$(OBJ:.o=.d)
