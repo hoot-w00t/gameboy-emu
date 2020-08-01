@@ -35,6 +35,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_nop
     },
     {
+        .mnemonic     = "LD BC,d16",
+        .opcode       = 0x01,
+        .length       = 3,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Load 16 bit value into register BC",
+        .handler      = &gb_opcode_ld_rr_d16
+    },
+    {
         .mnemonic     = "STOP",
         .opcode       = 0x10,
         .length       = 2,
@@ -42,6 +51,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 0,
         .comment      = "Low Power Standby Mode",
         .handler      = &gb_opcode_stop
+    },
+    {
+        .mnemonic     = "LD DE,d16",
+        .opcode       = 0x11,
+        .length       = 3,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Load 16 bit value into register DE",
+        .handler      = &gb_opcode_ld_rr_d16
     },
     {
         .mnemonic     = "JR r8",
@@ -62,6 +80,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_jr
     },
     {
+        .mnemonic     = "LD HL,d16",
+        .opcode       = 0x21,
+        .length       = 3,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Load 16 bit value into register HL",
+        .handler      = &gb_opcode_ld_rr_d16
+    },
+    {
         .mnemonic     = "JR Z,r8",
         .opcode       = 0x28,
         .length       = 2,
@@ -78,6 +105,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Relative jump if Carry Flag is clear",
         .handler      = &gb_opcode_jr
+    },
+    {
+        .mnemonic     = "LD SP,d16",
+        .opcode       = 0x31,
+        .length       = 3,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Load 16 bit value into SP",
+        .handler      = &gb_opcode_ld_rr_d16
     },
     {
         .mnemonic     = "JR C,r8",
@@ -150,6 +186,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 4,
         .comment      = "Disable Interrupts",
         .handler      = &gb_opcode_di
+    },
+    {
+        .mnemonic     = "LD SP,HL",
+        .opcode       = 0xF9,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load 16 bit register HL into SP",
+        .handler      = &gb_opcode_ld_sp_hl
     },
     {
         .mnemonic     = "EI",

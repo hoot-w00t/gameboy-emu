@@ -46,3 +46,11 @@ int gb_opcode_ld_rr_d16(const gb_opcode_t *opcode, gb_system_t *gb)
             return OPCODE_ILLEGAL;
     }
 }
+
+// LD SP,HL instruction
+int gb_opcode_ld_sp_hl(__attribute__((unused)) const gb_opcode_t *opcode, gb_system_t *gb)
+{
+    gb->sp = gb_register_read_u16(REG_HL, gb);
+
+    return OPCODE_ACTION;
+}

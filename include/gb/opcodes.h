@@ -57,5 +57,6 @@ int gb_opcode_jr(const gb_opcode_t *opcode, gb_system_t *gb);
 
 // opcodes/ld.c
 int gb_opcode_ld_rr_d16(const gb_opcode_t *opcode, gb_system_t *gb);
+int gb_opcode_ld_sp_hl(const gb_opcode_t *opcode, gb_system_t *gb);
 
 #endif
