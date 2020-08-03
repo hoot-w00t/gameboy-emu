@@ -1,6 +1,6 @@
 /*
 xor.c
-CPU Bitwise Exclusive OR (XOR) operations
+CPU Logical Exclusive OR operations
 
 Copyright (C) 2020 akrocynova
 
