@@ -125,6 +125,78 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_jr
     },
     {
+        .mnemonic     = "XOR B",
+        .opcode       = 0xA8,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Exclusive OR between registers A and B",
+        .handler      = &gb_opcode_xor
+    },
+    {
+        .mnemonic     = "XOR C",
+        .opcode       = 0xA9,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Exclusive OR between registers A and C",
+        .handler      = &gb_opcode_xor
+    },
+    {
+        .mnemonic     = "XOR D",
+        .opcode       = 0xAA,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Exclusive OR between registers A and D",
+        .handler      = &gb_opcode_xor
+    },
+    {
+        .mnemonic     = "XOR E",
+        .opcode       = 0xAB,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Exclusive OR between registers A and E",
+        .handler      = &gb_opcode_xor
+    },
+    {
+        .mnemonic     = "XOR H",
+        .opcode       = 0xAC,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Exclusive OR between registers A and H",
+        .handler      = &gb_opcode_xor
+    },
+    {
+        .mnemonic     = "XOR L",
+        .opcode       = 0xAD,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Exclusive OR between registers A and L",
+        .handler      = &gb_opcode_xor
+    },
+    {
+        .mnemonic     = "XOR (HL)",
+        .opcode       = 0xAE,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Exclusive OR between register A and value at address stored in HL",
+        .handler      = &gb_opcode_xor
+    },
+    {
+        .mnemonic     = "XOR A",
+        .opcode       = 0xAF,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Exclusive OR between registers A and A",
+        .handler      = &gb_opcode_xor
+    },
+    {
         .mnemonic     = "RET NZ",
         .opcode       = 0xC0,
         .length       = 1,
@@ -276,6 +348,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 4,
         .comment      = "Jump to address stored in HL register",
         .handler      = &gb_opcode_jp
+    },
+    {
+        .mnemonic     = "XOR d8",
+        .opcode       = 0xEE,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Exclusive OR between register A and d8",
+        .handler      = &gb_opcode_xor
     },
     {
         .mnemonic     = "DI",
