@@ -67,4 +67,8 @@ int gb_opcode_ld_r_d8(const gb_opcode_t *opcode, gb_system_t *gb);
 void gb_8b_xor(byte_t value, gb_system_t *gb);
 int gb_opcode_xor(const gb_opcode_t *opcode, gb_system_t *gb);
 
+// opcodes/or.c
+void gb_8b_or(byte_t value, gb_system_t *gb);
+int gb_opcode_or(const gb_opcode_t *opcode, gb_system_t *gb);
+
 #endif

@@ -269,6 +269,78 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_xor
     },
     {
+        .mnemonic     = "OR B",
+        .opcode       = 0xB0,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "OR between registers A and B",
+        .handler      = &gb_opcode_or
+    },
+    {
+        .mnemonic     = "OR C",
+        .opcode       = 0xB1,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "OR between registers A and C",
+        .handler      = &gb_opcode_or
+    },
+    {
+        .mnemonic     = "OR D",
+        .opcode       = 0xB2,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "OR between registers A and D",
+        .handler      = &gb_opcode_or
+    },
+    {
+        .mnemonic     = "OR E",
+        .opcode       = 0xB3,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "OR between registers A and E",
+        .handler      = &gb_opcode_or
+    },
+    {
+        .mnemonic     = "OR H",
+        .opcode       = 0xB4,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "OR between registers A and H",
+        .handler      = &gb_opcode_or
+    },
+    {
+        .mnemonic     = "OR L",
+        .opcode       = 0xB5,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "OR between registers A and L",
+        .handler      = &gb_opcode_or
+    },
+    {
+        .mnemonic     = "OR (HL)",
+        .opcode       = 0xB6,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "OR between registers A and value at address stored in HL",
+        .handler      = &gb_opcode_or
+    },
+    {
+        .mnemonic     = "OR A",
+        .opcode       = 0xB7,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "OR between registers A and A",
+        .handler      = &gb_opcode_or
+    },
+    {
         .mnemonic     = "RET NZ",
         .opcode       = 0xC0,
         .length       = 1,
@@ -438,6 +510,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 4,
         .comment      = "Disable Interrupts",
         .handler      = &gb_opcode_di
+    },
+    {
+        .mnemonic     = "OR d8",
+        .opcode       = 0xF6,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "OR between register A and 8 bit value",
+        .handler      = &gb_opcode_or
     },
     {
         .mnemonic     = "LD HL,SP+r8",
