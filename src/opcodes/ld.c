@@ -104,3 +104,45 @@ int gb_opcode_ld_r_d8(const gb_opcode_t *opcode, gb_system_t *gb)
             return OPCODE_ACTION;
     }
 }
+
+// LDI (HL),A / LDI A,(HL)
+int gb_opcode_ldi(const gb_opcode_t *opcode, gb_system_t *gb)
+{
+    uint16_t hl = gb_register_read_u16(REG_HL, gb);
+
+    switch (opcode->opcode) {
+        case 0x22:
+            gb_write_byte(hl, gb_register_read_byte(REG_A, gb), false, gb);
+            hl += 1;
+            gb_register_write_u16(REG_HL, hl, gb);
+            return OPCODE_ACTION;
+        case 0x2A:
+            gb_register_write_byte(REG_A, gb_read_byte(hl, gb), gb);
+            hl += 1;
+            gb_register_write_u16(REG_HL, hl, gb);
+            return OPCODE_ACTION;
+        default:
+            return OPCODE_ILLEGAL;
+    }
+}
+
+// LDD (HL),A / LDD A,(HL)
+int gb_opcode_ldd(const gb_opcode_t *opcode, gb_system_t *gb)
+{
+    uint16_t hl = gb_register_read_u16(REG_HL, gb);
+
+    switch (opcode->opcode) {
+        case 0x32:
+            gb_write_byte(hl, gb_register_read_byte(REG_A, gb), false, gb);
+            hl -= 1;
+            gb_register_write_u16(REG_HL, hl, gb);
+            return OPCODE_ACTION;
+        case 0x3A:
+            gb_register_write_byte(REG_A, gb_read_byte(hl, gb), gb);
+            hl -= 1;
+            gb_register_write_u16(REG_HL, hl, gb);
+            return OPCODE_ACTION;
+        default:
+            return OPCODE_ILLEGAL;
+    }
+}

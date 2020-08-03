@@ -125,6 +125,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ld_rr_d16
     },
     {
+        .mnemonic     = "LDI (HL),A",
+        .opcode       = 0x22,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load register A at memory address stored in HL and increment HL",
+        .handler      = &gb_opcode_ldi
+    },
+    {
         .mnemonic     = "LD H,d8",
         .opcode       = 0x26,
         .length       = 2,
@@ -141,6 +150,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Relative jump if Zero Flag is set",
         .handler      = &gb_opcode_jr
+    },
+    {
+        .mnemonic     = "LDI A,(HL)",
+        .opcode       = 0x2A,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load value at memory address stored in HL into register A and increment HL",
+        .handler      = &gb_opcode_ldi
     },
     {
         .mnemonic     = "LD L,d8",
@@ -170,6 +188,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ld_rr_d16
     },
     {
+        .mnemonic     = "LDD (HL),A",
+        .opcode       = 0x32,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load register A at memory address stored in HL and decrement HL",
+        .handler      = &gb_opcode_ldd
+    },
+    {
         .mnemonic     = "LD (HL),d8",
         .opcode       = 0x36,
         .length       = 2,
@@ -186,6 +213,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Relative jump if Carry Flag is set",
         .handler      = &gb_opcode_jr
+    },
+    {
+        .mnemonic     = "LDD A,(HL)",
+        .opcode       = 0x3A,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load value at memory address stored in HL into register A and decrement HL",
+        .handler      = &gb_opcode_ldd
     },
     {
         .mnemonic     = "LD A,d8",
