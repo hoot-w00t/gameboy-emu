@@ -197,6 +197,78 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ld_r_d8
     },
     {
+        .mnemonic     = "AND B",
+        .opcode       = 0xA0,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "And between registers A and B",
+        .handler      = &gb_opcode_and
+    },
+    {
+        .mnemonic     = "AND C",
+        .opcode       = 0xA1,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "And between registers A and C",
+        .handler      = &gb_opcode_and
+    },
+    {
+        .mnemonic     = "AND D",
+        .opcode       = 0xA2,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "And between registers A and D",
+        .handler      = &gb_opcode_and
+    },
+    {
+        .mnemonic     = "AND E",
+        .opcode       = 0xA3,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "And between registers A and E",
+        .handler      = &gb_opcode_and
+    },
+    {
+        .mnemonic     = "AND H",
+        .opcode       = 0xA4,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "And between registers A and H",
+        .handler      = &gb_opcode_and
+    },
+    {
+        .mnemonic     = "AND L",
+        .opcode       = 0xA5,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "And between registers A and L",
+        .handler      = &gb_opcode_and
+    },
+    {
+        .mnemonic     = "AND (HL)",
+        .opcode       = 0xA6,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "And between register A and value at address stored in HL",
+        .handler      = &gb_opcode_and
+    },
+    {
+        .mnemonic     = "AND A",
+        .opcode       = 0xA7,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "And between registers A and A",
+        .handler      = &gb_opcode_and
+    },
+    {
         .mnemonic     = "XOR B",
         .opcode       = 0xA8,
         .length       = 1,
@@ -483,6 +555,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 12,
         .comment      = "Call 16 bit address if Carry Flag is set",
         .handler      = &gb_opcode_call
+    },
+    {
+        .mnemonic     = "AND d8",
+        .opcode       = 0xE6,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "And between register A and 8 bit value",
+        .handler      = &gb_opcode_and
     },
     {
         .mnemonic     = "JP (HL)",
