@@ -44,6 +44,24 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ld_rr_d16
     },
     {
+        .mnemonic     = "LD B,d8",
+        .opcode       = 0x06,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load 8 bit value into register B",
+        .handler      = &gb_opcode_ld_r_d8
+    },
+    {
+        .mnemonic     = "LD C,d8",
+        .opcode       = 0x0E,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load 8 bit value into register C",
+        .handler      = &gb_opcode_ld_r_d8
+    },
+    {
         .mnemonic     = "STOP",
         .opcode       = 0x10,
         .length       = 2,
@@ -62,6 +80,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ld_rr_d16
     },
     {
+        .mnemonic     = "LD D,d8",
+        .opcode       = 0x16,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load 8 bit value into register D",
+        .handler      = &gb_opcode_ld_r_d8
+    },
+    {
         .mnemonic     = "JR r8",
         .opcode       = 0x18,
         .length       = 2,
@@ -69,6 +96,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 12,
         .comment      = "Relative jump",
         .handler      = &gb_opcode_jr
+    },
+    {
+        .mnemonic     = "LD E,d8",
+        .opcode       = 0x1E,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load 8 bit value into register E",
+        .handler      = &gb_opcode_ld_r_d8
     },
     {
         .mnemonic     = "JR NZ,r8",
@@ -89,6 +125,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ld_rr_d16
     },
     {
+        .mnemonic     = "LD H,d8",
+        .opcode       = 0x26,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load 8 bit value into register H",
+        .handler      = &gb_opcode_ld_r_d8
+    },
+    {
         .mnemonic     = "JR Z,r8",
         .opcode       = 0x28,
         .length       = 2,
@@ -96,6 +141,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Relative jump if Zero Flag is set",
         .handler      = &gb_opcode_jr
+    },
+    {
+        .mnemonic     = "LD L,d8",
+        .opcode       = 0x2E,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load 8 bit value into register L",
+        .handler      = &gb_opcode_ld_r_d8
     },
     {
         .mnemonic     = "JR NC,r8",
@@ -116,6 +170,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ld_rr_d16
     },
     {
+        .mnemonic     = "LD (HL),d8",
+        .opcode       = 0x36,
+        .length       = 2,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Load 8 bit value at address stored in register HL",
+        .handler      = &gb_opcode_ld_r_d8
+    },
+    {
         .mnemonic     = "JR C,r8",
         .opcode       = 0x38,
         .length       = 2,
@@ -123,6 +186,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Relative jump if Carry Flag is set",
         .handler      = &gb_opcode_jr
+    },
+    {
+        .mnemonic     = "LD A,d8",
+        .opcode       = 0x3E,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load 8 bit value into register A",
+        .handler      = &gb_opcode_ld_r_d8
     },
     {
         .mnemonic     = "XOR B",
