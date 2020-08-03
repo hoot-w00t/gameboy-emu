@@ -182,7 +182,7 @@ const gb_opcode_t gb_opcode_table[] = {
         .mnemonic     = "XOR (HL)",
         .opcode       = 0xAE,
         .length       = 1,
-        .cycles_true  = 4,
+        .cycles_true  = 8,
         .cycles_false = 4,
         .comment      = "Exclusive OR between register A and value at address stored in HL",
         .handler      = &gb_opcode_xor
@@ -352,9 +352,9 @@ const gb_opcode_t gb_opcode_table[] = {
     {
         .mnemonic     = "XOR d8",
         .opcode       = 0xEE,
-        .length       = 1,
-        .cycles_true  = 4,
-        .cycles_false = 4,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
         .comment      = "Exclusive OR between register A and d8",
         .handler      = &gb_opcode_xor
     },
