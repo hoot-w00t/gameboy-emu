@@ -64,7 +64,7 @@ int gb_opcode_xor(const gb_opcode_t *opcode, gb_system_t *gb)
             gb_8b_xor(gb_register_read_byte(REG_L, gb), gb);
             return OPCODE_ACTION;
         case 0xAE:
-            gb_8b_xor(gb_register_read_u16(REG_HL, gb), gb);
+            gb_8b_xor(gb_register_read_u16(REG_HL, gb), gb); // Is it HL or the value stored at address HL?
             return OPCODE_ACTION;
         case 0xAF:
             gb_8b_xor(gb_register_read_byte(REG_A, gb), gb);
