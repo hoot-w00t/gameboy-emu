@@ -44,6 +44,24 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ld_rr_d16
     },
     {
+        .mnemonic     = "INC BC",
+        .opcode       = 0x03,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Increment BC",
+        .handler      = &gb_opcode_inc
+    },
+    {
+        .mnemonic     = "INC B",
+        .opcode       = 0x04,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Increment B",
+        .handler      = &gb_opcode_inc
+    },
+    {
         .mnemonic     = "LD B,d8",
         .opcode       = 0x06,
         .length       = 2,
@@ -51,6 +69,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load 8 bit value into register B",
         .handler      = &gb_opcode_ld_r_d8
+    },
+    {
+        .mnemonic     = "INC C",
+        .opcode       = 0x0C,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Increment C",
+        .handler      = &gb_opcode_inc
     },
     {
         .mnemonic     = "LD C,d8",
@@ -80,6 +107,24 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ld_rr_d16
     },
     {
+        .mnemonic     = "INC DE",
+        .opcode       = 0x13,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Increment DE",
+        .handler      = &gb_opcode_inc
+    },
+    {
+        .mnemonic     = "INC D",
+        .opcode       = 0x14,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Increment D",
+        .handler      = &gb_opcode_inc
+    },
+    {
         .mnemonic     = "LD D,d8",
         .opcode       = 0x16,
         .length       = 2,
@@ -96,6 +141,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 12,
         .comment      = "Relative jump",
         .handler      = &gb_opcode_jr
+    },
+    {
+        .mnemonic     = "INC E",
+        .opcode       = 0x1C,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Increment E",
+        .handler      = &gb_opcode_inc
     },
     {
         .mnemonic     = "LD E,d8",
@@ -134,6 +188,24 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ldi
     },
     {
+        .mnemonic     = "INC HL",
+        .opcode       = 0x23,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Increment HL",
+        .handler      = &gb_opcode_inc
+    },
+    {
+        .mnemonic     = "INC H",
+        .opcode       = 0x24,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Increment H",
+        .handler      = &gb_opcode_inc
+    },
+    {
         .mnemonic     = "LD H,d8",
         .opcode       = 0x26,
         .length       = 2,
@@ -159,6 +231,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load value at memory address stored in HL into register A and increment HL",
         .handler      = &gb_opcode_ldi
+    },
+    {
+        .mnemonic     = "INC L",
+        .opcode       = 0x2C,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Increment L",
+        .handler      = &gb_opcode_inc
     },
     {
         .mnemonic     = "LD L,d8",
@@ -197,6 +278,24 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ldd
     },
     {
+        .mnemonic     = "INC SP",
+        .opcode       = 0x33,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Increment SP",
+        .handler      = &gb_opcode_inc
+    },
+    {
+        .mnemonic     = "INC (HL)",
+        .opcode       = 0x34,
+        .length       = 1,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Increment value at address stored in HL",
+        .handler      = &gb_opcode_inc
+    },
+    {
         .mnemonic     = "LD (HL),d8",
         .opcode       = 0x36,
         .length       = 2,
@@ -222,6 +321,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load value at memory address stored in HL into register A and decrement HL",
         .handler      = &gb_opcode_ldd
+    },
+    {
+        .mnemonic     = "INC A",
+        .opcode       = 0x3C,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Increment A",
+        .handler      = &gb_opcode_inc
     },
     {
         .mnemonic     = "LD A,d8",

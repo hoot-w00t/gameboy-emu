@@ -77,4 +77,10 @@ int gb_opcode_or(const gb_opcode_t *opcode, gb_system_t *gb);
 void gb_8b_and(byte_t value, gb_system_t *gb);
 int gb_opcode_and(const gb_opcode_t *opcode, gb_system_t *gb);
 
+// opcodes/inc.c
+void gb_inc_8b_reg(byte_t reg, gb_system_t *gb);
+void gb_inc_16b_reg(byte_t reg, gb_system_t *gb);
+void gb_inc_address(uint16_t address, gb_system_t *gb);
+int gb_opcode_inc(const gb_opcode_t *opcode, gb_system_t *gb);
+
 #endif
