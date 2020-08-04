@@ -809,6 +809,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_call
     },
     {
+        .mnemonic     = "LDH d8,A",
+        .opcode       = 0xE0,
+        .length       = 2,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Load register A into memory address 0xFF00+d8",
+        .handler      = &gb_opcode_ldh
+    },
+    {
         .mnemonic     = "AND d8",
         .opcode       = 0xE6,
         .length       = 2,
@@ -834,6 +843,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Exclusive OR between register A and d8",
         .handler      = &gb_opcode_xor
+    },
+    {
+        .mnemonic     = "LDH A,d8",
+        .opcode       = 0xF0,
+        .length       = 2,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Load memory address 0xFF00+d8 into register",
+        .handler      = &gb_opcode_ldh
     },
     {
         .mnemonic     = "DI",

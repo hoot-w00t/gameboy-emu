@@ -79,27 +79,35 @@ int gb_opcode_ld_r_d8(const gb_opcode_t *opcode, gb_system_t *gb)
         case 0x06:
             gb_register_write_byte(REG_B, gb_read_byte(gb->pc + 1, gb), gb);
             return OPCODE_ACTION;
+
         case 0x0E:
             gb_register_write_byte(REG_C, gb_read_byte(gb->pc + 1, gb), gb);
             return OPCODE_ACTION;
+
         case 0x16:
             gb_register_write_byte(REG_D, gb_read_byte(gb->pc + 1, gb), gb);
             return OPCODE_ACTION;
+
         case 0x1E:
             gb_register_write_byte(REG_E, gb_read_byte(gb->pc + 1, gb), gb);
             return OPCODE_ACTION;
+
         case 0x26:
             gb_register_write_byte(REG_H, gb_read_byte(gb->pc + 1, gb), gb);
             return OPCODE_ACTION;
+
         case 0x2E:
             gb_register_write_byte(REG_L, gb_read_byte(gb->pc + 1, gb), gb);
             return OPCODE_ACTION;
+
         case 0x36:
             gb_write_byte(gb_register_read_u16(REG_HL, gb), gb_read_byte(gb->pc + 1, gb), false, gb);
             return OPCODE_ACTION;
+
         case 0x3E:
             gb_register_write_byte(REG_A, gb_read_byte(gb->pc + 1, gb), gb);
             return OPCODE_ACTION;
+
         default:
             return OPCODE_ACTION;
     }
@@ -116,11 +124,13 @@ int gb_opcode_ldi(const gb_opcode_t *opcode, gb_system_t *gb)
             hl += 1;
             gb_register_write_u16(REG_HL, hl, gb);
             return OPCODE_ACTION;
+
         case 0x2A:
             gb_register_write_byte(REG_A, gb_read_byte(hl, gb), gb);
             hl += 1;
             gb_register_write_u16(REG_HL, hl, gb);
             return OPCODE_ACTION;
+
         default:
             return OPCODE_ILLEGAL;
     }
@@ -137,11 +147,39 @@ int gb_opcode_ldd(const gb_opcode_t *opcode, gb_system_t *gb)
             hl -= 1;
             gb_register_write_u16(REG_HL, hl, gb);
             return OPCODE_ACTION;
+
         case 0x3A:
             gb_register_write_byte(REG_A, gb_read_byte(hl, gb), gb);
             hl -= 1;
             gb_register_write_u16(REG_HL, hl, gb);
             return OPCODE_ACTION;
+
+        default:
+            return OPCODE_ILLEGAL;
+    }
+}
+
+// LDH d8,A / LDH A,d8
+int gb_opcode_ldh(const gb_opcode_t *opcode, gb_system_t *gb)
+{
+    switch (opcode->opcode) {
+        case 0xE0:
+            gb_write_byte(
+                0xFF00 + gb_read_byte(gb->pc + 1, gb),
+                gb_register_read_byte(REG_A, gb),
+                false,
+                gb
+            );
+            return OPCODE_ACTION;
+
+        case 0xF0:
+            gb_register_write_byte(
+                REG_A,
+                gb_read_byte(0xFF00 + gb_read_byte(gb->pc + 1, gb), gb),
+                gb
+            );
+            return OPCODE_ACTION;
+
         default:
             return OPCODE_ILLEGAL;
     }

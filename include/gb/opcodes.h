@@ -64,6 +64,7 @@ int gb_opcode_ld_hl_sp_r8(__attribute__((unused)) const gb_opcode_t *opcode, gb_
 int gb_opcode_ld_r_d8(const gb_opcode_t *opcode, gb_system_t *gb);
 int gb_opcode_ldi(const gb_opcode_t *opcode, gb_system_t *gb);
 int gb_opcode_ldd(const gb_opcode_t *opcode, gb_system_t *gb);
+int gb_opcode_ldh(const gb_opcode_t *opcode, gb_system_t *gb);
 
 // opcodes/xor.c
 void gb_8b_xor(byte_t value, gb_system_t *gb);
