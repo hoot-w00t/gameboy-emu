@@ -83,4 +83,10 @@ void gb_inc_16b_reg(byte_t reg, gb_system_t *gb);
 void gb_inc_address(uint16_t address, gb_system_t *gb);
 int gb_opcode_inc(const gb_opcode_t *opcode, gb_system_t *gb);
 
+// opcodes/dec.c
+void gb_dec_8b_reg(byte_t reg, gb_system_t *gb);
+void gb_dec_16b_reg(byte_t reg, gb_system_t *gb);
+void gb_dec_address(uint16_t address, gb_system_t *gb);
+int gb_opcode_dec(const gb_opcode_t *opcode, gb_system_t *gb);
+
 #endif

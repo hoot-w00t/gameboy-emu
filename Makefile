@@ -21,7 +21,8 @@ SRC	=	src/logger.c			\
 		src/opcodes/xor.c		\
 		src/opcodes/or.c		\
 		src/opcodes/and.c		\
-		src/opcodes/inc.c
+		src/opcodes/inc.c		\
+		src/opcodes/dec.c
 
 OBJ	=	$(SRC:.c=.o)
 DEP	=	$(OBJ:.o=.d)

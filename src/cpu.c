@@ -62,6 +62,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_inc
     },
     {
+        .mnemonic     = "DEC B",
+        .opcode       = 0x05,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Decrement B",
+        .handler      = &gb_opcode_dec
+    },
+    {
         .mnemonic     = "LD B,d8",
         .opcode       = 0x06,
         .length       = 2,
@@ -71,6 +80,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ld_r_d8
     },
     {
+        .mnemonic     = "DEC BC",
+        .opcode       = 0x0B,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Decrement BC",
+        .handler      = &gb_opcode_dec
+    },
+    {
         .mnemonic     = "INC C",
         .opcode       = 0x0C,
         .length       = 1,
@@ -78,6 +96,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 4,
         .comment      = "Increment C",
         .handler      = &gb_opcode_inc
+    },
+    {
+        .mnemonic     = "DEC C",
+        .opcode       = 0x0D,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Decrement C",
+        .handler      = &gb_opcode_dec
     },
     {
         .mnemonic     = "LD C,d8",
@@ -125,6 +152,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_inc
     },
     {
+        .mnemonic     = "DEC D",
+        .opcode       = 0x15,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Decrement D",
+        .handler      = &gb_opcode_dec
+    },
+    {
         .mnemonic     = "LD D,d8",
         .opcode       = 0x16,
         .length       = 2,
@@ -143,6 +179,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_jr
     },
     {
+        .mnemonic     = "DEC DE",
+        .opcode       = 0x1B,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Decrement DE",
+        .handler      = &gb_opcode_dec
+    },
+    {
         .mnemonic     = "INC E",
         .opcode       = 0x1C,
         .length       = 1,
@@ -150,6 +195,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 4,
         .comment      = "Increment E",
         .handler      = &gb_opcode_inc
+    },
+    {
+        .mnemonic     = "DEC E",
+        .opcode       = 0x1D,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Decrement E",
+        .handler      = &gb_opcode_dec
     },
     {
         .mnemonic     = "LD E,d8",
@@ -206,6 +260,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_inc
     },
     {
+        .mnemonic     = "DEC H",
+        .opcode       = 0x25,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Decrement H",
+        .handler      = &gb_opcode_dec
+    },
+    {
         .mnemonic     = "LD H,d8",
         .opcode       = 0x26,
         .length       = 2,
@@ -233,6 +296,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ldi
     },
     {
+        .mnemonic     = "DEC HL",
+        .opcode       = 0x2B,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Decrement HL",
+        .handler      = &gb_opcode_dec
+    },
+    {
         .mnemonic     = "INC L",
         .opcode       = 0x2C,
         .length       = 1,
@@ -240,6 +312,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 4,
         .comment      = "Increment L",
         .handler      = &gb_opcode_inc
+    },
+    {
+        .mnemonic     = "DEC L",
+        .opcode       = 0x2D,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Decrement L",
+        .handler      = &gb_opcode_dec
     },
     {
         .mnemonic     = "LD L,d8",
@@ -296,6 +377,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_inc
     },
     {
+        .mnemonic     = "DEC (HL)",
+        .opcode       = 0x35,
+        .length       = 1,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Decrement value at address stored in HL",
+        .handler      = &gb_opcode_dec
+    },
+    {
         .mnemonic     = "LD (HL),d8",
         .opcode       = 0x36,
         .length       = 2,
@@ -323,6 +413,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ldd
     },
     {
+        .mnemonic     = "DEC SP",
+        .opcode       = 0x3B,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Decrement SP",
+        .handler      = &gb_opcode_dec
+    },
+    {
         .mnemonic     = "INC A",
         .opcode       = 0x3C,
         .length       = 1,
@@ -330,6 +429,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 4,
         .comment      = "Increment A",
         .handler      = &gb_opcode_inc
+    },
+    {
+        .mnemonic     = "DEC A",
+        .opcode       = 0x3D,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Decrement A",
+        .handler      = &gb_opcode_dec
     },
     {
         .mnemonic     = "LD A,d8",
