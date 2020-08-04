@@ -40,7 +40,7 @@ uint16_t gb_register_read_u16(byte_t reg, gb_system_t *gb)
 // Write 2 bytes to a 16 bit CPU register
 void gb_register_write_u16(byte_t reg, uint16_t value, gb_system_t *gb)
 {
-    gb->registers[reg] = value << 8;
+    gb->registers[reg] = (value >> 8) & 0xff;
     gb->registers[reg + 1] = value & 0xff;
 }
 
