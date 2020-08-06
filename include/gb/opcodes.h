@@ -90,4 +90,8 @@ void gb_dec_16b_reg(byte_t reg, gb_system_t *gb);
 void gb_dec_address(uint16_t address, gb_system_t *gb);
 int gb_opcode_dec(const gb_opcode_t *opcode, gb_system_t *gb);
 
+// opcodes/cp.c
+void gb_cp(byte_t value, gb_system_t *gb);
+int gb_opcode_cp(const gb_opcode_t *opcode, gb_system_t *gb);
+
 #endif

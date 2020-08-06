@@ -665,6 +665,78 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_or
     },
     {
+        .mnemonic     = "CP B",
+        .opcode       = 0xB8,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "CP registers A and B",
+        .handler      = &gb_opcode_cp
+    },
+    {
+        .mnemonic     = "CP C",
+        .opcode       = 0xB9,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "CP registers A and C",
+        .handler      = &gb_opcode_cp
+    },
+    {
+        .mnemonic     = "CP D",
+        .opcode       = 0xBA,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "CP registers A and D",
+        .handler      = &gb_opcode_cp
+    },
+    {
+        .mnemonic     = "CP E",
+        .opcode       = 0xBB,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "CP registers A and E",
+        .handler      = &gb_opcode_cp
+    },
+    {
+        .mnemonic     = "CP H",
+        .opcode       = 0xBC,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "CP registers A and H",
+        .handler      = &gb_opcode_cp
+    },
+    {
+        .mnemonic     = "CP L",
+        .opcode       = 0xBD,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "CP registers A and L",
+        .handler      = &gb_opcode_cp
+    },
+    {
+        .mnemonic     = "CP (HL)",
+        .opcode       = 0xBE,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "CP register A and value at address stored in HL",
+        .handler      = &gb_opcode_cp
+    },
+    {
+        .mnemonic     = "CP A",
+        .opcode       = 0xBF,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "CP registers A and A",
+        .handler      = &gb_opcode_cp
+    },
+    {
         .mnemonic     = "RET NZ",
         .opcode       = 0xC0,
         .length       = 1,
@@ -897,6 +969,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 4,
         .comment      = "Enable Interrupts",
         .handler      = &gb_opcode_ei
+    },
+    {
+        .mnemonic     = "CP d8",
+        .opcode       = 0xFE,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "CP register A with 8 bit value",
+        .handler      = &gb_opcode_cp
     },
     {NULL, 0, 0, 0, 0, NULL, NULL}
 };
