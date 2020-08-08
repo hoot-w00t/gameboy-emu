@@ -470,3 +470,21 @@ int gb_opcode_ld_r_r(const gb_opcode_t *opcode, gb_system_t *gb)
             return OPCODE_ILLEGAL;
     }
 }
+
+// LD A,(C)
+int gb_opcode_ld_a_c(__attribute__((unused)) const gb_opcode_t *opcode, gb_system_t *gb)
+{
+    uint16_t address = gb_read_byte(0xFF00, gb) + gb_register_read_byte(REG_C, gb);
+
+    gb_register_write_byte(REG_A, gb_read_byte(address, gb), gb);
+    return OPCODE_ACTION;
+}
+
+// LD (C),A
+int gb_opcode_ld_c_a(__attribute__((unused)) const gb_opcode_t *opcode, gb_system_t *gb)
+{
+    uint16_t address = gb_read_byte(0xFF00, gb) + gb_register_read_byte(REG_C, gb);
+
+    gb_write_byte(address, gb_register_read_byte(REG_A, gb), false, gb);
+    return OPCODE_ACTION;
+}

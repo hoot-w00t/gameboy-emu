@@ -1493,6 +1493,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ldh
     },
     {
+        .mnemonic     = "LD (C),A",
+        .opcode       = 0xE2,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load register A at address 0xFF00+C",
+        .handler      = &gb_opcode_ld_c_a
+    },
+    {
         .mnemonic     = "AND d8",
         .opcode       = 0xE6,
         .length       = 2,
@@ -1536,6 +1545,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 12,
         .comment      = "Load memory address 0xFF00+d8 into register",
         .handler      = &gb_opcode_ldh
+    },
+    {
+        .mnemonic     = "LD A,(C)",
+        .opcode       = 0xF2,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load value at address 0xFF00+C into register A",
+        .handler      = &gb_opcode_ld_a_c
     },
     {
         .mnemonic     = "DI",
