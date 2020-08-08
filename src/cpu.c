@@ -44,6 +44,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ld_rr_d16
     },
     {
+        .mnemonic     = "LD (BC),A",
+        .opcode       = 0x02,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load register A at address stored in register BC",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
         .mnemonic     = "INC BC",
         .opcode       = 0x03,
         .length       = 1,
@@ -78,6 +87,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load 8 bit value into register B",
         .handler      = &gb_opcode_ld_r_d8
+    },
+    {
+        .mnemonic     = "LD A,(BC)",
+        .opcode       = 0x0A,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load value at address stored in register BC in register A",
+        .handler      = &gb_opcode_ld_r_r
     },
     {
         .mnemonic     = "DEC BC",
@@ -134,6 +152,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_ld_rr_d16
     },
     {
+        .mnemonic     = "LD (DE),A",
+        .opcode       = 0x12,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load register A at address stored in register DE",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
         .mnemonic     = "INC DE",
         .opcode       = 0x13,
         .length       = 1,
@@ -177,6 +204,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 12,
         .comment      = "Relative jump",
         .handler      = &gb_opcode_jr
+    },
+    {
+        .mnemonic     = "LD A,(DE)",
+        .opcode       = 0x1A,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load value at address stored in register DE in register A",
+        .handler      = &gb_opcode_ld_r_r
     },
     {
         .mnemonic     = "DEC DE",
@@ -447,6 +483,573 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load 8 bit value into register A",
         .handler      = &gb_opcode_ld_r_d8
+    },
+    {
+        .mnemonic     = "LD B,B",
+        .opcode       = 0x40,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register B into register B",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD B,C",
+        .opcode       = 0x41,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register C into register B",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD B,D",
+        .opcode       = 0x42,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register D into register B",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD B,E",
+        .opcode       = 0x43,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register E into register B",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD B,H",
+        .opcode       = 0x44,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register H into register B",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD B,L",
+        .opcode       = 0x45,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register L into register B",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD B,(HL)",
+        .opcode       = 0x46,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load value at address stored in register HL into register B",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD B,A",
+        .opcode       = 0x47,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register A into register B",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD C,B",
+        .opcode       = 0x48,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register B into register C",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD C,C",
+        .opcode       = 0x49,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register C into register C",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD C,D",
+        .opcode       = 0x4A,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register D into register C",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD C,E",
+        .opcode       = 0x4B,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register E into register C",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD C,H",
+        .opcode       = 0x4C,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register H into register C",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD C,L",
+        .opcode       = 0x4D,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register L into register C",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD C,(HL)",
+        .opcode       = 0x4E,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load value at address stored in register HL into register C",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD C,A",
+        .opcode       = 0x4F,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register A into register C",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD D,B",
+        .opcode       = 0x50,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register B into register D",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD D,C",
+        .opcode       = 0x51,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register C into register D",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD D,D",
+        .opcode       = 0x52,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register D into register D",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD D,E",
+        .opcode       = 0x53,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register E into register D",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD D,H",
+        .opcode       = 0x54,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register H into register D",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD D,L",
+        .opcode       = 0x55,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register L into register D",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD D,(HL)",
+        .opcode       = 0x56,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load value at address stored in register HL into register D",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD D,A",
+        .opcode       = 0x57,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register A into register D",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD E,B",
+        .opcode       = 0x58,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register B into register E",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD E,C",
+        .opcode       = 0x59,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register C into register E",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD E,D",
+        .opcode       = 0x5A,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register D into register E",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD E,E",
+        .opcode       = 0x5B,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register E into register E",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD E,H",
+        .opcode       = 0x5C,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register H into register E",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD E,L",
+        .opcode       = 0x5D,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register L into register E",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD E,(HL)",
+        .opcode       = 0x5E,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load value at address stored in register HL into register E",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD E,A",
+        .opcode       = 0x5F,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register A into register E",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD H,B",
+        .opcode       = 0x60,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register B into register H",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD H,C",
+        .opcode       = 0x61,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register C into register H",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD H,D",
+        .opcode       = 0x62,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register D into register H",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD H,E",
+        .opcode       = 0x63,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register E into register H",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD H,H",
+        .opcode       = 0x64,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register H into register H",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD H,L",
+        .opcode       = 0x65,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register L into register H",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD H,(HL)",
+        .opcode       = 0x66,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load value at address stored in register HL into register H",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD H,A",
+        .opcode       = 0x67,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register A into register H",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD L,B",
+        .opcode       = 0x68,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register B into register L",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD L,C",
+        .opcode       = 0x69,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register C into register L",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD L,D",
+        .opcode       = 0x6A,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register D into register L",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD L,E",
+        .opcode       = 0x6B,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register E into register L",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD L,H",
+        .opcode       = 0x6C,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register H into register L",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD L,L",
+        .opcode       = 0x6D,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register L into register L",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD L,(HL)",
+        .opcode       = 0x6E,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load value at address stored in register HL into register L",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD L,A",
+        .opcode       = 0x6F,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register A into register L",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD (HL),B",
+        .opcode       = 0x70,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load register B at address stored in register HL",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD (HL),C",
+        .opcode       = 0x71,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load register C at address stored in register HL",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD (HL),D",
+        .opcode       = 0x72,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load register D at address stored in register HL",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD (HL),E",
+        .opcode       = 0x73,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load register E at address stored in register HL",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD (HL),H",
+        .opcode       = 0x74,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load register H at address stored in register HL",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD (HL),L",
+        .opcode       = 0x75,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load register L at address stored in register HL",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD (HL),A",
+        .opcode       = 0x77,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load register A at address stored in register HL",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD A,B",
+        .opcode       = 0x78,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register B into register A",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD A,C",
+        .opcode       = 0x79,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register C into register A",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD A,D",
+        .opcode       = 0x7A,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register D into register A",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD A,E",
+        .opcode       = 0x7B,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register E into register A",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD A,H",
+        .opcode       = 0x7C,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register H into register A",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD A,L",
+        .opcode       = 0x7D,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register L into register A",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD A,(HL)",
+        .opcode       = 0x7E,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Load value at address stored in register HL into register A",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
+        .mnemonic     = "LD A,A",
+        .opcode       = 0x7F,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Load register A into register A",
+        .handler      = &gb_opcode_ld_r_r
     },
     {
         .mnemonic     = "AND B",
@@ -908,6 +1511,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .handler      = &gb_opcode_jp
     },
     {
+        .mnemonic     = "LD (a16),A",
+        .opcode       = 0xEA,
+        .length       = 3,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Load register A at address",
+        .handler      = &gb_opcode_ld_r_r
+    },
+    {
         .mnemonic     = "XOR d8",
         .opcode       = 0xEE,
         .length       = 2,
@@ -960,6 +1572,15 @@ const gb_opcode_t gb_opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load 16 bit register HL into SP",
         .handler      = &gb_opcode_ld_sp_hl
+    },
+    {
+        .mnemonic     = "LD A,(a16)",
+        .opcode       = 0xFA,
+        .length       = 3,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Load value at address into register A",
+        .handler      = &gb_opcode_ld_r_r
     },
     {
         .mnemonic     = "EI",
