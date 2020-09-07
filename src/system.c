@@ -89,3 +89,15 @@ gb_system_t *create_gb_system(void)
 
     return gb;
 }
+
+// Standard GameBoy emulation loop
+int emulate_gb_system(gb_system_t *gb)
+{
+    int last_ret;
+
+    while ((last_ret = gb_cpu_cycle(gb, true)) >= 0) {
+        continue;
+    }
+
+    return last_ret;
+}
