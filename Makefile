@@ -7,6 +7,7 @@ BIN_NAME	=	gameboy
 
 SRC	=	src/logger.c			\
 		src/emulator.c			\
+		src/system.c			\
 		src/memory.c			\
 		src/memory_banks.c		\
 		src/mbc/mbc.c			\
