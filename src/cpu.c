@@ -22,6 +22,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "gb/memory.h"
 #include "gb/registers.h"
 #include "logger.h"
+#include <stdio.h>
 
 // Opcode table
 const gb_opcode_t gb_opcode_table[] = {
@@ -1720,4 +1721,33 @@ int gb_cpu_cycle(gb_system_t *gb, const bool emulate_cycles)
     }
 
     return 0;
+}
+
+void dump_cpu(gb_system_t *gb)
+{
+    printf("PC: 0x%04X    SP: 0x%04X\n", gb->pc, gb->sp);
+    printf("IME: %u\n", gb->ime);
+    printf("Idle Cycles: %u\n\n", gb->idle_cycles);
+
+    printf("8-bit registers:\n");
+    printf("A: %02X    F: %02X\n",
+           gb_register_read_byte(REG_A, gb),
+           gb_register_read_byte(REG_F, gb));
+    printf("B: %02X    C: %02X\n",
+           gb_register_read_byte(REG_B, gb),
+           gb_register_read_byte(REG_C, gb));
+    printf("D: %02X    E: %02X\n",
+           gb_register_read_byte(REG_D, gb),
+           gb_register_read_byte(REG_E, gb));
+    printf("H: %02X    L: %02X\n",
+           gb_register_read_byte(REG_H, gb),
+           gb_register_read_byte(REG_L, gb));
+
+    printf("\n16-bit registers:\n");
+    printf("AF: %04X    BC: %02X\n",
+           gb_register_read_u16(REG_AF, gb),
+           gb_register_read_u16(REG_BC, gb));
+    printf("DE: %04X    HL: %02X\n",
+           gb_register_read_u16(REG_DE, gb),
+           gb_register_read_u16(REG_HL, gb));
 }
