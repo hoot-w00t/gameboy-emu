@@ -18,6 +18,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "gb/system.h"
+#include "gb/debugger.h"
 #include "logger.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -98,7 +99,8 @@ int main(int ac, char **av)
         return EXIT_FAILURE;
 
     if (args.debug) {
-        printf("Todo: Add debug mode\n");
+        set_logger_level("all");
+        debug_gb_system(gb);
     } else {
         status = emulate_gb_system(gb);
     }

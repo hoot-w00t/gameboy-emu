@@ -1,13 +1,14 @@
 CC	=	cc
 INCLUDE	=	-Iinclude
 CFLAGS	=	-W -Wall -Wextra -pipe $(INCLUDE) -g
-LDFLAGS	=	$(shell sdl2-config --cflags --libs)
+LDFLAGS	=	$(shell pkg-config --libs readline) $(shell sdl2-config --cflags --libs)
 
 BIN_NAME	=	gameboy
 
 SRC	=	src/logger.c			\
 		src/emulator.c			\
 		src/system.c			\
+		src/debugger.c			\
 		src/memory.c			\
 		src/memory_banks.c		\
 		src/mbc/mbc.c			\
