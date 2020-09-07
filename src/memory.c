@@ -22,11 +22,13 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "gb/cartridge.h"
 #include "gb/mbc.h"
 #include "logger.h"
+#include <stdio.h>
 #include <stddef.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <ctype.h>
 
 // Read byte from given address
 byte_t gb_read_byte(uint16_t address, gb_system_t *gb)
@@ -245,4 +247,69 @@ bool gb_test_memory(uint16_t address, byte_t value, bool bypass_ro, gb_system_t 
     }
 
     return true;
+}
+
+void dump_memory(gb_system_t *gb, uint16_t address, const uint16_t bytes,
+    const bool labels)
+{
+    const byte_t bytes_per_line = 16;
+    byte_t b[bytes_per_line];
+
+    for (uint16_t i = 0; i < bytes; i += bytes_per_line, address += bytes_per_line) {
+        for (byte_t j = 0; j < bytes_per_line; ++j) {
+            b[j] = gb_read_byte(address + j, gb);
+        }
+
+        if (labels) {
+            if (address <= INTERRUPT_VECTOR_TABLE_UADDR) {
+                printf("IVT       ");
+            } else if (address >= CARTRIDGE_HEADER_LADDR && address <= CARTRIDGE_HEADER_UADDR) {
+                printf("CART HDR  ");
+            } else if (address >= ROM_BANK_0_LADDR && address <= ROM_BANK_0_UADDR) {
+                printf("ROM #0    ");
+            } else if (address >= ROM_BANK_N_LADDR && address <= ROM_BANK_N_UADDR) {
+                printf("ROM #%3u  ", gb->memory.rom_banks.index + 1);
+            } else if (address >= TILE_LADDR && address <= BG_MAP_2_UADDR) {
+                printf("VRAM      ");
+            } else if (address >= RAM_BANK_0_LADDR && address <= RAM_BANK_0_UADDR) {
+                printf("RAM #0    ");
+            } else if (address >= RAM_BANK_N_LADDR && address <= RAM_BANK_N_UADDR) {
+                printf("RAM #%3u  ", gb->memory.ram_banks.index + 1);
+            } else if (address >= RAM_ECHO_LADDR && address <= RAM_ECHO_UADDR) {
+                printf("RAM Echo  ");
+            } else if (address >= OAM_LADDR && address <= OAM_UADDR) {
+                printf("OAM       ");
+            } else if (address >= IO_REGISTERS_LADDR && address <= IO_REGISTERS_UADDR) {
+                printf("IO REGS   ");
+            } else if (address >= HRAM_LADDR && address <= HRAM_UADDR) {
+                printf("HRAM      ");
+            } else {
+                printf("          ");
+            }
+        }
+
+        printf("0x%04X: ", address);
+        for (byte_t j = 0; j < bytes_per_line; ++j) {
+            if (i + j < bytes) {
+                printf("%02X ", b[j]);
+            } else {
+                printf("   ");
+            }
+
+            if (j == (bytes_per_line / 2) - 1)
+                printf(" ");
+        }
+
+        printf("   ");
+        for (byte_t j = 0; j < bytes_per_line && i + j < bytes; ++j) {
+            printf("%c", isprint((char) b[j]) ? (char) b[j] : '.');
+        }
+        printf("\n");
+    }
+}
+
+void dump_memory_range(gb_system_t *gb, uint16_t laddr, uint16_t uaddr,
+    const bool labels)
+{
+    dump_memory(gb, laddr, uaddr - laddr, labels);
 }

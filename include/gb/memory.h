@@ -27,5 +27,9 @@ bool gb_write_byte(uint16_t address, byte_t value, bool bypass_ro, gb_system_t *
 uint16_t gb_read_uint16(uint16_t address, gb_system_t *gb);
 int gb_load_rom(const char *filename, gb_system_t *gb);
 bool gb_test_memory(uint16_t address, byte_t value, bool bypass_ro, gb_system_t *gb);
+void dump_memory(gb_system_t *gb, uint16_t address, const uint16_t bytes,
+    const bool labels);
+void dump_memory_range(gb_system_t *gb, uint16_t laddr, uint16_t uaddr,
+    const bool labels);
 
 #endif
