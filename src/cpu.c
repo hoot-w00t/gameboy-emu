@@ -1657,10 +1657,12 @@ void gb_cpu_ret(gb_system_t *gb)
 // Emulate a GameBoy CPU cycle
 int gb_cpu_cycle(gb_system_t *gb, const bool emulate_cycles)
 {
-    if (gb->idle_cycles > 0) {
+    if (gb->idle_cycles > 0 && emulate_cycles) {
         gb->idle_cycles -= 1;
         gb->cycle_nb += 1;
         return 0;
+    } else if (gb->idle_cycles > 0 && !emulate_cycles) {
+        gb->idle_cycles = 0;
     }
 
     byte_t opcode_value = gb_read_byte(gb->pc, gb);
