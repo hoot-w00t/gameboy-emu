@@ -19,6 +19,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifndef _GB_DEFS
 #define _GB_DEFS
@@ -176,6 +177,7 @@ struct gb_system {
     uint16_t pc;                       // Program Counter (Initialized with CARTRIDGE_HEADER_LADDR)
     uint16_t sp;                       // Stack pointer (Initialized with HRAM_UADDR)
     uint16_t idle_cycles;              // Remaining cycles to idle (decrease at every cycle)
+    size_t cycle_nb;                   // CPU Cycle #
     byte_t ime;                        // Interrupt Master Enable Flag
 };
 

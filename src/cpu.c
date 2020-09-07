@@ -1654,10 +1654,11 @@ void gb_cpu_ret(gb_system_t *gb)
 }
 
 // Emulate a GameBoy CPU cycle
-int gb_cpu_cycle(gb_system_t *gb)
+int gb_cpu_cycle(gb_system_t *gb, const bool emulate_cycles)
 {
     if (gb->idle_cycles > 0) {
         gb->idle_cycles -= 1;
+        gb->cycle_nb += 1;
         return 0;
     }
 
@@ -1696,10 +1697,18 @@ int gb_cpu_cycle(gb_system_t *gb)
         return -1;
     }
 
-    if (handler_ret & OPCODE_ACTION) {
-        gb->idle_cycles += opcode->cycles_true - 1;
+    if (emulate_cycles) {
+        gb->cycle_nb += 1;
+
+        if (handler_ret & OPCODE_ACTION) {
+            gb->idle_cycles += opcode->cycles_true - 1;
+        } else if (handler_ret & OPCODE_NOACTION) {
+            gb->idle_cycles += opcode->cycles_false - 1;
+        }
+    } else if (handler_ret & OPCODE_ACTION) {
+        gb->cycle_nb += opcode->cycles_true;
     } else if (handler_ret & OPCODE_NOACTION) {
-        gb->idle_cycles += opcode->cycles_false - 1;
+        gb->cycle_nb += opcode->cycles_false;
     }
 
     if (!(handler_ret & OPCODE_NOPC)) {

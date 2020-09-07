@@ -26,6 +26,6 @@ void gb_cpu_push_stack(const uint16_t address, gb_system_t *gb);
 uint16_t gb_cpu_pop_stack(gb_system_t *gb);
 void gb_cpu_call(const uint16_t address, gb_system_t *gb);
 void gb_cpu_ret(gb_system_t *gb);
-int gb_cpu_cycle(gb_system_t *gb);
+int gb_cpu_cycle(gb_system_t *gb, const bool emulate_cycles);
 
 #endif
