@@ -24,6 +24,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 void free_gb_system(gb_system_t *gb, bool include_ptr);
 gb_system_t *create_gb_system(void);
+int load_rom_from_file(const char *filename, gb_system_t *gb);
 int emulate_gb_system(gb_system_t *gb);
 
 #endif

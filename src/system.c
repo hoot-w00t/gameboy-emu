@@ -21,8 +21,15 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "gb/memory.h"
 #include "gb/memory_banks.h"
 #include "gb/registers.h"
+#include "gb/cartridge.h"
+#include "gb/mbc.h"
+#include "gb/cpu.h"
+#include "logger.h"
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 // Free gb_system_t
 // If include_ptr is true, also free *gb
@@ -88,6 +95,92 @@ gb_system_t *create_gb_system(void)
     gb_write_byte(0xFFFF, 0x00, false, gb); // IE
 
     return gb;
+}
+
+// Load GameBoy ROM from filename
+int load_rom_from_file(const char *filename, gb_system_t *gb)
+{
+    int fd;
+
+    if ((fd = open(filename, O_RDONLY)) < 0) {
+        logger(LOG_ERROR, "Unable to open: %s: %s",
+                          filename,
+                          strerror(errno));
+        return -1;
+    }
+
+    uint16_t address = 0x0;
+    uint16_t loaded_bytes = 0;
+    byte_t buffer[1024];
+    int n;
+
+    gb->cartridge.filename = (char *) filename;
+
+    while ((n = read(fd, buffer, sizeof(buffer))) > 0) {
+        if (address == 0x0) {
+            decode_cartridge_header(buffer, &gb->cartridge);
+
+            byte_t header_checksum = compute_header_checksum(buffer);
+            dump_cartridge_header(&gb->cartridge);
+            logger(LOG_DEBUG, "Computed header checksum: 0x%02X", header_checksum);
+
+            if (!valid_nintendo_logo(&gb->cartridge)) {
+                logger(LOG_CRIT, "Invalid Nintendo Logo bitmap");
+                close(fd);
+                return -3;
+            }
+
+            if (header_checksum != gb->cartridge.header_checksum) {
+                logger(LOG_CRIT, "Cartridge Header Checksum is invalid");
+                close(fd);
+                return -3;
+            }
+
+            gb->memory.rom_banks.bank_size = GB_ROM_BANK_SIZE;
+            gb->memory.rom_banks.max_bank_nb = gb->cartridge.rom_banks;
+            gb->memory.rom_banks.current_bank_nb = gb->cartridge.rom_banks;
+            gb->memory.ram_banks.bank_size = gb->cartridge.ram_size;
+            gb->memory.ram_banks.max_bank_nb = gb->cartridge.ram_banks;
+            gb->memory.ram_banks.current_bank_nb = gb->cartridge.ram_banks;
+
+            if (!gb_allocate_membank(&gb->memory.rom_banks) || !gb_allocate_membank(&gb->memory.ram_banks)) {
+                close(fd);
+                return -3;
+            }
+
+            gb->memory.mbc_read = get_mbc_readb_fptr(&gb->cartridge);
+            gb->memory.mbc_write = get_mbc_writeb_fptr(&gb->cartridge);
+        }
+
+        for (int i = 0; i < n; ++i) {
+            if (address >= ROM_BANK_N_UADDR) {
+                address = ROM_BANK_N_LADDR;
+                if (!gb_increment_membank(&gb->memory.rom_banks)) {
+                    close(fd);
+                    return -3;
+                }
+            }
+
+            gb_write_byte(address + i, buffer[i], true, gb);
+        }
+
+        address += n;
+        loaded_bytes += n;
+    }
+
+    if (n < 0) {
+        logger(LOG_ERROR, "Error while reading: %s: %s",
+                          filename,
+                          strerror(errno));
+        return -2;
+    }
+
+    logger(LOG_DEBUG, "Computed global checksum: 0x%04X", compute_global_checksum(gb));
+
+    gb_switch_membank(0, &gb->memory.rom_banks);
+    close(fd);
+
+    return loaded_bytes;
 }
 
 // Standard GameBoy emulation loop
