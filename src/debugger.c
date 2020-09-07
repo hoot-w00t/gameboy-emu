@@ -131,5 +131,6 @@ void debug_gb_system(gb_system_t *gb)
     }
 
     free(line);
+    rl_clear_history();
     printf("Exitting debugger\n");
 }
