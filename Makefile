@@ -9,6 +9,7 @@ BIN_NAME	=	gameboy
 SRC	=	logger.c	\
 		xalloc.c	\
 		main.c		\
+		emulator.c	\
 		gb_system.c	\
 		cartridge.c	\
 		mmu/banks.c	\
