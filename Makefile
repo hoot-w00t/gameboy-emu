@@ -9,7 +9,8 @@ BIN_NAME	=	gameboy
 SRC	=	logger.c	\
 		xalloc.c	\
 		main.c		\
-		gb_system.c
+		gb_system.c	\
+		mmu/banks.c
 
 OBJ	=	$(SRC:%.c=obj/%.o)
 DEP	=	$(OBJ:.o=.d)
