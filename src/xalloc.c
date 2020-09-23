@@ -1,6 +1,6 @@
 /*
-xmalloc.c
-malloc() wrapper to exit on failed allocation and initialize allocated space
+xalloc.c
+Memory allocation function wrappers
 
 Copyright (C) 2020 akrocynova
 
@@ -21,7 +21,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <stdlib.h>
 
 // Allocate SIZE bytes of memory.
-void *xmalloc(size_t size)
+void *xalloc(size_t size)
 {
     void *ptr;
 
@@ -34,7 +34,7 @@ void *xmalloc(size_t size)
 }
 
 // Allocate SIZE bytes of memory initialized with value 0
-void *xzmalloc(size_t size)
+void *xzalloc(size_t size)
 {
     void *ptr;
 

@@ -22,7 +22,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _GB_XALLOC_H
 #define _GB_XALLOC_H
 
-void *xmalloc(size_t size);
-void *xzmalloc(size_t size);
+void *xalloc(size_t size);
+void *xzalloc(size_t size);
 
 #endif
