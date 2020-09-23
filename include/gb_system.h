@@ -22,6 +22,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _GB_SYSTEM_H
 #define _GB_SYSTEM_H
 
+byte_t *load_file(const char *filename, int *size);
+int load_rom(byte_t *rom, int size, gb_system_t *gb);
 int load_rom_from_file(const char *filename, gb_system_t *gb);
 void gb_system_reset(gb_system_t *gb);
 void gb_system_destroy(gb_system_t *gb);
