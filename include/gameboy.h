@@ -137,8 +137,8 @@ struct cartridge_hdr {
     char licensee_code[2];    // Licensee code formeat
     bool old_licensee_code;   // It is the old licensee code format
     byte_t mbc_type;          // MBC Type
-    byte_t rom_banks;         // Number of ROM banks on the cartridge
-    byte_t ram_banks;         // Number of RAM banks on the cartridge
+    uint16_t rom_banks;       // Number of ROM banks on the cartridge
+    uint16_t ram_banks;       // Number of RAM banks on the cartridge
     uint16_t ram_size;        // RAM bank size
     byte_t destination_code;  // Destination code
     byte_t rom_version;       // Mask ROM Version Number

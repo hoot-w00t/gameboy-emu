@@ -10,6 +10,7 @@ SRC	=	logger.c	\
 		xalloc.c	\
 		main.c		\
 		gb_system.c	\
+		cartridge.c	\
 		mmu/banks.c	\
 		mmu/mmu.c	\
 		mmu/mbc0.c
