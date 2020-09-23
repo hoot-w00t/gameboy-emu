@@ -1,6 +1,6 @@
 /*
-emulator.c
-Emulator's main loop
+main.c
+Main function, command-line argument parsing
 
 Copyright (C) 2020 akrocynova
 
@@ -17,9 +17,8 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "gb/system.h"
-#include "gb/debugger.h"
 #include "logger.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
@@ -86,25 +85,6 @@ void parse_args(int ac, char **av)
 
 int main(int ac, char **av)
 {
-    gb_system_t *gb;
-    int status;
-
     parse_args(ac, av);
-    if (!(gb = create_gb_system())) {
-        fprintf(stderr, "Memory allocation failed");
-        return EXIT_FAILURE;
-    }
-
-    if (load_rom_from_file(args.filename, gb) < 0)
-        return EXIT_FAILURE;
-
-    if (args.debug) {
-        set_logger_level("all");
-        debug_gb_system(gb);
-    } else {
-        status = emulate_gb_system(gb);
-    }
-
-    free_gb_system(gb, true);
-    return status >= 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }

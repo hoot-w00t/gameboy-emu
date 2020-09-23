@@ -6,27 +6,8 @@ LDFLAGS	=	$(shell pkg-config --libs readline) $(shell sdl2-config --libs)
 
 BIN_NAME	=	gameboy
 
-SRC	=	logger.c			\
-		emulator.c			\
-		system.c			\
-		debugger.c			\
-		memory.c			\
-		memory_banks.c		\
-		mbc/mbc.c			\
-		mbc/mbc3.c			\
-		cartridge.c			\
-		interrupts.c		\
-		registers.c			\
-		cpu.c				\
-		opcodes/control.c	\
-		opcodes/jumps.c		\
-		opcodes/ld.c		\
-		opcodes/xor.c		\
-		opcodes/or.c		\
-		opcodes/and.c		\
-		opcodes/inc.c		\
-		opcodes/dec.c		\
-		opcodes/cp.c
+SRC	=	logger.c	\
+		main.c
 
 OBJ	=	$(SRC:%.c=obj/%.o)
 DEP	=	$(OBJ:.o=.d)
