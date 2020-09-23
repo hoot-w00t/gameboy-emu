@@ -86,27 +86,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define INTERRUPT_FLAG               (0xFF0F) // RW
 #define INTERRUPT_ENABLE             (0xFFFF) // RW
 
-struct addr_range {
-    uint16_t start;
-    uint16_t end;
-};
-#define ADDR_IN_RANGE(addr,range) ((addr) >= range.start && (addr) <= range.end)
-
-const struct addr_range ivt_range = {.start = 0x0, .end = 0xFF};
-const struct addr_range cartridge_hdr_range = {.start = 0x100, .end = 0x14F};
-const struct addr_range rom_bank_0_range = {.start = 0x150, .end = 0x3FFF};
-const struct addr_range rom_bank_n_range = {.start = 0x4000, .end = 0x7FFF};
-const struct addr_range tile_range = {.start = 0x8000, .end = 0x97FF};
-const struct addr_range bg_map_1_range = {.start = 0x9800, .end = 0x9BFF};
-const struct addr_range bg_map_2_range = {.start = 0x9C00, .end = 0x9FFF};
-const struct addr_range vram_range = {.start = tile_range.start, .end = bg_map_2_range.end};
-const struct addr_range ram_bank_n_range = {.start = 0xA000, .end = 0xBFFF};
-const struct addr_range ram_bank_0_range = {.start = 0xC000, .end = 0xDFFF};
-const struct addr_range ram_echo_range = {.start = 0xE000, .end = 0xFDFF};
-const struct addr_range oam_range = {.start = 0xFE00, .end = 0xFE9F};
-const struct addr_range ioregs_range = {.start = 0xFF00, .end = 0xFF7F};
-const struct addr_range hram_range = {.start = 0xFF80, .end = 0xFFFE};
-
 // Memory size
 #define ROM_BANK_SIZE (16384)
 #define RAM_BANK_SIZE (8192)
