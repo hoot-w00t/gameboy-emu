@@ -23,7 +23,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define _MMU_BANKS_H
 
 void membank_free(membank_t *mb);
-void membank_init(uint16_t max_bank_nb, uint16_t bank_size, membank_t *mb);
+void membank_init(uint16_t max_bank_nb, uint16_t bank0_size,
+    uint16_t bank_size, membank_t *mb);
 bool membank_switch(uint16_t index, membank_t *mb);
 byte_t membank_readb(uint16_t addr, membank_t *mb);
 byte_t membank_readb_bank(uint16_t addr, uint16_t index, membank_t *mb);

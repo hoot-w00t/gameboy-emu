@@ -36,18 +36,24 @@ void membank_free(membank_t *mb)
 }
 
 // Initialize and allocate memory banks
-void membank_init(uint16_t max_bank_nb, uint16_t bank_size, membank_t *mb)
+void membank_init(uint16_t max_bank_nb, uint16_t bank0_size,
+    uint16_t bank_size, membank_t *mb)
 {
     membank_free(mb);
     mb->max_bank_nb = max_bank_nb;
     mb->current_bank_nb = max_bank_nb;
+    mb->bank0_size = bank0_size;
     mb->bank_size = bank_size;
     mb->index = 0;
     mb->enabled = true;
 
     mb->banks = xalloc(sizeof(byte_t *) * max_bank_nb);
     for (uint16_t i = 0; i < max_bank_nb; ++i) {
-        mb->banks[i] = xzalloc(bank_size);
+        if (i == 0) {
+            mb->banks[i] = xzalloc(bank0_size);
+        } else {
+            mb->banks[i] = xzalloc(bank_size);
+        }
     }
 }
 
@@ -99,7 +105,9 @@ byte_t membank_readb(uint16_t addr, membank_t *mb)
 // Used for reading outside of the emulator's context
 byte_t membank_readb_bank(uint16_t addr, uint16_t index, membank_t *mb)
 {
-    if (index >= mb->max_bank_nb || addr >= mb->bank_size) {
+    uint16_t size = index ? mb->bank_size : mb->bank0_size;
+
+    if (index >= mb->max_bank_nb || addr >= size) {
         logger(LOG_ERROR,
                "membank_readb_bank failed: bank #%u out of bounds (%u banks allocated, $%04X)",
                index,
@@ -138,7 +146,9 @@ bool membank_writeb(uint16_t addr, byte_t value, membank_t *mb)
 bool membank_writeb_bank(uint16_t addr, byte_t value, uint16_t index,
     membank_t *mb)
 {
-    if (index >= mb->max_bank_nb || addr >= mb->bank_size) {
+    uint16_t size = index ? mb->bank_size : mb->bank0_size;
+
+    if (index >= mb->max_bank_nb || addr >= size) {
         logger(LOG_ERROR,
                "membank_writeb_bank failed: bank #%u out of bounds (%u banks allocated, $%04X)",
                index,

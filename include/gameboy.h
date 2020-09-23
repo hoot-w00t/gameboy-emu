@@ -151,7 +151,8 @@ struct membank {
     uint16_t index;            // Index of the selected memory bank
     uint16_t max_bank_nb;      // Maximum number of memory banks
     uint16_t current_bank_nb;  // Current number of accessible memory banks
-    uint16_t bank_size;        // Size in bytes of one memory bank
+    uint16_t bank0_size;       // Size in bytes of the memory bank #0
+    uint16_t bank_size;        // Size in bytes of the other memory banks
     bool enabled;              // Is the memory bank enabled
 };
 
