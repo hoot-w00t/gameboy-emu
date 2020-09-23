@@ -1,5 +1,5 @@
 CC	=	cc
-INCLUDE	=	-Iinclude
+INCLUDE	=	-Iinclude $(shell sdl2-config --cflags)
 OFLAGS	=	-g
 CFLAGS	=	$(OFLAGS) -W -Wall -Wextra -pipe $(INCLUDE)
 LDFLAGS	=	$(shell pkg-config --libs readline) $(shell sdl2-config --libs)
@@ -8,7 +8,8 @@ BIN_NAME	=	gameboy
 
 SRC	=	logger.c	\
 		xalloc.c	\
-		main.c
+		main.c		\
+		gb_system.c
 
 OBJ	=	$(SRC:%.c=obj/%.o)
 DEP	=	$(OBJ:.o=.d)
