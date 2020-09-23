@@ -7,6 +7,7 @@ LDFLAGS	=	$(shell pkg-config --libs readline) $(shell sdl2-config --libs)
 BIN_NAME	=	gameboy
 
 SRC	=	logger.c	\
+		xalloc.c	\
 		main.c
 
 OBJ	=	$(SRC:%.c=obj/%.o)
