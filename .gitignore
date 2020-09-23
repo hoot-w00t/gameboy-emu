@@ -18,4 +18,5 @@
 gameboy
 *.rom
 *.gb
+*.gbc
 *.bin
