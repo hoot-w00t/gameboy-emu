@@ -23,6 +23,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define _CARTRIDGE_H
 
 char *cartridge_publisher(cartridge_hdr_t *cr);
+char *cartridge_mbc_type(cartridge_hdr_t *cr);
 bool cartridge_decode_hdr(byte_t *data, cartridge_hdr_t *cr);
 byte_t compute_header_checksum(byte_t *data);
 bool cartridge_check_logo(cartridge_hdr_t *cr);

@@ -100,6 +100,7 @@ const struct licensee_publishers licensee_publishers[] = {
     { NULL, NULL }
 };
 
+// Return the cartridge publisher (only for the new licensee code)
 char *cartridge_publisher(cartridge_hdr_t *cr)
 {
     for (int i = 0; licensee_publishers[i].code; ++i) {
@@ -110,6 +111,42 @@ char *cartridge_publisher(cartridge_hdr_t *cr)
         }
     }
     return "unknown";
+}
+
+// Return the cartridge MBC type details
+char *cartridge_mbc_type(cartridge_hdr_t *cr)
+{
+    switch (cr->mbc_type) {
+        case 0x00: return "Rom Only";
+        case 0x01: return "MBC1";
+        case 0x02: return "MBC1 (+RAM)";
+        case 0x03: return "MBC1 (+RAM +Battery";
+        case 0x05: return "MBC2";
+        case 0x06: return "MBC2 (+Battery)";
+        case 0x08: return "Rom (+RAM)";
+        case 0x09: return "Rom (+RAM +Battery)";
+        case 0x0B: return "MMM01";
+        case 0x0C: return "MMM01 (+RAM)";
+        case 0x0D: return "MMM01 (+RAM +Battery)";
+        case 0x0F: return "MBC3 (+Timer +Battery)";
+        case 0x10: return "MBC3 (+Timer +RAM +Battery";
+        case 0x11: return "MBC3";
+        case 0x12: return "MBC3 (+RAM)";
+        case 0x13: return "MBC3 (+RAM +Battery)";
+        case 0x19: return "MBC5";
+        case 0x1A: return "MBC5 (+RAM)";
+        case 0x1B: return "MBC5 (+RAM +Battery)";
+        case 0x1C: return "MBC5 (+Rumble)";
+        case 0x1D: return "MBC5 (+Rumble +RAM)";
+        case 0x1E: return "MBC5 (+Rumble +RAM +Battery)";
+        case 0x20: return "MBC6";
+        case 0x22: return "MBC7 (+Sensor +Rumble +RAM +Battery)";
+        case 0xFC: return "Pocket Camera";
+        case 0xFD: return "BANDAI TAMA5";
+        case 0xFE: return "HuC3";
+        case 0xFF: return "HuC1 (+RAM, +Battery)";
+        default: return "Unknown";
+    }
 }
 
 // Decode the cartridge header starting at *data into *cr
@@ -254,13 +291,13 @@ void cartridge_dump(cartridge_hdr_t *cr)
     if (cr->old_licensee_code) {
         printf("Licensee code (old): 0x%02X\n", cr->licensee_code[0]);
     } else {
-        printf("Licensee code: $%c%c\n",
+        printf("Licensee code: %c%c\n",
                cr->licensee_code[0],
                cr->licensee_code[1]);
         printf("Publisher: %s\n", cartridge_publisher(cr));
     }
 
-    printf("MBC Type: 0x%02X\n", cr->mbc_type);
+    printf("MBC Type: %s ($%02X)\n", cartridge_mbc_type(cr), cr->mbc_type);
     printf("ROM banks: %u\n", cr->rom_banks);
     printf("RAM: Bank Size: %u, Banks: %u\n",
            cr->ram_size,
