@@ -1,33 +1,34 @@
 CC	=	cc
 INCLUDE	=	-Iinclude
-CFLAGS	=	-W -Wall -Wextra -pipe $(INCLUDE) -g
-LDFLAGS	=	$(shell pkg-config --libs readline) $(shell sdl2-config --cflags --libs)
+OFLAGS	=	-g
+CFLAGS	=	$(OFLAGS) -W -Wall -Wextra -pipe $(INCLUDE)
+LDFLAGS	=	$(shell pkg-config --libs readline) $(shell sdl2-config --libs)
 
 BIN_NAME	=	gameboy
 
-SRC	=	src/logger.c			\
-		src/emulator.c			\
-		src/system.c			\
-		src/debugger.c			\
-		src/memory.c			\
-		src/memory_banks.c		\
-		src/mbc/mbc.c			\
-		src/mbc/mbc3.c			\
-		src/cartridge.c			\
-		src/interrupts.c		\
-		src/registers.c			\
-		src/cpu.c				\
-		src/opcodes/control.c	\
-		src/opcodes/jumps.c		\
-		src/opcodes/ld.c		\
-		src/opcodes/xor.c		\
-		src/opcodes/or.c		\
-		src/opcodes/and.c		\
-		src/opcodes/inc.c		\
-		src/opcodes/dec.c		\
-		src/opcodes/cp.c
+SRC	=	logger.c			\
+		emulator.c			\
+		system.c			\
+		debugger.c			\
+		memory.c			\
+		memory_banks.c		\
+		mbc/mbc.c			\
+		mbc/mbc3.c			\
+		cartridge.c			\
+		interrupts.c		\
+		registers.c			\
+		cpu.c				\
+		opcodes/control.c	\
+		opcodes/jumps.c		\
+		opcodes/ld.c		\
+		opcodes/xor.c		\
+		opcodes/or.c		\
+		opcodes/and.c		\
+		opcodes/inc.c		\
+		opcodes/dec.c		\
+		opcodes/cp.c
 
-OBJ	=	$(SRC:.c=.o)
+OBJ	=	$(SRC:%.c=obj/%.o)
 DEP	=	$(OBJ:.o=.d)
 
 .PHONY:	all	clean	fclean	re
@@ -37,11 +38,12 @@ all:	$(BIN_NAME)
 $(BIN_NAME):	$(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-%.o:	%.c
+obj/%.o:	src/%.c
+	@mkdir -p "$(shell dirname $@)"
 	$(CC) -c $< -o $@ -MMD $(CFLAGS)
 
 clean:
-	rm -f $(OBJ) $(DEP)
+	rm -rf obj
 
 fclean:	clean
 	rm -f $(BIN_NAME)
