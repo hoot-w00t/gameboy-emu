@@ -56,9 +56,11 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define SPRITE_MAXHEIGHT (16)
 
 // Memory map
+#define ADDR_IN_RANGE(addr,start,end) (addr >= start && addr <= end)
+
 // LADDR is the the lower address and UADDR the upper
-#define INTERRUPT_VECTOR_TABLE_LADDR (0x0000)
-#define INTERRUPT_VECTOR_TABLE_UADDR (0x00FF)
+#define IVT_LADDR                    (0x0000)
+#define IVT_UADDR                    (0x00FF)
 #define CARTRIDGE_HEADER_LADDR       (0x0100)
 #define CARTRIDGE_HEADER_UADDR       (0x014F)
 #define ROM_BANK_0_LADDR             (0x0150)
@@ -71,6 +73,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define BG_MAP_1_UADDR               (0x9BFF)
 #define BG_MAP_2_LADDR               (0x9C00)
 #define BG_MAP_2_UADDR               (0x9FFF)
+#define VRAM_LADDR                   TILE_LADDR
+#define VRAM_UADDR                   BG_MAP_2_UADDR
 #define RAM_BANK_N_LADDR             (0xA000)
 #define RAM_BANK_N_UADDR             (0xBFFF)
 #define RAM_BANK_0_LADDR             (0xC000)
@@ -123,6 +127,8 @@ typedef struct cartridge_hdr cartridge_hdr_t;
 typedef struct membank membank_t;
 typedef struct mmu mmu_t;
 typedef struct gb_system gb_system_t;
+typedef byte_t (*mmu_readb_t)(uint16_t, gb_system_t *);
+typedef bool (*mmu_writeb_t)(uint16_t, byte_t, gb_system_t *);
 
 // Structures
 struct cartridge_hdr {
@@ -156,6 +162,8 @@ struct mmu {
     byte_t oam[OAM_SIZE];        // Object Attribute Memory
     byte_t ioregs[IO_REGS_SIZE]; // IO Registers
     byte_t hram[HRAM_SIZE];      // HRAM
+    mmu_readb_t readb_f;         // mbc_readb function pointer
+    mmu_writeb_t writeb_f;       // mbc_writeb function pointer
 };
 
 struct gb_system {

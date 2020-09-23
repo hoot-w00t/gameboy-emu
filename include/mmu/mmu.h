@@ -1,6 +1,6 @@
 /*
-banks.h
-Function prototypes for mmu/banks.c
+mmu.h
+Function prototypes for mmu/mmu.c
 
 Copyright (C) 2020 akrocynova
 
@@ -19,16 +19,11 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "gameboy.h"
 
-#ifndef _MMU_BANKS_H
-#define _MMU_BANKS_H
+#ifndef _MMU_MMU_H
+#define _MMU_MMU_H
 
-void membank_free(membank_t *mb);
-void membank_init(uint16_t max_bank_nb, uint16_t bank_size, membank_t *mb);
-bool membank_switch(uint16_t index, membank_t *mb);
-byte_t membank_readb(uint16_t addr, membank_t *mb);
-byte_t membank_readb_bank(uint16_t addr, uint16_t index, membank_t *mb);
-bool membank_writeb(uint16_t addr, byte_t value, membank_t *mb);
-bool membank_writeb_bank(uint16_t addr, byte_t value, uint16_t index,
-    membank_t *mb);
+byte_t mmu_readb(uint16_t addr, gb_system_t *gb);
+bool mmu_writeb(uint16_t addr, byte_t value, gb_system_t *gb);
+bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb);
 
 #endif

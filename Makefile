@@ -10,7 +10,9 @@ SRC	=	logger.c	\
 		xalloc.c	\
 		main.c		\
 		gb_system.c	\
-		mmu/banks.c
+		mmu/banks.c	\
+		mmu/mmu.c	\
+		mmu/mbc0.c
 
 OBJ	=	$(SRC:%.c=obj/%.o)
 DEP	=	$(OBJ:.o=.d)
