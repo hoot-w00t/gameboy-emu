@@ -20,6 +20,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "logger.h"
 #include "gameboy.h"
 #include "mmu/mbc0.h"
+#include <stdio.h>
+#include <ctype.h>
 
 // Read byte from addr
 byte_t mmu_readb(uint16_t addr, gb_system_t *gb)
