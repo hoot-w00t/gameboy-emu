@@ -117,7 +117,7 @@ int load_rom(byte_t *rom, int size, gb_system_t *gb)
     membank_init(gb->cartridge.ram_banks + 1, RAM_BANK_SIZE, gb->cartridge.ram_size, &gb->memory.ram);
 
     addr = 0x0; bank_index = 0;
-    for (int i = 0; i < size; ++i) {
+    for (int i = 0; i < size; ++i, ++addr) {
         if (addr >= ROM_BANK_SIZE) {
             addr = 0x0;
             ++bank_index;
