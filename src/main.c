@@ -87,13 +87,19 @@ void parse_args(int ac, char **av)
 
 int main(int ac, char **av)
 {
+    int emulation_ret;
     gb_system_t *gb;
 
     parse_args(ac, av);
     if (!(gb = gb_system_create_load_rom(args.filename)))
         return EXIT_FAILURE;
 
-    gb_system_emulate(gb);
+    emulation_ret = gb_system_emulate(gb);
     gb_system_destroy(gb);
-    return EXIT_SUCCESS;
+
+    if (emulation_ret < 0) {
+        return EXIT_FAILURE;
+    } else {
+        return EXIT_SUCCESS;
+    }
 }
