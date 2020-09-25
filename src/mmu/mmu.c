@@ -25,6 +25,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 byte_t mmu_readb(uint16_t addr, gb_system_t *gb)
 {
     if (gb->memory.readb_f) {
+        logger(LOG_ALL, "mmu_readb: read address $%04X", addr);
         return (*gb->memory.readb_f)(addr, gb);
     } else {
         logger(LOG_ERROR, "mmu_readb failed: no readb handler");
@@ -36,6 +37,7 @@ byte_t mmu_readb(uint16_t addr, gb_system_t *gb)
 bool mmu_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
     if (gb->memory.writeb_f) {
+        logger(LOG_ALL, "mmu_writeb: write $%02X at address $%04X", value, addr);
         return (*gb->memory.writeb_f)(addr, value, gb);
     } else {
         logger(LOG_ERROR, "mmu_writeb failed: no writeb handler");
@@ -55,4 +57,34 @@ bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb)
         default: logger(LOG_ERROR, "Unsupported MBC type $%02X", mbc_type);
     }
     return false;
+}
+
+void mmu_dump(uint16_t addr, uint16_t n, gb_system_t *gb)
+{
+    const byte_t bytes_per_line = 16;
+    byte_t buf[bytes_per_line];
+
+    for (uint16_t i = 0; i < n; i += bytes_per_line, addr += bytes_per_line) {
+        for (byte_t j = 0; j < bytes_per_line; ++j) {
+            buf[j] = mmu_readb(addr + j, gb);
+        }
+
+        printf("0x%04X: ", addr);
+        for (byte_t j = 0; j < bytes_per_line; ++j) {
+            if (i + j < n) {
+                printf("%02X ", buf[j]);
+            } else {
+                printf("   ");
+            }
+
+            if (j == (bytes_per_line / 2) - 1)
+                printf(" ");
+        }
+
+        printf("   ");
+        for (byte_t j = 0; j < bytes_per_line && i + j < n; ++j) {
+            printf("%c", isprint((char) buf[j]) ? (char) buf[j] : '.');
+        }
+        printf("\n");
+    }
 }
