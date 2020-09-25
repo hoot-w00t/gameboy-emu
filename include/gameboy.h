@@ -120,6 +120,13 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define INTERRUPT_SERIAL   (0x58)
 #define INTERRUPT_JOYPAD   (0x60)
 
+// Return values for the opcode handlers
+#define OPCODE_ILLEGAL   (0b0000)  // Illegal opcode
+#define OPCODE_ACTION    (0b0001)  // Opcode executed and action condition is true
+#define OPCODE_NOACTION  (0b0010)  // Opcode executed and action condition is false
+#define OPCODE_EXIT      (0b0100)  // Break out of the CPU loop
+#define OPCODE_NOPC      (0b1000)  // Do not increment PC (for jump operations)
+
 // Type definitions
 typedef uint8_t byte_t;
 typedef int8_t sbyte_t;
@@ -129,6 +136,8 @@ typedef struct mmu mmu_t;
 typedef struct gb_system gb_system_t;
 typedef byte_t (*mmu_readb_t)(uint16_t, gb_system_t *);
 typedef bool (*mmu_writeb_t)(uint16_t, byte_t, gb_system_t *);
+typedef struct opcode opcode_t;
+typedef int (*opcode_handler_t)(const opcode_t *, gb_system_t *);
 
 // Structures
 struct cartridge_hdr {
@@ -177,6 +186,16 @@ struct gb_system {
     uint16_t idle_cycles;              // Remaining cycles to idle (decrease at every cycle)
     size_t cycle_nb;                   // CPU Cycle #
     byte_t ime;                        // Interrupt Master Enable Flag
+};
+
+struct opcode {
+    char *mnemonic;            // Mnemonic
+    byte_t opcode;             // Opcode
+    byte_t length;             // Instruction length in bytes
+    byte_t cycles_true;        // Opcode duration in cycles (if conditionnal, only if condition is true)
+    byte_t cycles_false;       // Opcode duration in cycles (if conditionnal and condition if false)
+    char *comment;             // What the instruction does
+    opcode_handler_t handler;  // Function pointer to the opcode handler
 };
 
 #endif
