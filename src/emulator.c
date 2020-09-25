@@ -41,7 +41,7 @@ int gb_system_emulate_loop(gb_system_t *gb)
         if (!pause_emulation) {
             // Calculate how many CPU cycles should be emulated
             // since last frame
-            remaining_cpu_cycles = elapsed = cpu_clock_speed;
+            remaining_cpu_cycles = elapsed * cpu_clock_speed;
 
             for (; remaining_cpu_cycles > 0; --remaining_cpu_cycles) {
                 if (cpu_cycle(true, gb) < 0) {
