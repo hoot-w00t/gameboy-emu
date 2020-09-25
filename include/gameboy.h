@@ -103,6 +103,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 // Cartridge header addresses
 #define CR_LOGO_ADDR              (0x0104)
 #define CR_TITLE_ADDR             (0x0134)
+#define CR_CGB_FLAG_ADDR          (0x0143)
 #define CR_LICENSEE_CODE_ADDR     (0x0144)
 #define CR_OLD_LICENSEE_CODE_ADDR (0x014B)
 #define CR_MBC_TYPE_ADDR          (0x0147)

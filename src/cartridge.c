@@ -153,6 +153,15 @@ char *cartridge_mbc_type(cartridge_hdr_t *cr)
 // Returns false if there was an error
 bool cartridge_decode_hdr(byte_t *data, cartridge_hdr_t *cr)
 {
+    // Color GameBoy is not supported
+    switch (data[CR_CGB_FLAG_ADDR]) {
+        case 0x80:
+        case 0xC0:
+            logger(LOG_ERROR, "Color GameBoy is not supported");
+            return false;
+        default: break;
+    }
+
     // Read Nintendo Logo bitmap
     for (byte_t i = 0; i < sizeof(cr->logo); ++i) {
         cr->logo[i] = data[CR_LOGO_ADDR + i];
