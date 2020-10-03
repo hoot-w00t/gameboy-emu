@@ -23,5 +23,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define _CPU_CPU_H
 
 int cpu_cycle(const bool emulate_cycles, gb_system_t *gb);
+void cpu_dump(gb_system_t *gb);
 
 #endif

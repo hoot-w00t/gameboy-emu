@@ -20,7 +20,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "logger.h"
 #include "gameboy.h"
 #include "cpu/opcodes.h"
+#include "cpu/registers.h"
 #include "mmu/mmu.h"
+#include <stdio.h>
 
 // Emulate a GameBoy CPU cycle
 // If emulate_cycles is false, one cycle == one instruction
@@ -86,4 +88,38 @@ int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
     if (handler_ret & OPCODE_EXIT) return -2;
 
     return 0;
+}
+
+void cpu_dump(gb_system_t *gb)
+{
+    if (gb->halt) printf("CPU Halted\n");
+
+    printf("PC: $%04X    SP: $%04X\n", gb->pc, gb->sp);
+    printf("Cycle #%lu (idle: %u)\n", gb->cycle_nb, gb->idle_cycles);
+
+    printf("A: $%02X    F: $%02X\n",
+           reg_readb(REG_A, gb),
+           reg_readb(REG_F, gb));
+    printf("B: $%02X    C: $%02X\n",
+           reg_readb(REG_B, gb),
+           reg_readb(REG_C, gb));
+    printf("D: $%02X    E: $%02X\n",
+           reg_readb(REG_D, gb),
+           reg_readb(REG_E, gb));
+    printf("H: $%02X    L: $%02X\n\n",
+           reg_readb(REG_H, gb),
+           reg_readb(REG_L, gb));
+
+    printf("AF: $%04X    BC: $%04X\n",
+           reg_read_u16(REG_AF, gb),
+           reg_read_u16(REG_BC, gb));
+    printf("DE: $%04X    HL: $%04X\n",
+           reg_read_u16(REG_DE, gb),
+           reg_read_u16(REG_HL, gb));
+
+    printf("Flags:\n");
+    printf("    Z: %c\n", reg_flag(FLAG_Z, gb) ? '1' : '0');
+    printf("    N: %c\n", reg_flag(FLAG_N, gb) ? '1' : '0');
+    printf("    H: %c\n", reg_flag(FLAG_H, gb) ? '1' : '0');
+    printf("    C: %c\n", reg_flag(FLAG_C, gb) ? '1' : '0');
 }
