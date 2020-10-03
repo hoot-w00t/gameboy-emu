@@ -104,3 +104,59 @@ int opcode_rst(const opcode_t *opcode, gb_system_t *gb)
     cpu_call(addr, gb);
     return opcode->cycles_true;
 }
+
+// RET and RET cc opcodes
+int opcode_ret(const opcode_t *opcode, gb_system_t *gb)
+{
+    switch (opcode->opcode) {
+        // RET
+        case 0xC9: cpu_ret(gb); return opcode->cycles_true;
+
+        // RET NZ
+        case 0xC0:
+            if (reg_flag(FLAG_Z, gb) == false) {
+                cpu_ret(gb);
+                return opcode->cycles_true;
+            } else {
+                return opcode->cycles_false;
+            }
+
+        // RET Z
+        case 0xC8:
+            if (reg_flag(FLAG_Z, gb) == true) {
+                cpu_ret(gb);
+                return opcode->cycles_true;
+            } else {
+                return opcode->cycles_false;
+            }
+
+        // RET NC
+        case 0xD0:
+            if (reg_flag(FLAG_C, gb) == false) {
+                cpu_ret(gb);
+                return opcode->cycles_true;
+            } else {
+                return opcode->cycles_false;
+            }
+
+        // RET C
+        case 0xD8:
+            if (reg_flag(FLAG_C, gb) == true) {
+                cpu_ret(gb);
+                return opcode->cycles_true;
+            } else {
+                return opcode->cycles_false;
+            }
+
+        default: return OPCODE_ILLEGAL;
+    }
+}
+
+// RETI
+int opcode_reti(const opcode_t *opcode, gb_system_t *gb)
+{
+    cpu_ret(gb);
+    // TODO: Enable interrupts
+
+    return opcode->cycles_true;
+}

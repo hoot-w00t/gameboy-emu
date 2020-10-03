@@ -26,5 +26,7 @@ void cpu_call(uint16_t addr, gb_system_t *gb);
 void cpu_ret(gb_system_t *gb);
 int opcode_call(const opcode_t *opcode, gb_system_t *gb);
 int opcode_rst(const opcode_t *opcode, gb_system_t *gb);
+int opcode_ret(const opcode_t *opcode, gb_system_t *gb);
+int opcode_reti(const opcode_t *opcode, gb_system_t *gb);
 
 #endif

@@ -818,6 +818,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_a
     },
     {
+        .mnemonic     = "RET NZ",
+        .opcode       = 0xC0,
+        .length       = 1,
+        .cycles_true  = 20,
+        .cycles_false = 8,
+        .comment      = "Pop address from stack and jump to it if Z is reset",
+        .handler      = &opcode_ret
+    },
+    {
         .mnemonic     = "POP BC",
         .opcode       = 0xC1,
         .length       = 1,
@@ -872,6 +881,24 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_rst
     },
     {
+        .mnemonic     = "RET Z",
+        .opcode       = 0xC8,
+        .length       = 1,
+        .cycles_true  = 20,
+        .cycles_false = 8,
+        .comment      = "Pop address from stack and jump to it if Z is set",
+        .handler      = &opcode_ret
+    },
+    {
+        .mnemonic     = "RET",
+        .opcode       = 0xC9,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Pop address from stack and jump to it",
+        .handler      = &opcode_ret
+    },
+    {
         .mnemonic     = "JP Z,nn",
         .opcode       = 0xCA,
         .length       = 3,
@@ -906,6 +933,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 16,
         .comment      = "Call $08",
         .handler      = &opcode_rst
+    },
+    {
+        .mnemonic     = "RET NC",
+        .opcode       = 0xD0,
+        .length       = 1,
+        .cycles_true  = 20,
+        .cycles_false = 8,
+        .comment      = "Pop address from stack and jump to it if C is reset",
+        .handler      = &opcode_ret
     },
     {
         .mnemonic     = "POP DE",
@@ -951,6 +987,24 @@ const opcode_t opcode_table[] = {
         .cycles_false = 16,
         .comment      = "Call $10",
         .handler      = &opcode_rst
+    },
+    {
+        .mnemonic     = "RET C",
+        .opcode       = 0xD8,
+        .length       = 1,
+        .cycles_true  = 20,
+        .cycles_false = 8,
+        .comment      = "Pop address from stack and jump to it if C is set",
+        .handler      = &opcode_ret
+    },
+    {
+        .mnemonic     = "RETI",
+        .opcode       = 0xD9,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Pop address from stack, jump to it and enable interrupts",
+        .handler      = &opcode_reti
     },
     {
         .mnemonic     = "JP C,nn",
