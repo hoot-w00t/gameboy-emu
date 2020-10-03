@@ -21,6 +21,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "gameboy.h"
 #include "cpu/opcodes/control.h"
 #include "cpu/opcodes/ld.h"
+#include "cpu/opcodes/jumps.h"
 
 const opcode_t opcode_table[] = {
     {
@@ -780,6 +781,24 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_pop
     },
     {
+        .mnemonic     = "JP NZ,nn",
+        .opcode       = 0xC2,
+        .length       = 3,
+        .cycles_true  = 16,
+        .cycles_false = 12,
+        .comment      = "Jump to nn if Z if reset",
+        .handler      = &opcode_jp
+    },
+    {
+        .mnemonic     = "JP nn",
+        .opcode       = 0xC3,
+        .length       = 3,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Jump to nn",
+        .handler      = &opcode_jp
+    },
+    {
         .mnemonic     = "PUSH BC",
         .opcode       = 0xC5,
         .length       = 1,
@@ -787,6 +806,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 16,
         .comment      = "Push BC to stack",
         .handler      = &opcode_push
+    },
+    {
+        .mnemonic     = "JP Z,nn",
+        .opcode       = 0xCA,
+        .length       = 3,
+        .cycles_true  = 16,
+        .cycles_false = 12,
+        .comment      = "Jump to nn if Z if set",
+        .handler      = &opcode_jp
     },
     {
         .mnemonic     = "POP DE",
@@ -798,6 +826,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_pop
     },
     {
+        .mnemonic     = "JP NC,nn",
+        .opcode       = 0xD2,
+        .length       = 3,
+        .cycles_true  = 16,
+        .cycles_false = 12,
+        .comment      = "Jump to nn if C if reset",
+        .handler      = &opcode_jp
+    },
+    {
         .mnemonic     = "PUSH DE",
         .opcode       = 0xD5,
         .length       = 1,
@@ -805,6 +842,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 16,
         .comment      = "Push DE to stack",
         .handler      = &opcode_push
+    },
+    {
+        .mnemonic     = "JP C,nn",
+        .opcode       = 0xDA,
+        .length       = 3,
+        .cycles_true  = 16,
+        .cycles_false = 12,
+        .comment      = "Jump to nn if C if set",
+        .handler      = &opcode_jp
     },
     {
         .mnemonic     = "LDH (n),A",
@@ -841,6 +887,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 16,
         .comment      = "Push HL to stack",
         .handler      = &opcode_push
+    },
+    {
+        .mnemonic     = "JP (HL)",
+        .opcode       = 0xE9,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Jump to address in HL",
+        .handler      = &opcode_jp_hl
     },
     {
         .mnemonic     = "LD (nn),A",
