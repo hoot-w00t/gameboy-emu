@@ -122,11 +122,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define INTERRUPT_JOYPAD   (0x60)
 
 // Return values for the opcode handlers
-#define OPCODE_ILLEGAL   (0b0000)  // Illegal opcode
-#define OPCODE_ACTION    (0b0001)  // Opcode executed and action condition is true
-#define OPCODE_NOACTION  (0b0010)  // Opcode executed and action condition is false
-#define OPCODE_EXIT      (0b0100)  // Break out of the CPU loop
-#define OPCODE_NOPC      (0b1000)  // Do not increment PC (for jump operations)
+#define OPCODE_ILLEGAL   (-1)  // Illegal opcode
+#define OPCODE_EXIT      (-2)  // Break out of the CPU loop
 
 // Type definitions
 typedef uint8_t byte_t;

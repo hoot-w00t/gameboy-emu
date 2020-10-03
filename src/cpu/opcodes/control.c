@@ -19,9 +19,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "gameboy.h"
 
-int opcode_nop(
-    __attribute__((unused)) const opcode_t *opcode,
-    __attribute__((unused)) gb_system_t *gb)
+int opcode_nop(const opcode_t *opcode, __attribute__((unused)) gb_system_t *gb)
 {
-    return OPCODE_ACTION;
+    return opcode->cycles_true;
 }

@@ -22,6 +22,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _CPU_CPU_H
 #define _CPU_CPU_H
 
+byte_t cpu_fetchb(gb_system_t *gb);
+byte_t cpu_fetch_u16(gb_system_t *gb);
 int cpu_cycle(const bool emulate_cycles, gb_system_t *gb);
 void cpu_dump(gb_system_t *gb);
 

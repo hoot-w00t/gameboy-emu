@@ -24,12 +24,31 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "mmu/mmu.h"
 #include <stdio.h>
 
+// Fetch byte from PC and increment PC
+byte_t cpu_fetchb(gb_system_t *gb)
+{
+    byte_t value = mmu_readb(gb->pc, gb);
+
+    gb->pc += 1;
+    return value;
+}
+
+// Fetch uint16 from PC and increment PC twice
+byte_t cpu_fetch_u16(gb_system_t *gb)
+{
+    byte_t value = mmu_read_u16(gb->pc, gb);
+
+    gb->pc += 2;
+    return value;
+}
+
 // Emulate a GameBoy CPU cycle
 // If emulate_cycles is false, one cycle == one instruction
-// Returns 0 on normal operation
-// Returns < 0 when system should be halted
-//      -1: illegal opcode
-//      -2: halt the system
+// On normal operation, returns the number of CPU cycles
+// an instruction will take (or 0 if idling)
+// Returns < 0 if opcode didn't execute as normal
+//      OPCODE_ILLEGAL: illegal opcode
+//      OPCODE_EXIT   : break the emulation loop
 int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
 {
     byte_t opcode_value;
@@ -49,11 +68,11 @@ int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
     }
 
     // Fetch and execute opcode
-    opcode_value = mmu_readb(gb->pc, gb);
+    opcode_value = cpu_fetchb(gb);
     if ((opcode = opcode_identify(opcode_value))) {
         logger(LOG_DEBUG,
                "$%04X: $%02X: %s",
-               gb->pc,
+               gb->pc - 1,
                opcode_value,
                opcode->mnemonic);
 
@@ -62,32 +81,23 @@ int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
         handler_ret = OPCODE_ILLEGAL;
     }
 
-    if (handler_ret == OPCODE_ILLEGAL) {
-        logger(LOG_CRIT,
-               "$%04X: $%02X: Illegal opcode",
-               gb->pc,
-               opcode_value);
-
-        return -1;
+    if (handler_ret < 0) {
+        if (handler_ret == OPCODE_ILLEGAL) {
+            logger(LOG_CRIT,
+                "$%04X: $%02X: Illegal opcode",
+                gb->pc - 1,
+                opcode_value);
+        }
+        return handler_ret;
     }
 
     if (emulate_cycles) {
         gb->cycle_nb += 1;
-        if (handler_ret & OPCODE_ACTION) {
-            gb->idle_cycles += opcode->cycles_true - 1;
-        } else if (handler_ret & OPCODE_NOACTION) {
-            gb->idle_cycles += opcode->cycles_false - 1;
-        }
-    } else if (handler_ret & OPCODE_ACTION) {
-        gb->cycle_nb += opcode->cycles_true;
-    } else if (handler_ret & OPCODE_NOACTION) {
-        gb->cycle_nb += opcode->cycles_false;
+        gb->idle_cycles += handler_ret;
+    } else {
+        gb->cycle_nb += handler_ret;
     }
-
-    if (!(handler_ret & OPCODE_NOPC)) gb->pc += opcode->length;
-    if (handler_ret & OPCODE_EXIT) return -2;
-
-    return 0;
+    return handler_ret;
 }
 
 void cpu_dump(gb_system_t *gb)
