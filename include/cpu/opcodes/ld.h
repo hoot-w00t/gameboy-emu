@@ -26,7 +26,13 @@ void cpu_pushb(byte_t value, gb_system_t *gb);
 void cpu_push_u16(uint16_t value, gb_system_t *gb);
 byte_t cpu_popb(byte_t value, gb_system_t *gb);
 uint16_t cpu_pop_u16(uint16_t value, gb_system_t *gb);
+
 int opcode_push(const opcode_t *opcode, gb_system_t *gb);
 int opcode_pop(const opcode_t *opcode, gb_system_t *gb);
+
+int opcode_ld_r8(const opcode_t *opcode, gb_system_t *gb);
+int opcode_ld_a(const opcode_t *opcode, gb_system_t *gb);
+int opcode_ld_r16_nn(const opcode_t *opcode, gb_system_t *gb);
+int opcode_ld_sp(const opcode_t *opcode, gb_system_t *gb);
 
 #endif
