@@ -22,6 +22,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/control.h"
 #include "cpu/opcodes/ld.h"
 #include "cpu/opcodes/jumps.h"
+#include "cpu/opcodes/calls.h"
 
 const opcode_t opcode_table[] = {
     {
@@ -844,6 +845,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_jp
     },
     {
+        .mnemonic     = "CALL NZ,nn",
+        .opcode       = 0xC4,
+        .length       = 3,
+        .cycles_true  = 24,
+        .cycles_false = 12,
+        .comment      = "Push PC and jump to nn if Z if reset",
+        .handler      = &opcode_call
+    },
+    {
         .mnemonic     = "PUSH BC",
         .opcode       = 0xC5,
         .length       = 1,
@@ -860,6 +870,24 @@ const opcode_t opcode_table[] = {
         .cycles_false = 12,
         .comment      = "Jump to nn if Z if set",
         .handler      = &opcode_jp
+    },
+    {
+        .mnemonic     = "CALL Z,nn",
+        .opcode       = 0xCC,
+        .length       = 3,
+        .cycles_true  = 24,
+        .cycles_false = 12,
+        .comment      = "Push PC and jump to nn if Z if set",
+        .handler      = &opcode_call
+    },
+    {
+        .mnemonic     = "CALL nn",
+        .opcode       = 0xCD,
+        .length       = 3,
+        .cycles_true  = 24,
+        .cycles_false = 24,
+        .comment      = "Push PC and jump to nn",
+        .handler      = &opcode_call
     },
     {
         .mnemonic     = "POP DE",
@@ -880,6 +908,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_jp
     },
     {
+        .mnemonic     = "CALL NC,nn",
+        .opcode       = 0xD4,
+        .length       = 3,
+        .cycles_true  = 24,
+        .cycles_false = 12,
+        .comment      = "Push PC and jump to nn if C if reset",
+        .handler      = &opcode_call
+    },
+    {
         .mnemonic     = "PUSH DE",
         .opcode       = 0xD5,
         .length       = 1,
@@ -896,6 +933,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 12,
         .comment      = "Jump to nn if C if set",
         .handler      = &opcode_jp
+    },
+    {
+        .mnemonic     = "CALL C,nn",
+        .opcode       = 0xDC,
+        .length       = 3,
+        .cycles_true  = 24,
+        .cycles_false = 12,
+        .comment      = "Push PC and jump to nn if C if set",
+        .handler      = &opcode_call
     },
     {
         .mnemonic     = "LDH (n),A",

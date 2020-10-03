@@ -1,6 +1,6 @@
 /*
 jumps.c
-JP, JR, CALL, RST, RET(I) opcodes
+JP and JR opcodes
 
 Copyright (C) 2020 akrocynova
 
