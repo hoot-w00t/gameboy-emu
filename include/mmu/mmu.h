@@ -24,6 +24,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 byte_t mmu_readb(uint16_t addr, gb_system_t *gb);
 bool mmu_writeb(uint16_t addr, byte_t value, gb_system_t *gb);
+uint16_t mmu_read_u16(uint16_t addr, gb_system_t *gb);
 bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb);
 void mmu_dump(uint16_t addr, uint16_t n, gb_system_t *gb);
 
