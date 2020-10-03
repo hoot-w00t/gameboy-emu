@@ -53,6 +53,15 @@ uint16_t mmu_read_u16(uint16_t addr, gb_system_t *gb)
     return (mmu_readb(addr, gb) | (mmu_readb(addr + 1, gb) << 8));
 }
 
+// Write uint16 at addr
+bool mmu_write_u16(uint16_t addr, uint16_t value, gb_system_t *gb)
+{
+    bool tmp;
+
+    tmp = mmu_writeb(addr, (value & 0xff), gb);
+    return mmu_writeb(addr + 1, (value >> 8), gb) && tmp;
+}
+
 // Set MBC type and initialize MBC-related functions and variables
 bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb)
 {
