@@ -24,8 +24,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 void cpu_pushb(byte_t value, gb_system_t *gb);
 void cpu_push_u16(uint16_t value, gb_system_t *gb);
-byte_t cpu_popb(byte_t value, gb_system_t *gb);
-uint16_t cpu_pop_u16(uint16_t value, gb_system_t *gb);
+byte_t cpu_popb(gb_system_t *gb);
+uint16_t cpu_pop_u16(gb_system_t *gb);
 
 int opcode_push(const opcode_t *opcode, gb_system_t *gb);
 int opcode_pop(const opcode_t *opcode, gb_system_t *gb);
