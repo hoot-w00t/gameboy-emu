@@ -20,6 +20,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "gameboy.h"
 #include "cpu/opcodes/control.h"
+#include "cpu/opcodes/ld.h"
 
 const opcode_t opcode_table[] = {
     {
@@ -30,6 +31,78 @@ const opcode_t opcode_table[] = {
         .cycles_false = 4,
         .comment      = "No OPeration",
         .handler      = &opcode_nop
+    },
+    {
+        .mnemonic     = "POP BC",
+        .opcode       = 0xC1,
+        .length       = 1,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Pop SP to BC",
+        .handler      = &opcode_pop
+    },
+    {
+        .mnemonic     = "PUSH BC",
+        .opcode       = 0xC5,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Push BC to stack",
+        .handler      = &opcode_push
+    },
+    {
+        .mnemonic     = "POP DE",
+        .opcode       = 0xD1,
+        .length       = 1,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Pop SP to DE",
+        .handler      = &opcode_pop
+    },
+    {
+        .mnemonic     = "PUSH DE",
+        .opcode       = 0xD5,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Push DE to stack",
+        .handler      = &opcode_push
+    },
+    {
+        .mnemonic     = "POP HL",
+        .opcode       = 0xE1,
+        .length       = 1,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Pop SP to HL",
+        .handler      = &opcode_pop
+    },
+    {
+        .mnemonic     = "Push HL",
+        .opcode       = 0xE5,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Push HL to stack",
+        .handler      = &opcode_push
+    },
+    {
+        .mnemonic     = "POP AF",
+        .opcode       = 0xF1,
+        .length       = 1,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Pop SP to AF",
+        .handler      = &opcode_pop
+    },
+    {
+        .mnemonic     = "PUSH AF",
+        .opcode       = 0xF5,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Push AF to stack",
+        .handler      = &opcode_push
     },
     {NULL, 0, 0, 0, 0, NULL, NULL}
 };

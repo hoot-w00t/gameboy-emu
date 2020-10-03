@@ -16,6 +16,7 @@ SRC	=	logger.c				\
 		cpu/cpu.c				\
 		cpu/opcodes.c			\
 		cpu/opcodes/control.c	\
+		cpu/opcodes/ld.c		\
 		mmu/banks.c				\
 		mmu/mmu.c				\
 		mmu/mbc0.c
