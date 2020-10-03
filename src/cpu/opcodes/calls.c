@@ -83,3 +83,24 @@ int opcode_call(const opcode_t *opcode, gb_system_t *gb)
         default: return OPCODE_ILLEGAL;
     }
 }
+
+// RST opcodes
+int opcode_rst(const opcode_t *opcode, gb_system_t *gb)
+{
+    uint16_t addr;
+
+    switch (opcode->opcode) {
+        case 0xC7: addr = 0x00; break;
+        case 0xCF: addr = 0x08; break;
+        case 0xD7: addr = 0x10; break;
+        case 0xDF: addr = 0x18; break;
+        case 0xE7: addr = 0x20; break;
+        case 0xEF: addr = 0x28; break;
+        case 0xF7: addr = 0x30; break;
+        case 0xFF: addr = 0x38; break;
+        default: return OPCODE_ILLEGAL;
+    }
+
+    cpu_call(addr, gb);
+    return opcode->cycles_true;
+}

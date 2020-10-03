@@ -25,5 +25,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 void cpu_call(uint16_t addr, gb_system_t *gb);
 void cpu_ret(gb_system_t *gb);
 int opcode_call(const opcode_t *opcode, gb_system_t *gb);
+int opcode_rst(const opcode_t *opcode, gb_system_t *gb);
 
 #endif

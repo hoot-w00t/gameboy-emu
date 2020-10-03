@@ -863,6 +863,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_push
     },
     {
+        .mnemonic     = "RST $00",
+        .opcode       = 0xC7,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Call $00",
+        .handler      = &opcode_rst
+    },
+    {
         .mnemonic     = "JP Z,nn",
         .opcode       = 0xCA,
         .length       = 3,
@@ -888,6 +897,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 24,
         .comment      = "Push PC and jump to nn",
         .handler      = &opcode_call
+    },
+    {
+        .mnemonic     = "RST $08",
+        .opcode       = 0xCF,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Call $08",
+        .handler      = &opcode_rst
     },
     {
         .mnemonic     = "POP DE",
@@ -926,6 +944,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_push
     },
     {
+        .mnemonic     = "RST $10",
+        .opcode       = 0xD7,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Call $10",
+        .handler      = &opcode_rst
+    },
+    {
         .mnemonic     = "JP C,nn",
         .opcode       = 0xDA,
         .length       = 3,
@@ -942,6 +969,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 12,
         .comment      = "Push PC and jump to nn if C if set",
         .handler      = &opcode_call
+    },
+    {
+        .mnemonic     = "RST $18",
+        .opcode       = 0xDF,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Call $18",
+        .handler      = &opcode_rst
     },
     {
         .mnemonic     = "LDH (n),A",
@@ -980,6 +1016,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_push
     },
     {
+        .mnemonic     = "RST $20",
+        .opcode       = 0xE7,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Call $20",
+        .handler      = &opcode_rst
+    },
+    {
         .mnemonic     = "JP (HL)",
         .opcode       = 0xE9,
         .length       = 1,
@@ -996,6 +1041,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 16,
         .comment      = "Load A at address nn",
         .handler      = &opcode_ld_a
+    },
+    {
+        .mnemonic     = "RST $28",
+        .opcode       = 0xEF,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Call $28",
+        .handler      = &opcode_rst
     },
     {
         .mnemonic     = "LDH A,(n)",
@@ -1034,6 +1088,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_push
     },
     {
+        .mnemonic     = "RST $30",
+        .opcode       = 0xF7,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Call $30",
+        .handler      = &opcode_rst
+    },
+    {
         .mnemonic     = "LD SP,HL",
         .opcode       = 0xF9,
         .length       = 1,
@@ -1041,6 +1104,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load HL to SP",
         .handler      = &opcode_ld_sp
+    },
+    {
+        .mnemonic     = "RST $FF",
+        .opcode       = 0xFF,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Call $FF",
+        .handler      = &opcode_rst
     },
     {
         .mnemonic     = "LD A,(nn)",
