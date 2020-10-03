@@ -77,3 +77,53 @@ int opcode_jp_hl(const opcode_t *opcode, gb_system_t *gb)
 
     return opcode->cycles_true;
 }
+
+// JR n and JR cc,n opcodes
+int opcode_jr(const opcode_t *opcode, gb_system_t *gb)
+{
+    sbyte_t n = (sbyte_t) cpu_fetchb(gb);
+    uint16_t addr = gb->pc + n;
+
+    switch (opcode->opcode) {
+        // JR n
+        case 0x18: gb->pc = addr; return opcode->cycles_true;
+
+        // JR NZ,n
+        case 0x20:
+            if (reg_flag(FLAG_Z, gb) == false) {
+                gb->pc = addr;
+                return opcode->cycles_true;
+            } else {
+                return opcode->cycles_false;
+            }
+
+        // JR Z,n
+        case 0x28:
+            if (reg_flag(FLAG_Z, gb) == true) {
+                gb->pc = addr;
+                return opcode->cycles_true;
+            } else {
+                return opcode->cycles_false;
+            }
+
+        // JR NC,n
+        case 0x30:
+            if (reg_flag(FLAG_C, gb) == false) {
+                gb->pc = addr;
+                return opcode->cycles_true;
+            } else {
+                return opcode->cycles_false;
+            }
+
+        // JR C,n
+        case 0x38:
+            if (reg_flag(FLAG_C, gb) == true) {
+                gb->pc = addr;
+                return opcode->cycles_true;
+            } else {
+                return opcode->cycles_false;
+            }
+
+        default: return OPCODE_ILLEGAL;
+    }
+}

@@ -115,6 +115,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_r8
     },
     {
+        .mnemonic     = "JR n",
+        .opcode       = 0x18,
+        .length       = 2,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Jump to PC+n (signed)",
+        .handler      = &opcode_jr
+    },
+    {
         .mnemonic     = "LD A,(DE)",
         .opcode       = 0x1A,
         .length       = 1,
@@ -131,6 +140,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load n to E",
         .handler      = &opcode_ld_r8
+    },
+    {
+        .mnemonic     = "JR NZ,n",
+        .opcode       = 0x20,
+        .length       = 2,
+        .cycles_true  = 12,
+        .cycles_false = 8,
+        .comment      = "Jump to PC+n (signed) if Z is reset",
+        .handler      = &opcode_jr
     },
     {
         .mnemonic     = "LD HL,nn",
@@ -160,6 +178,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_r8
     },
     {
+        .mnemonic     = "JR Z,n",
+        .opcode       = 0x28,
+        .length       = 2,
+        .cycles_true  = 12,
+        .cycles_false = 8,
+        .comment      = "Jump to PC+n (signed) if Z is set",
+        .handler      = &opcode_jr
+    },
+    {
         .mnemonic     = "LDI A,(HL)",
         .opcode       = 0x2A,
         .length       = 1,
@@ -178,6 +205,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_r8
     },
     {
+        .mnemonic     = "JR NC,n",
+        .opcode       = 0x30,
+        .length       = 2,
+        .cycles_true  = 12,
+        .cycles_false = 8,
+        .comment      = "Jump to PC+n (signed) if C is reset",
+        .handler      = &opcode_jr
+    },
+    {
         .mnemonic     = "LD SP,nn",
         .opcode       = 0x31,
         .length       = 3,
@@ -194,6 +230,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load A at address HL and decrement A",
         .handler      = &opcode_ld_a
+    },
+    {
+        .mnemonic     = "JR C,n",
+        .opcode       = 0x38,
+        .length       = 2,
+        .cycles_true  = 12,
+        .cycles_false = 8,
+        .comment      = "Jump to PC+n (signed) if C is set",
+        .handler      = &opcode_jr
     },
     {
         .mnemonic     = "LDD A,(HL)",

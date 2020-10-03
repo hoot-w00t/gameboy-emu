@@ -24,5 +24,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 int opcode_jp(const opcode_t *opcode, gb_system_t *gb);
 int opcode_jp_hl(const opcode_t *opcode, gb_system_t *gb);
+int opcode_jr(const opcode_t *opcode, gb_system_t *gb);
 
 #endif
