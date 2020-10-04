@@ -92,6 +92,9 @@ int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
     }
 
     if (emulate_cycles) {
+        // Exclude the current cycle from the remaining
+        if (handler_ret > 0) handler_ret -= 1;
+
         gb->cycle_nb += 1;
         gb->idle_cycles += handler_ret;
     } else {
