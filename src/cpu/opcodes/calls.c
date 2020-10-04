@@ -156,7 +156,7 @@ int opcode_ret(const opcode_t *opcode, gb_system_t *gb)
 int opcode_reti(const opcode_t *opcode, gb_system_t *gb)
 {
     cpu_ret(gb);
-    // TODO: Enable interrupts
+    gb->interrupts.ime = IME_ENABLE;
 
     return opcode->cycles_true;
 }
