@@ -1,6 +1,6 @@
 /*
-control.c
-Control opcodes
+interrupts.h
+Function prototypes for interrupts.c
 
 Copyright (C) 2020 akrocynova
 
@@ -19,19 +19,12 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "gameboy.h"
 
-int opcode_nop(const opcode_t *opcode, __attribute__((unused)) gb_system_t *gb)
-{
-    return opcode->cycles_true;
-}
+#ifndef _CPU_INTERRUPTS_H
+#define _CPU_INTERRUPTS_H
 
-int opcode_ei(const opcode_t *opcode, gb_system_t *gb)
-{
-    gb->interrupts.ime = IME_ENABLE;
-    return opcode->cycles_true;
-}
+bool cpu_int_flag(byte_t int_bit, gb_system_t *gb);
+void cpu_int_flag_set(byte_t int_bit, gb_system_t *gb);
+void cpu_int_flag_clear(byte_t int_bit, gb_system_t *gb);
+int cpu_int_isr(gb_system_t *gb);
 
-int opcode_di(const opcode_t *opcode, gb_system_t *gb)
-{
-    gb->interrupts.ime = IME_DISABLE;
-    return opcode->cycles_true;
-}
+#endif

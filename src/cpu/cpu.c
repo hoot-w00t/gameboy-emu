@@ -21,6 +21,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "gameboy.h"
 #include "cpu/opcodes.h"
 #include "cpu/registers.h"
+#include "cpu/interrupts.h"
 #include "mmu/mmu.h"
 #include <stdio.h>
 
@@ -67,18 +68,21 @@ int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
 
     }
 
-    // Fetch and execute opcode
-    opcode_value = cpu_fetchb(gb);
-    if ((opcode = opcode_identify(opcode_value))) {
-        logger(LOG_DEBUG,
-               "$%04X: $%02X: %s",
-               gb->pc - 1,
-               opcode_value,
-               opcode->mnemonic);
+    if (!(handler_ret = cpu_int_isr(gb))) {
+        // No ISR executed, continue on normal operation
+        // Fetch and execute opcode
+        opcode_value = cpu_fetchb(gb);
+        if ((opcode = opcode_identify(opcode_value))) {
+            logger(LOG_DEBUG,
+                "$%04X: $%02X: %s",
+                gb->pc - 1,
+                opcode_value,
+                opcode->mnemonic);
 
-        handler_ret = (*opcode->handler)(opcode, gb);
-    } else {
-        handler_ret = OPCODE_ILLEGAL;
+            handler_ret = (*opcode->handler)(opcode, gb);
+        } else {
+            handler_ret = OPCODE_ILLEGAL;
+        }
     }
 
     if (handler_ret < 0) {
@@ -110,7 +114,22 @@ void cpu_dump(gb_system_t *gb)
     printf("PC: $%04X    SP: $%04X\n", gb->pc, gb->sp);
     printf("Cycle #%lu (idle: %u)\n", gb->cycle_nb, gb->idle_cycles);
 
-    printf("A: $%02X    F: $%02X\n",
+    printf("\nIME=%i\n", gb->interrupts.ime);
+    printf("Bits:    7 6 5 4 3 2 1 0\n");
+    printf("IE  :    ");
+    for (sbyte_t i = 7; i >= 0; --i) {
+        printf("%c%c",
+               (gb->interrupts.ie_reg & (1 << i)) ? '1' : '0',
+               i > 0 ? ' ' : '\n');
+    }
+    printf("IF  :    ");
+    for (sbyte_t i = 7; i >= 0; --i) {
+        printf("%c%c",
+               (gb->interrupts.if_reg & (1 << i)) ? '1' : '0',
+               i > 0 ? ' ' : '\n');
+    }
+
+    printf("\nA: $%02X    F: $%02X\n",
            reg_readb(REG_A, gb),
            reg_readb(REG_F, gb));
     printf("B: $%02X    C: $%02X\n",

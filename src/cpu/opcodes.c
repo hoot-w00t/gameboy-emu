@@ -1133,6 +1133,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_a
     },
     {
+        .mnemonic     = "DI",
+        .opcode       = 0xF3,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Disable Interrupts",
+        .handler      = &opcode_di
+    },
+    {
         .mnemonic     = "PUSH AF",
         .opcode       = 0xF5,
         .length       = 1,
@@ -1160,15 +1169,6 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_sp
     },
     {
-        .mnemonic     = "RST $FF",
-        .opcode       = 0xFF,
-        .length       = 1,
-        .cycles_true  = 16,
-        .cycles_false = 16,
-        .comment      = "Call $FF",
-        .handler      = &opcode_rst
-    },
-    {
         .mnemonic     = "LD A,(nn)",
         .opcode       = 0xFA,
         .length       = 3,
@@ -1176,6 +1176,24 @@ const opcode_t opcode_table[] = {
         .cycles_false = 16,
         .comment      = "Load value at address nn to A",
         .handler      = &opcode_ld_a
+    },
+    {
+        .mnemonic     = "EI",
+        .opcode       = 0xFB,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Enable Interrupts",
+        .handler      = &opcode_ei
+    },
+    {
+        .mnemonic     = "RST $FF",
+        .opcode       = 0xFF,
+        .length       = 1,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Call $FF",
+        .handler      = &opcode_rst
     },
     {NULL, 0, 0, 0, 0, NULL, NULL}
 };

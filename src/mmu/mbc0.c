@@ -44,6 +44,12 @@ byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
     } else if (ADDR_IN_RANGE(addr, HRAM_LADDR, HRAM_UADDR)) {
         return gb->memory.hram[addr - HRAM_LADDR];
 
+    } else if (addr == INTERRUPT_FLAG) {
+        return gb->interrupts.if_reg;
+
+    } else if (addr == INTERRUPT_ENABLE) {
+        return gb->interrupts.ie_reg;
+
     } else {
         logger(LOG_ERROR, "mbc0_readb failed: address $%04X", addr);
         return 0;
@@ -72,6 +78,14 @@ bool mbc0_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 
     } else if (ADDR_IN_RANGE(addr, HRAM_LADDR, HRAM_UADDR)) {
         gb->memory.hram[addr - HRAM_LADDR] = value;
+        return true;
+
+    } else if (addr == INTERRUPT_FLAG) {
+        gb->interrupts.if_reg = value;
+        return true;
+
+    } else if (addr == INTERRUPT_ENABLE) {
+        gb->interrupts.ie_reg = value;
         return true;
 
     } else {

@@ -115,11 +115,21 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define CR_GLOBAL_CHECKSUM_ADDR   (0x014E)
 
 // Interrupts
-#define INTERRUPT_VBLANK   (0x40)
-#define INTERRUPT_LCD_STAT (0x48)
-#define INTERRUPT_TIMER    (0x50)
-#define INTERRUPT_SERIAL   (0x58)
-#define INTERRUPT_JOYPAD   (0x60)
+#define ISR_CYCLES       (5)
+#define IME_DISABLE      (0)
+#define IME_ENABLE       (1)
+
+#define INT_VBLANK       (0x40)
+#define INT_LCD_STAT     (0x48)
+#define INT_TIMER        (0x50)
+#define INT_SERIAL       (0x58)
+#define INT_JOYPAD       (0x60)
+
+#define INT_VBLANK_BIT   (0)
+#define INT_LCD_STAT_BIT (1)
+#define INT_TIMER_BIT    (2)
+#define INT_SERIAL_BIT   (3)
+#define INT_JOYPAD_BIT   (4)
 
 // Return values for the opcode handlers
 #define OPCODE_ILLEGAL   (-1)  // Illegal opcode
@@ -174,16 +184,22 @@ struct mmu {
     mmu_writeb_t writeb_f;       // mbc_writeb function pointer
 };
 
+struct interrupts {
+    byte_t ime;     // Interrupt Master Enable flag
+    byte_t ie_reg;  // Interrupt Flag register
+    byte_t if_reg;  // Interrupt Enable register
+};
+
 struct gb_system {
     struct cartridge_hdr cartridge;    // Cartridge information
     struct mmu memory;                 // Memory areas
+    struct interrupts interrupts;      // Interrupt registers
     byte_t registers[8];               // CPU Registers
     bool halt;                         // Is CPU halted
     uint16_t pc;                       // Program Counter (Initialized with CARTRIDGE_HEADER_LADDR)
     uint16_t sp;                       // Stack pointer (Initialized with HRAM_UADDR)
     uint16_t idle_cycles;              // Remaining cycles to idle (decrease at every cycle)
     size_t cycle_nb;                   // CPU Cycle #
-    byte_t ime;                        // Interrupt Master Enable Flag
 };
 
 struct opcode {
