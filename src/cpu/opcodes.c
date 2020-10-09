@@ -26,6 +26,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/alu/add.h"
 #include "cpu/opcodes/alu/adc.h"
 #include "cpu/opcodes/alu/and.h"
+#include "cpu/opcodes/alu/xor.h"
 
 const opcode_t opcode_table[] = {
     {
@@ -1073,6 +1074,78 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_and
     },
     {
+        .mnemonic     = "XOR B",
+        .opcode       = 0xA8,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical XOR with B",
+        .handler      = &opcode_xor
+    },
+    {
+        .mnemonic     = "XOR C",
+        .opcode       = 0xA9,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical XOR with C",
+        .handler      = &opcode_xor
+    },
+    {
+        .mnemonic     = "XOR D",
+        .opcode       = 0xAA,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical XOR with D",
+        .handler      = &opcode_xor
+    },
+    {
+        .mnemonic     = "XOR E",
+        .opcode       = 0xAB,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical XOR with E",
+        .handler      = &opcode_xor
+    },
+    {
+        .mnemonic     = "XOR H",
+        .opcode       = 0xAC,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical XOR with H",
+        .handler      = &opcode_xor
+    },
+    {
+        .mnemonic     = "XOR L",
+        .opcode       = 0xAD,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical XOR with L",
+        .handler      = &opcode_xor
+    },
+    {
+        .mnemonic     = "XOR (HL)",
+        .opcode       = 0xAE,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Logical XOR with (HL)",
+        .handler      = &opcode_xor
+    },
+    {
+        .mnemonic     = "XOR A",
+        .opcode       = 0xAF,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical XOR with A",
+        .handler      = &opcode_xor
+    },
+    {
         .mnemonic     = "RET NZ",
         .opcode       = 0xC0,
         .length       = 1,
@@ -1377,6 +1450,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 16,
         .comment      = "Load A at address nn",
         .handler      = &opcode_ld_a
+    },
+    {
+        .mnemonic     = "XOR n",
+        .opcode       = 0xEE,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Logical XOR with n",
+        .handler      = &opcode_xor
     },
     {
         .mnemonic     = "RST $28",
