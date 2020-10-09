@@ -25,6 +25,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/calls.h"
 #include "cpu/opcodes/alu/add.h"
 #include "cpu/opcodes/alu/adc.h"
+#include "cpu/opcodes/alu/and.h"
 
 const opcode_t opcode_table[] = {
     {
@@ -1000,6 +1001,78 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_adc_a_n
     },
     {
+        .mnemonic     = "AND B",
+        .opcode       = 0xA0,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical AND with B",
+        .handler      = &opcode_and
+    },
+    {
+        .mnemonic     = "AND C",
+        .opcode       = 0xA1,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical AND with C",
+        .handler      = &opcode_and
+    },
+    {
+        .mnemonic     = "AND D",
+        .opcode       = 0xA2,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical AND with D",
+        .handler      = &opcode_and
+    },
+    {
+        .mnemonic     = "AND E",
+        .opcode       = 0xA3,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical AND with E",
+        .handler      = &opcode_and
+    },
+    {
+        .mnemonic     = "AND H",
+        .opcode       = 0xA4,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical AND with H",
+        .handler      = &opcode_and
+    },
+    {
+        .mnemonic     = "AND L",
+        .opcode       = 0xA5,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical AND with L",
+        .handler      = &opcode_and
+    },
+    {
+        .mnemonic     = "AND (HL)",
+        .opcode       = 0xA6,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Logical AND with (HL)",
+        .handler      = &opcode_and
+    },
+    {
+        .mnemonic     = "AND A",
+        .opcode       = 0xA7,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical AND with A",
+        .handler      = &opcode_and
+    },
+    {
         .mnemonic     = "RET NZ",
         .opcode       = 0xC0,
         .length       = 1,
@@ -1268,6 +1341,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 16,
         .comment      = "Push HL to stack",
         .handler      = &opcode_push
+    },
+    {
+        .mnemonic     = "AND n",
+        .opcode       = 0xE6,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Logical AND with n",
+        .handler      = &opcode_and
     },
     {
         .mnemonic     = "RST $20",
