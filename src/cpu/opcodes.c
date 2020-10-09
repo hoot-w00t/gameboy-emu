@@ -27,6 +27,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/alu/adc.h"
 #include "cpu/opcodes/alu/and.h"
 #include "cpu/opcodes/alu/xor.h"
+#include "cpu/opcodes/alu/or.h"
 
 const opcode_t opcode_table[] = {
     {
@@ -1146,6 +1147,78 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_xor
     },
     {
+        .mnemonic     = "OR B",
+        .opcode       = 0xB0,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical OR with B",
+        .handler      = &opcode_or
+    },
+    {
+        .mnemonic     = "OR C",
+        .opcode       = 0xB1,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical OR with C",
+        .handler      = &opcode_or
+    },
+    {
+        .mnemonic     = "OR D",
+        .opcode       = 0xB2,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical OR with D",
+        .handler      = &opcode_or
+    },
+    {
+        .mnemonic     = "OR E",
+        .opcode       = 0xB3,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical OR with E",
+        .handler      = &opcode_or
+    },
+    {
+        .mnemonic     = "OR H",
+        .opcode       = 0xB4,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical OR with H",
+        .handler      = &opcode_or
+    },
+    {
+        .mnemonic     = "OR L",
+        .opcode       = 0xB5,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical OR with L",
+        .handler      = &opcode_or
+    },
+    {
+        .mnemonic     = "OR (HL)",
+        .opcode       = 0xB6,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Logical OR with (HL)",
+        .handler      = &opcode_or
+    },
+    {
+        .mnemonic     = "OR A",
+        .opcode       = 0xB7,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Logical OR with A",
+        .handler      = &opcode_or
+    },
+    {
         .mnemonic     = "RET NZ",
         .opcode       = 0xC0,
         .length       = 1,
@@ -1513,6 +1586,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 16,
         .comment      = "Push AF to stack",
         .handler      = &opcode_push
+    },
+    {
+        .mnemonic     = "OR n",
+        .opcode       = 0xF6,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Logical OR with n",
+        .handler      = &opcode_or
     },
     {
         .mnemonic     = "RST $30",

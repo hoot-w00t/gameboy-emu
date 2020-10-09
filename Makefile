@@ -24,6 +24,7 @@ SRC	=	logger.c				\
 		cpu/opcodes/alu/adc.c	\
 		cpu/opcodes/alu/and.c	\
 		cpu/opcodes/alu/xor.c	\
+		cpu/opcodes/alu/or.c	\
 		mmu/banks.c				\
 		mmu/mmu.c				\
 		mmu/mbc0.c
