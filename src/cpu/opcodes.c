@@ -30,6 +30,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/alu/and.h"
 #include "cpu/opcodes/alu/xor.h"
 #include "cpu/opcodes/alu/or.h"
+#include "cpu/opcodes/alu/cp.h"
 
 const opcode_t opcode_table[] = {
     {
@@ -1365,6 +1366,78 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_or
     },
     {
+        .mnemonic     = "CP B",
+        .opcode       = 0xB8,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Compare A with B",
+        .handler      = &opcode_cp
+    },
+    {
+        .mnemonic     = "CP C",
+        .opcode       = 0xB9,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Compare A with C",
+        .handler      = &opcode_cp
+    },
+    {
+        .mnemonic     = "CP D",
+        .opcode       = 0xBA,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Compare A with D",
+        .handler      = &opcode_cp
+    },
+    {
+        .mnemonic     = "CP E",
+        .opcode       = 0xBB,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Compare A with E",
+        .handler      = &opcode_cp
+    },
+    {
+        .mnemonic     = "CP H",
+        .opcode       = 0xBC,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Compare A with H",
+        .handler      = &opcode_cp
+    },
+    {
+        .mnemonic     = "CP L",
+        .opcode       = 0xBD,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Compare A with L",
+        .handler      = &opcode_cp
+    },
+    {
+        .mnemonic     = "CP (HL)",
+        .opcode       = 0xBE,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Compare A with (HL)",
+        .handler      = &opcode_cp
+    },
+    {
+        .mnemonic     = "CP A",
+        .opcode       = 0xBF,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Compare A with A",
+        .handler      = &opcode_cp
+    },
+    {
         .mnemonic     = "RET NZ",
         .opcode       = 0xC0,
         .length       = 1,
@@ -1795,6 +1868,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 4,
         .comment      = "Enable Interrupts",
         .handler      = &opcode_ei
+    },
+    {
+        .mnemonic     = "CP n",
+        .opcode       = 0xFE,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Compare A with n",
+        .handler      = &opcode_cp
     },
     {
         .mnemonic     = "RST $FF",
