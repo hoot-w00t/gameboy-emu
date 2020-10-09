@@ -25,6 +25,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/calls.h"
 #include "cpu/opcodes/alu/add.h"
 #include "cpu/opcodes/alu/adc.h"
+#include "cpu/opcodes/alu/sub.h"
 #include "cpu/opcodes/alu/and.h"
 #include "cpu/opcodes/alu/xor.h"
 #include "cpu/opcodes/alu/or.h"
@@ -1003,6 +1004,78 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_adc_a_n
     },
     {
+        .mnemonic     = "SUB A,B",
+        .opcode       = 0x90,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Subtract B from A",
+        .handler      = &opcode_sub
+    },
+    {
+        .mnemonic     = "SUB A,C",
+        .opcode       = 0x91,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Subtract C from A",
+        .handler      = &opcode_sub
+    },
+    {
+        .mnemonic     = "SUB A,D",
+        .opcode       = 0x92,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Subtract D from A",
+        .handler      = &opcode_sub
+    },
+    {
+        .mnemonic     = "SUB A,E",
+        .opcode       = 0x93,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Subtract E from A",
+        .handler      = &opcode_sub
+    },
+    {
+        .mnemonic     = "SUB A,H",
+        .opcode       = 0x94,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Subtract H from A",
+        .handler      = &opcode_sub
+    },
+    {
+        .mnemonic     = "SUB A,L",
+        .opcode       = 0x95,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Subtract L from A",
+        .handler      = &opcode_sub
+    },
+    {
+        .mnemonic     = "SUB A,(HL)",
+        .opcode       = 0x96,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Subtract (HL) from A",
+        .handler      = &opcode_sub
+    },
+    {
+        .mnemonic     = "SUB A,A",
+        .opcode       = 0x97,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Subtract A from A",
+        .handler      = &opcode_sub
+    },
+    {
         .mnemonic     = "AND B",
         .opcode       = 0xA0,
         .length       = 1,
@@ -1397,6 +1470,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 16,
         .comment      = "Push DE to stack",
         .handler      = &opcode_push
+    },
+    {
+        .mnemonic     = "SUB A,n",
+        .opcode       = 0xD6,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Subtract n from A",
+        .handler      = &opcode_sub
     },
     {
         .mnemonic     = "RST $10",
