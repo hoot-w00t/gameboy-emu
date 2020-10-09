@@ -23,6 +23,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/ld.h"
 #include "cpu/opcodes/jumps.h"
 #include "cpu/opcodes/calls.h"
+#include "cpu/opcodes/alu/add.h"
 
 const opcode_t opcode_table[] = {
     {
@@ -69,6 +70,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 20,
         .comment      = "Load SP at address nn",
         .handler      = &opcode_ld_sp
+    },
+    {
+        .mnemonic     = "ADD HL,BC",
+        .opcode       = 0x09,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Add BC to HL",
+        .handler      = &opcode_add_hl_n
     },
     {
         .mnemonic     = "LD A,(BC)",
@@ -123,6 +133,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 12,
         .comment      = "Jump to PC+n (signed)",
         .handler      = &opcode_jr
+    },
+    {
+        .mnemonic     = "ADD HL,DE",
+        .opcode       = 0x19,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Add DE to HL",
+        .handler      = &opcode_add_hl_n
     },
     {
         .mnemonic     = "LD A,(DE)",
@@ -188,6 +207,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_jr
     },
     {
+        .mnemonic     = "ADD HL,HL",
+        .opcode       = 0x29,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Add HL to HL",
+        .handler      = &opcode_add_hl_n
+    },
+    {
         .mnemonic     = "LDI A,(HL)",
         .opcode       = 0x2A,
         .length       = 1,
@@ -240,6 +268,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Jump to PC+n (signed) if C is set",
         .handler      = &opcode_jr
+    },
+    {
+        .mnemonic     = "ADD HL,SP",
+        .opcode       = 0x39,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Add SP to HL",
+        .handler      = &opcode_add_hl_n
     },
     {
         .mnemonic     = "LDD A,(HL)",
@@ -818,6 +855,78 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_a
     },
     {
+        .mnemonic     = "ADD A,B",
+        .opcode       = 0x80,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Add B to A",
+        .handler      = &opcode_add_a_n
+    },
+    {
+        .mnemonic     = "ADD A,C",
+        .opcode       = 0x81,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Add C to A",
+        .handler      = &opcode_add_a_n
+    },
+    {
+        .mnemonic     = "ADD A,D",
+        .opcode       = 0x82,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Add D to A",
+        .handler      = &opcode_add_a_n
+    },
+    {
+        .mnemonic     = "ADD A,E",
+        .opcode       = 0x83,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Add E to A",
+        .handler      = &opcode_add_a_n
+    },
+    {
+        .mnemonic     = "ADD A,H",
+        .opcode       = 0x84,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Add H to A",
+        .handler      = &opcode_add_a_n
+    },
+    {
+        .mnemonic     = "ADD A,L",
+        .opcode       = 0x85,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Add L to A",
+        .handler      = &opcode_add_a_n
+    },
+    {
+        .mnemonic     = "ADD A,(HL)",
+        .opcode       = 0x86,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Add value at address stored in HL to A",
+        .handler      = &opcode_add_a_n
+    },
+    {
+        .mnemonic     = "ADD A,A",
+        .opcode       = 0x87,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Add A to A",
+        .handler      = &opcode_add_a_n
+    },
+    {
         .mnemonic     = "RET NZ",
         .opcode       = 0xC0,
         .length       = 1,
@@ -870,6 +979,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 16,
         .comment      = "Push BC to stack",
         .handler      = &opcode_push
+    },
+    {
+        .mnemonic     = "ADD A,n",
+        .opcode       = 0xC6,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Add n to A",
+        .handler      = &opcode_add_a_n
     },
     {
         .mnemonic     = "RST $00",

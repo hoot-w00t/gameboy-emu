@@ -20,6 +20,7 @@ SRC	=	logger.c				\
 		cpu/opcodes/ld.c		\
 		cpu/opcodes/jumps.c		\
 		cpu/opcodes/calls.c		\
+		cpu/opcodes/alu/add.c	\
 		mmu/banks.c				\
 		mmu/mmu.c				\
 		mmu/mbc0.c
