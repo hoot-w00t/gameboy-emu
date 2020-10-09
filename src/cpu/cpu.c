@@ -35,9 +35,9 @@ byte_t cpu_fetchb(gb_system_t *gb)
 }
 
 // Fetch uint16 from PC and increment PC twice
-byte_t cpu_fetch_u16(gb_system_t *gb)
+uint16_t cpu_fetch_u16(gb_system_t *gb)
 {
-    byte_t value = mmu_read_u16(gb->pc, gb);
+    uint16_t value = mmu_read_u16(gb->pc, gb);
 
     gb->pc += 2;
     return value;
