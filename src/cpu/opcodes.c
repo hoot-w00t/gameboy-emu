@@ -24,6 +24,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/jumps.h"
 #include "cpu/opcodes/calls.h"
 #include "cpu/opcodes/alu/add.h"
+#include "cpu/opcodes/alu/adc.h"
 
 const opcode_t opcode_table[] = {
     {
@@ -927,6 +928,78 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_add_a_n
     },
     {
+        .mnemonic     = "ADC A,B",
+        .opcode       = 0x88,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Add B+Cy to A",
+        .handler      = &opcode_adc_a_n
+    },
+    {
+        .mnemonic     = "ADC A,C",
+        .opcode       = 0x89,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Add C+Cy to A",
+        .handler      = &opcode_adc_a_n
+    },
+    {
+        .mnemonic     = "ADC A,D",
+        .opcode       = 0x8A,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Add D+Cy to A",
+        .handler      = &opcode_adc_a_n
+    },
+    {
+        .mnemonic     = "ADC A,E",
+        .opcode       = 0x8B,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Add E+Cy to A",
+        .handler      = &opcode_adc_a_n
+    },
+    {
+        .mnemonic     = "ADC A,H",
+        .opcode       = 0x8C,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Add H+Cy to A",
+        .handler      = &opcode_adc_a_n
+    },
+    {
+        .mnemonic     = "ADC A,L",
+        .opcode       = 0x8D,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Add L+Cy to A",
+        .handler      = &opcode_adc_a_n
+    },
+    {
+        .mnemonic     = "ADC A,(HL)",
+        .opcode       = 0x8E,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Add (HL)+Cy to A",
+        .handler      = &opcode_adc_a_n
+    },
+    {
+        .mnemonic     = "ADC A,A",
+        .opcode       = 0x8F,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Add A+Cy to A",
+        .handler      = &opcode_adc_a_n
+    },
+    {
         .mnemonic     = "RET NZ",
         .opcode       = 0xC0,
         .length       = 1,
@@ -1042,6 +1115,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 24,
         .comment      = "Push PC and jump to nn",
         .handler      = &opcode_call
+    },
+    {
+        .mnemonic     = "ADC A,n",
+        .opcode       = 0xCE,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Add n+Cy to A",
+        .handler      = &opcode_adc_a_n
     },
     {
         .mnemonic     = "RST $08",
