@@ -21,6 +21,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "xalloc.h"
 #include "gameboy.h"
 #include "cartridge.h"
+#include "cpu/registers.h"
 #include "mmu/mmu.h"
 #include "mmu/banks.h"
 #include <stdio.h>
@@ -156,8 +157,53 @@ int load_rom_from_file(const char *filename, gb_system_t *gb)
 // Reset a gb_system_t to its startup state
 void gb_system_reset(gb_system_t *gb)
 {
+    // Initialize registers
+    reg_write_u16(REG_AF, 0x01B0, gb);
+    reg_write_u16(REG_BC, 0x0013, gb);
+    reg_write_u16(REG_DE, 0x00D8, gb);
+    reg_write_u16(REG_HL, 0x014D, gb);
     gb->pc = CARTRIDGE_HEADER_LADDR;
     gb->sp = HRAM_UADDR;
+
+    // Initialize IO registers
+    // Timer
+    gb->memory.ioregs[0x05] = 0x00; // TIMA
+    gb->memory.ioregs[0x06] = 0x00; // TMA
+    gb->memory.ioregs[0x07] = 0x00; // TAC
+
+    // Sound
+    gb->memory.ioregs[0x10] = 0x80; // NR10
+    gb->memory.ioregs[0x11] = 0xBF; // NR11
+    gb->memory.ioregs[0x12] = 0xF3; // NR12
+    gb->memory.ioregs[0x14] = 0xBF; // NR14
+    gb->memory.ioregs[0x16] = 0x3F; // NR21
+    gb->memory.ioregs[0x17] = 0x00; // NR22
+    gb->memory.ioregs[0x19] = 0xBF; // NR24
+    gb->memory.ioregs[0x1A] = 0x7F; // NR30
+    gb->memory.ioregs[0x1B] = 0xFF; // NR31
+    gb->memory.ioregs[0x1C] = 0x9F; // NR32
+    gb->memory.ioregs[0x1E] = 0xBF; // NR33
+    gb->memory.ioregs[0x20] = 0xFF; // NR41
+    gb->memory.ioregs[0x21] = 0x00; // NR42
+    gb->memory.ioregs[0x22] = 0x00; // NR43
+    gb->memory.ioregs[0x23] = 0xBF; // NR30
+    gb->memory.ioregs[0x24] = 0x77; // NR50
+    gb->memory.ioregs[0x25] = 0xF3; // NR51
+    gb->memory.ioregs[0x26] = 0xF1; // NR52
+
+    // LCD
+    gb->memory.ioregs[0x40] = 0x91; // LCDC
+    gb->memory.ioregs[0x42] = 0x00; // SCY
+    gb->memory.ioregs[0x43] = 0x00; // SCX
+    gb->memory.ioregs[0x45] = 0x00; // LYC
+    gb->memory.ioregs[0x47] = 0xFC; // BGP
+    gb->memory.ioregs[0x48] = 0xFF; // OBP0
+    gb->memory.ioregs[0x49] = 0xFF; // OBP1
+    gb->memory.ioregs[0x4A] = 0x00; // WY
+    gb->memory.ioregs[0x4B] = 0x00; // WX
+
+    // Interrupts
+    gb->memory.ioregs[0xFF] = 0x00; // IE
 }
 
 // Destroy gb_system_t and free all allocated memory
