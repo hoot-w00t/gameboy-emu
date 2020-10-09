@@ -298,7 +298,7 @@ void cartridge_dump(cartridge_hdr_t *cr)
     printf("Title: %s\n", cr->title);
 
     if (cr->old_licensee_code) {
-        printf("Licensee code (old): 0x%02X\n", cr->licensee_code[0]);
+        printf("Licensee code (old): $%02X\n", cr->licensee_code[0]);
     } else {
         printf("Licensee code: %c%c\n",
                cr->licensee_code[0],
@@ -312,11 +312,11 @@ void cartridge_dump(cartridge_hdr_t *cr)
            cr->ram_size,
            cr->ram_banks);
 
-    printf("ROM Version: 0x%02X\n", cr->rom_version);
-    printf("Destination code: 0x%02X (%s)\n",
+    printf("ROM Version: $%02X\n", cr->rom_version);
+    printf("Destination code: $%02X (%s)\n",
            cr->destination_code,
            cr->destination_code ? "Non-Japanese" : "Japanese");
 
-    printf("Header Checksum: 0x%02X\n", cr->header_checksum);
-    printf("Global Checksum: 0x%04X\n", cr->global_checksum);
+    printf("Header Checksum: $%02X\n", cr->header_checksum);
+    printf("Global Checksum: $%04X\n", cr->global_checksum);
 }
