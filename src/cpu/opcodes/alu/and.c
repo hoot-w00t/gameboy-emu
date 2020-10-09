@@ -50,7 +50,7 @@ int opcode_and(const opcode_t *opcode, gb_system_t *gb)
     result = reg_readb(REG_A, gb) & value;
 
     if (result == 0) reg_flag_set(FLAG_Z, gb); else reg_flag_clear(FLAG_Z, gb);
-    reg_flag_clear(FLAG_H, gb);
+    reg_flag_clear(FLAG_N, gb);
     reg_flag_set(FLAG_H, gb);
     reg_flag_clear(FLAG_C, gb);
 
