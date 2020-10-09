@@ -30,8 +30,6 @@ int opcode_adc_a_n(const opcode_t *opcode, gb_system_t *gb)
     byte_t value;
     byte_t result;
 
-    if (reg_flag(FLAG_C, gb)) value = 1; else value = 0;
-
     switch (opcode->opcode) {
         // ADC A,n
         case 0x8F: value = reg_readb(REG_A, gb); break;
@@ -48,6 +46,8 @@ int opcode_adc_a_n(const opcode_t *opcode, gb_system_t *gb)
 
         default: return OPCODE_ILLEGAL;
     }
+
+    if (reg_flag(FLAG_C, gb)) value += 1;
 
     result = cpu_addb(reg_readb(REG_A, gb), value, gb);
     if (result == 0) reg_flag_set(FLAG_Z, gb); else reg_flag_clear(FLAG_Z, gb);
