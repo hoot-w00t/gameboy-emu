@@ -23,6 +23,7 @@ SRC	=	logger.c				\
 		cpu/opcodes/alu/add.c	\
 		cpu/opcodes/alu/adc.c	\
 		cpu/opcodes/alu/sub.c	\
+		cpu/opcodes/alu/sbc.c	\
 		cpu/opcodes/alu/and.c	\
 		cpu/opcodes/alu/xor.c	\
 		cpu/opcodes/alu/or.c	\

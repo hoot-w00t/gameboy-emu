@@ -26,6 +26,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/alu/add.h"
 #include "cpu/opcodes/alu/adc.h"
 #include "cpu/opcodes/alu/sub.h"
+#include "cpu/opcodes/alu/sbc.h"
 #include "cpu/opcodes/alu/and.h"
 #include "cpu/opcodes/alu/xor.h"
 #include "cpu/opcodes/alu/or.h"
@@ -1076,6 +1077,78 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_sub
     },
     {
+        .mnemonic     = "SBC A,B",
+        .opcode       = 0x98,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Subtract B+Cy from A",
+        .handler      = &opcode_sbc
+    },
+    {
+        .mnemonic     = "SBC A,C",
+        .opcode       = 0x99,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Subtract C+Cy from A",
+        .handler      = &opcode_sbc
+    },
+    {
+        .mnemonic     = "SBC A,D",
+        .opcode       = 0x9A,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Subtract D+Cy from A",
+        .handler      = &opcode_sbc
+    },
+    {
+        .mnemonic     = "SBC A,E",
+        .opcode       = 0x9B,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Subtract E+Cy from A",
+        .handler      = &opcode_sbc
+    },
+    {
+        .mnemonic     = "SBC A,H",
+        .opcode       = 0x9C,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Subtract H+Cy from A",
+        .handler      = &opcode_sbc
+    },
+    {
+        .mnemonic     = "SBC A,L",
+        .opcode       = 0x9D,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Subtract L+Cy from A",
+        .handler      = &opcode_sbc
+    },
+    {
+        .mnemonic     = "SBC A,(HL)",
+        .opcode       = 0x9E,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Subtract (HL)+Cy from A",
+        .handler      = &opcode_sbc
+    },
+    {
+        .mnemonic     = "SBC A,A",
+        .opcode       = 0x9F,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Subtract A+Cy from A",
+        .handler      = &opcode_sbc
+    },
+    {
         .mnemonic     = "AND B",
         .opcode       = 0xA0,
         .length       = 1,
@@ -1524,6 +1597,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 12,
         .comment      = "Push PC and jump to nn if C if set",
         .handler      = &opcode_call
+    },
+    {
+        .mnemonic     = "SBC A,n",
+        .opcode       = 0xDE,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Subtract n+Cy from A",
+        .handler      = &opcode_sbc
     },
     {
         .mnemonic     = "RST $18",
