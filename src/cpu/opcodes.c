@@ -31,6 +31,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/alu/xor.h"
 #include "cpu/opcodes/alu/or.h"
 #include "cpu/opcodes/alu/cp.h"
+#include "cpu/opcodes/alu/inc.h"
 
 const opcode_t opcode_table[] = {
     {
@@ -59,6 +60,24 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load A at address BC",
         .handler      = &opcode_ld_a
+    },
+    {
+        .mnemonic     = "INC BC",
+        .opcode       = 0x03,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Increment BC",
+        .handler      = &opcode_inc_nn
+    },
+    {
+        .mnemonic     = "INC B",
+        .opcode       = 0x04,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Increment B",
+        .handler      = &opcode_inc_n_r
     },
     {
         .mnemonic     = "LD B,n",
@@ -97,6 +116,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_a
     },
     {
+        .mnemonic     = "INC C",
+        .opcode       = 0x0C,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Increment C",
+        .handler      = &opcode_inc_n_r
+    },
+    {
         .mnemonic     = "LD C,n",
         .opcode       = 0x0E,
         .length       = 2,
@@ -122,6 +150,24 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load A at address DE",
         .handler      = &opcode_ld_a
+    },
+    {
+        .mnemonic     = "INC DE",
+        .opcode       = 0x13,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Increment DE",
+        .handler      = &opcode_inc_nn
+    },
+    {
+        .mnemonic     = "INC D",
+        .opcode       = 0x14,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Increment D",
+        .handler      = &opcode_inc_n_r
     },
     {
         .mnemonic     = "LD D,n",
@@ -160,6 +206,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_a
     },
     {
+        .mnemonic     = "INC E",
+        .opcode       = 0x1C,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Increment E",
+        .handler      = &opcode_inc_n_r
+    },
+    {
         .mnemonic     = "LD E,n",
         .opcode       = 0x1E,
         .length       = 2,
@@ -194,6 +249,24 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load A at address HL and increment A",
         .handler      = &opcode_ld_a
+    },
+    {
+        .mnemonic     = "INC HL",
+        .opcode       = 0x23,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Increment HL",
+        .handler      = &opcode_inc_nn
+    },
+    {
+        .mnemonic     = "INC H",
+        .opcode       = 0x24,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Increment H",
+        .handler      = &opcode_inc_n_r
     },
     {
         .mnemonic     = "LD H,n",
@@ -232,6 +305,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_a
     },
     {
+        .mnemonic     = "INC L",
+        .opcode       = 0x2C,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Increment L",
+        .handler      = &opcode_inc_n_r
+    },
+    {
         .mnemonic     = "LD L,n",
         .opcode       = 0x2E,
         .length       = 2,
@@ -268,6 +350,24 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_a
     },
     {
+        .mnemonic     = "INC SP",
+        .opcode       = 0x33,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Increment SP",
+        .handler      = &opcode_inc_nn
+    },
+    {
+        .mnemonic     = "INC (HL)",
+        .opcode       = 0x34,
+        .length       = 1,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Increment (HL)",
+        .handler      = &opcode_inc_n_hl
+    },
+    {
         .mnemonic     = "JR C,n",
         .opcode       = 0x38,
         .length       = 2,
@@ -293,6 +393,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load value at address HL to A and decrement A",
         .handler      = &opcode_ld_a
+    },
+    {
+        .mnemonic     = "INC A",
+        .opcode       = 0x3C,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Increment A",
+        .handler      = &opcode_inc_n_r
     },
     {
         .mnemonic     = "LD A,n",
