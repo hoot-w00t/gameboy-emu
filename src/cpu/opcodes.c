@@ -32,6 +32,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/alu/or.h"
 #include "cpu/opcodes/alu/cp.h"
 #include "cpu/opcodes/alu/inc.h"
+#include "cpu/opcodes/alu/dec.h"
 
 const opcode_t opcode_table[] = {
     {
@@ -80,6 +81,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_inc_n_r
     },
     {
+        .mnemonic     = "DEC B",
+        .opcode       = 0x05,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Decrement B",
+        .handler      = &opcode_dec_n_r
+    },
+    {
         .mnemonic     = "LD B,n",
         .opcode       = 0x06,
         .length       = 2,
@@ -116,6 +126,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_a
     },
     {
+        .mnemonic     = "DEC BC",
+        .opcode       = 0x0B,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Decrement BC",
+        .handler      = &opcode_dec_nn
+    },
+    {
         .mnemonic     = "INC C",
         .opcode       = 0x0C,
         .length       = 1,
@@ -123,6 +142,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 4,
         .comment      = "Increment C",
         .handler      = &opcode_inc_n_r
+    },
+    {
+        .mnemonic     = "DEC C",
+        .opcode       = 0x0D,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Decrement C",
+        .handler      = &opcode_dec_n_r
     },
     {
         .mnemonic     = "LD C,n",
@@ -170,6 +198,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_inc_n_r
     },
     {
+        .mnemonic     = "DEC D",
+        .opcode       = 0x15,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Decrement D",
+        .handler      = &opcode_dec_n_r
+    },
+    {
         .mnemonic     = "LD D,n",
         .opcode       = 0x16,
         .length       = 2,
@@ -206,6 +243,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_a
     },
     {
+        .mnemonic     = "DEC DE",
+        .opcode       = 0x1B,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Decrement DE",
+        .handler      = &opcode_dec_nn
+    },
+    {
         .mnemonic     = "INC E",
         .opcode       = 0x1C,
         .length       = 1,
@@ -213,6 +259,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 4,
         .comment      = "Increment E",
         .handler      = &opcode_inc_n_r
+    },
+    {
+        .mnemonic     = "DEC E",
+        .opcode       = 0x1D,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Decrement E",
+        .handler      = &opcode_dec_n_r
     },
     {
         .mnemonic     = "LD E,n",
@@ -269,6 +324,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_inc_n_r
     },
     {
+        .mnemonic     = "DEC H",
+        .opcode       = 0x25,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Decrement H",
+        .handler      = &opcode_dec_n_r
+    },
+    {
         .mnemonic     = "LD H,n",
         .opcode       = 0x26,
         .length       = 2,
@@ -305,6 +369,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_a
     },
     {
+        .mnemonic     = "DEC HL",
+        .opcode       = 0x2B,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Decrement HL",
+        .handler      = &opcode_dec_nn
+    },
+    {
         .mnemonic     = "INC L",
         .opcode       = 0x2C,
         .length       = 1,
@@ -312,6 +385,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 4,
         .comment      = "Increment L",
         .handler      = &opcode_inc_n_r
+    },
+    {
+        .mnemonic     = "DEC L",
+        .opcode       = 0x2D,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Decrement L",
+        .handler      = &opcode_dec_n_r
     },
     {
         .mnemonic     = "LD L,n",
@@ -368,6 +450,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_inc_n_hl
     },
     {
+        .mnemonic     = "DEC (HL)",
+        .opcode       = 0x35,
+        .length       = 1,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Decrement (HL)",
+        .handler      = &opcode_dec_n_hl
+    },
+    {
         .mnemonic     = "JR C,n",
         .opcode       = 0x38,
         .length       = 2,
@@ -395,6 +486,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_a
     },
     {
+        .mnemonic     = "DEC SP",
+        .opcode       = 0x3B,
+        .length       = 1,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Decrement SP",
+        .handler      = &opcode_dec_nn
+    },
+    {
         .mnemonic     = "INC A",
         .opcode       = 0x3C,
         .length       = 1,
@@ -402,6 +502,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 4,
         .comment      = "Increment A",
         .handler      = &opcode_inc_n_r
+    },
+    {
+        .mnemonic     = "DEC A",
+        .opcode       = 0x3D,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Decrement A",
+        .handler      = &opcode_dec_n_r
     },
     {
         .mnemonic     = "LD A,n",
