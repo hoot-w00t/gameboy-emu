@@ -29,6 +29,5 @@ void reg_write_u16(byte_t reg, uint16_t value, gb_system_t *gb);
 bool reg_flag(byte_t flag, gb_system_t *gb);
 void reg_flag_set(byte_t flag, gb_system_t *gb);
 void reg_flag_clear(byte_t flag, gb_system_t *gb);
-void reg_flag_n(const bool subtract, gb_system_t *gb);
 
 #endif

@@ -68,13 +68,3 @@ void reg_flag_clear(byte_t flag, gb_system_t *gb)
         reg_writeb(REG_F, (reg_value ^ (1 << flag)), gb);
     }
 }
-
-// Set or clear N flag (Subtract flag)
-void reg_flag_n(const bool subtract, gb_system_t *gb)
-{
-    if (subtract) {
-        reg_flag_set(FLAG_N, gb);
-    } else {
-        reg_flag_clear(FLAG_N, gb);
-    }
-}
