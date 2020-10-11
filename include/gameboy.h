@@ -131,6 +131,42 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define INT_SERIAL_BIT   (3)
 #define INT_JOYPAD_BIT   (4)
 
+// LCD IO Registers
+#define LCDC         (0xFF40) // LCD Control Register
+#define LCDC_STATUS  (0xFF41) // LCD Status Register
+
+// Positions and scrolling
+#define LCDC_SCY     (0xFF42) // Scroll Y (RW)
+#define LCDC_SCX     (0xFF43) // Scroll X (RW)
+#define LCDC_LY      (0xFF44) // Y-Coordinate (RO)
+#define LCDC_LYC     (0xFF45) // LY Compare (RW)
+#define LCDC_WY      (0xFF4A) // Window Y Position (RW)
+#define LCDC_WX      (0xFF4B) // Window X Position -7 (RW)
+
+// Monochrome Palettes
+#define LCDC_BGP     (0xFF47) // BG Palette Data (RW)
+#define LCDC_OBP0    (0xFF48) // Object Palette 0 Data (RW)
+#define LCDC_OBP1    (0xFF49) // Object Palette 1 Data (RW)
+
+// OAM DMA Transfers
+#define LCDC_DMA     (0xFF46) // DMA Transfer
+
+// VRAM Modes
+#define LCDC_MODE_0           (0)         // H-Blank Period
+#define LCDC_MODE_HBLANK      LCDC_MODE_0
+#define LCDC_MODE_1           (1)         // V-Blank Period
+#define LCDC_MODE_VBLANK      LCDC_MODE_1
+#define LCDC_MODE_2           (2)         // Searching objects
+#define LCDC_MODE_SEARCH      LCDC_MODE_2
+#define LCDC_MODE_3           (3)         // Drawing
+#define LCDC_MODE_DRAW        LCDC_MODE_3
+
+// Video Monochrome shades
+#define GB_PALETTE_WHITE      (0)
+#define GB_PALETTE_LIGHT_GRAY (1)
+#define GB_PALETTE_DARK_GRAY  (2)
+#define GB_PALETTE_BLACK      (3)
+
 // Return values for the opcode handlers
 #define OPCODE_ILLEGAL   (-1)  // Illegal opcode
 #define OPCODE_EXIT      (-2)  // Break out of the CPU loop
@@ -138,6 +174,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 // Type definitions
 typedef uint8_t byte_t;
 typedef int8_t sbyte_t;
+typedef struct pixel pixel_t;
+typedef struct lcd_screen lcd_screen_t;
 typedef struct cartridge_hdr cartridge_hdr_t;
 typedef struct membank membank_t;
 typedef struct mmu mmu_t;
@@ -148,6 +186,39 @@ typedef struct opcode opcode_t;
 typedef int (*opcode_handler_t)(const opcode_t *, gb_system_t *);
 
 // Structures
+struct pixel {
+    byte_t r;
+    byte_t g;
+    byte_t b;
+};
+
+struct lcd_pos_regs {
+    byte_t scy;
+    byte_t scx;
+    byte_t ly;
+    byte_t lyc;
+    byte_t wy;
+    byte_t wx;
+};
+
+struct lcd_gb_palettes {
+    byte_t bgp;
+    byte_t obp0;
+    byte_t obp1;
+};
+
+struct lcd_screen {
+    byte_t mode;                   // LCD Mode
+    byte_t lcdc;                   // LCD Control Register
+    byte_t lcdc_status;            // LCD Status Register
+    struct lcd_pos_regs pos;       // LCD Positions and Scrolling Registers
+    struct lcd_gb_palettes gb_pal; // LCD Monochrome Palettes
+    byte_t dma;                    // DMA Transfer
+
+    // Screen framebuffer to hold the pixels
+    pixel_t framebuffer[SCREEN_HEIGHT][SCREEN_WIDTH];
+};
+
 struct cartridge_hdr {
     byte_t logo[48];          // Nintendo Logo Bitmap
     char title[17];           // Up to 16 characters + trailing zero
@@ -191,6 +262,7 @@ struct interrupts {
 };
 
 struct gb_system {
+    struct lcd_screen screen;          // GameBoy Video Screen
     struct cartridge_hdr cartridge;    // Cartridge information
     struct mmu memory;                 // Memory areas
     struct interrupts interrupts;      // Interrupt registers
