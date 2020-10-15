@@ -161,10 +161,12 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define LCDC_MODE_3           (3)         // Drawing
 #define LCDC_MODE_DRAW        LCDC_MODE_3
 
-// LCD PPU Cycles
-#define LCD_FRAME_CYCLES      (70224)
-#define LCD_LINE_CYCLES       (456)
-#define LCD_DMA_CYCLES        (160)
+// LCD Definitions
+#define LCD_LINES                       (154)
+#define LCD_DMA_CYCLES                  (160)
+#define LCD_MODE_2_CYCLES               (80)
+#define LCD_LINE_CYCLES                 (456)
+#define LCD_FRAME_CYCLES                (LCD_LINES * LCD_LINE_CYCLES)
 
 // Video Monochrome shades
 #define GB_PALETTE_WHITE      (0)
@@ -241,8 +243,7 @@ struct lcd_screen {
 
     // LCD State
     uint32_t frame_cycle;
-    uint32_t scanline_cycle;
-    uint16_t scanline;
+    uint32_t line_cycle;
 };
 
 struct cartridge_hdr {
