@@ -459,6 +459,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_dec_n_hl
     },
     {
+        .mnemonic     = "LD (HL),n",
+        .opcode       = 0x36,
+        .length       = 2,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Load n to (HL)",
+        .handler      = &opcode_ld_r8
+    },
+    {
         .mnemonic     = "JR C,n",
         .opcode       = 0x38,
         .length       = 2,

@@ -172,6 +172,9 @@ int opcode_ld_r8(const opcode_t *opcode, gb_system_t *gb)
         case 0x74: ld_hl_r8(REG_H, gb); break;
         case 0x75: ld_hl_r8(REG_L, gb); break;
 
+        // LD (HL),n
+        case 0x36: mmu_writeb(reg_read_u16(REG_HL, gb), cpu_fetchb(gb), gb); break;
+
         default: return OPCODE_ILLEGAL;
     }
     return opcode->cycles_true;
