@@ -23,6 +23,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define _CPU_OPCODE_ALU_SUB_H
 
 byte_t cpu_subb(const byte_t target, const byte_t value, gb_system_t *gb);
+uint16_t cpu_sub_u16(const uint16_t target, const uint16_t value, gb_system_t *gb);
 int opcode_sub(const opcode_t *opcode, gb_system_t *gb);
 
 #endif
