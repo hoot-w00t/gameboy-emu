@@ -24,6 +24,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/registers.h"
 #include "mmu/mmu.h"
 #include "mmu/banks.h"
+#include "ppu/lcd_regs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -192,15 +193,15 @@ void gb_system_reset(gb_system_t *gb)
     gb->memory.ioregs[0x26] = 0xF1; // NR52
 
     // LCD
-    gb->memory.ioregs[0x40] = 0x91; // LCDC
-    gb->memory.ioregs[0x42] = 0x00; // SCY
-    gb->memory.ioregs[0x43] = 0x00; // SCX
-    gb->memory.ioregs[0x45] = 0x00; // LYC
-    gb->memory.ioregs[0x47] = 0xFC; // BGP
-    gb->memory.ioregs[0x48] = 0xFF; // OBP0
-    gb->memory.ioregs[0x49] = 0xFF; // OBP1
-    gb->memory.ioregs[0x4A] = 0x00; // WY
-    gb->memory.ioregs[0x4B] = 0x00; // WX
+    lcd_reg_writeb(LCDC,      0x91, gb);
+    lcd_reg_writeb(LCDC_SCY,  0x00, gb);
+    lcd_reg_writeb(LCDC_SCX,  0x00, gb);
+    lcd_reg_writeb(LCDC_LYC,  0x00, gb);
+    lcd_reg_writeb(LCDC_BGP,  0xFC, gb);
+    lcd_reg_writeb(LCDC_OBP0, 0xFF, gb);
+    lcd_reg_writeb(LCDC_OBP1, 0xFF, gb);
+    lcd_reg_writeb(LCDC_WY,   0x00, gb);
+    lcd_reg_writeb(LCDC_WX,   0x00, gb);
 
     // Interrupts
     gb->memory.ioregs[0xFF] = 0x00; // IE
