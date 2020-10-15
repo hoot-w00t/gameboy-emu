@@ -33,7 +33,7 @@ byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
     } else if (ADDR_IN_RANGE(addr, VRAM_LADDR, VRAM_UADDR)) {
         if (gb->screen.enable && gb->screen.mode > LCDC_MODE_2) {
             logger(LOG_ERROR, "mbc0_readb failed: address $%04X: VRAM is not accessible", addr);
-            return 0;
+            return 0xFF;
         }
 
         return gb->memory.vram[addr - VRAM_LADDR];
