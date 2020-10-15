@@ -161,6 +161,11 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define LCDC_MODE_3           (3)         // Drawing
 #define LCDC_MODE_DRAW        LCDC_MODE_3
 
+// LCD PPU Cycles
+#define LCD_FRAME_CYCLES      (70224)
+#define LCD_LINE_CYCLES       (456)
+#define LCD_DMA_CYCLES        (160)
+
 // Video Monochrome shades
 #define GB_PALETTE_WHITE      (0)
 #define GB_PALETTE_LIGHT_GRAY (1)
@@ -214,9 +219,18 @@ struct lcd_screen {
     struct lcd_pos_regs pos;       // LCD Positions and Scrolling Registers
     struct lcd_gb_palettes gb_pal; // LCD Monochrome Palettes
     byte_t dma;                    // DMA Transfer
+    uint16_t dma_src;              // DMA Source Address
+    byte_t dma_offset;             // DMA Address Offset
+    byte_t dma_running;            // DMA Transfer Remaining Cycles
 
     // Screen framebuffer to hold the pixels
     pixel_t framebuffer[SCREEN_HEIGHT][SCREEN_WIDTH];
+    bool framebuffer_updated; // Set to true when framebuffer was updated
+
+    // LCD State
+    uint32_t frame_cycle;
+    uint32_t scanline_cycle;
+    uint16_t scanline;
 };
 
 struct cartridge_hdr {
