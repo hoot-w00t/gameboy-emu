@@ -2079,6 +2079,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_rst
     },
     {
+        .mnemonic     = "LDHL SP,n",
+        .opcode       = 0xF8,
+        .length       = 2,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Load SP+n (signed) to HL",
+        .handler      = &opcode_ld_sp
+    },
+    {
         .mnemonic     = "LD SP,HL",
         .opcode       = 0xF9,
         .length       = 1,
