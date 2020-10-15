@@ -197,31 +197,43 @@ struct pixel {
     byte_t b;
 };
 
-struct lcd_pos_regs {
-    byte_t scy;
-    byte_t scx;
-    byte_t ly;
-    byte_t lyc;
-    byte_t wy;
-    byte_t wx;
-};
-
-struct lcd_gb_palettes {
-    byte_t bgp;
-    byte_t obp0;
-    byte_t obp1;
-};
-
 struct lcd_screen {
-    byte_t mode;                   // LCD Mode
-    byte_t lcdc;                   // LCD Control Register
-    byte_t lcdc_status;            // LCD Status Register
-    struct lcd_pos_regs pos;       // LCD Positions and Scrolling Registers
-    struct lcd_gb_palettes gb_pal; // LCD Monochrome Palettes
-    byte_t dma;                    // DMA Transfer
-    uint16_t dma_src;              // DMA Source Address
-    byte_t dma_offset;             // DMA Address Offset
-    byte_t dma_running;            // DMA Transfer Remaining Cycles
+    // LCD Control Register (RW)
+    bool bg_display;        // Bit 0 -- Background/Window display
+    bool obj_display;       // Bit 1 -- Object display (sprites)
+    bool obj_size;          // Bit 2 -- Object size (8x8 or 8x16 tiles)
+    bool bg_tilemap_select; // Bit 3 -- Background Tile Map Select
+    bool bg_select;         // Bit 4 -- Background and Window Tile Data Select
+    bool window_display;    // Bit 5 -- Window Display
+    bool window_select;     // Bit 6 -- Window Tile Map Select
+    bool enable;            // Bit 7 -- LCD Enable
+
+    // LCD Status Register
+    byte_t mode;            // Bits 0-1 -- LCD Mode (RO)
+    bool coincidence_flag;  // Bit 2    -- Coincidence Flag (RO)
+    bool hblank_int;        // Bit 3    -- H-Blank Interrupt (RW)
+    bool vblank_int;        // Bit 4    -- V-Blank Interrupt (RW)
+    bool oam_int;           // Bit 5    -- OAM Interrupt (RW)
+    bool coincidence_int;   // Bit 6    -- Coincidence Interrupt (RW)
+
+    // LCD Positions and Scrolling Registers
+    byte_t scy; // Scroll Y (RW)
+    byte_t scx; // Scroll X (RW)
+    byte_t ly;  // Current scanline (RO)
+    byte_t lyc; // Value to compare with LY (RW)
+    byte_t wy;  // Window Y position (RW)
+    byte_t wx;  // Window X position minus 7 (RW)
+
+    // LCD Monochrome Palettes (RW)
+    byte_t bgp;     // BG Palette Data
+    byte_t obp0;    // Object Palette 0 Data
+    byte_t obp1;    // Object Palette 1 Data
+
+    // DMA
+    byte_t dma;                     // DMA Transfer
+    uint16_t dma_src;               // DMA Source Address
+    byte_t dma_offset;              // DMA Address Offset
+    byte_t dma_running;             // DMA Transfer Remaining Cycles
 
     // Screen framebuffer to hold the pixels
     pixel_t framebuffer[SCREEN_HEIGHT][SCREEN_WIDTH];

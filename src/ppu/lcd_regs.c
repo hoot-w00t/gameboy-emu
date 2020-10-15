@@ -23,18 +23,39 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 byte_t lcd_reg_readb(uint16_t addr, gb_system_t *gb)
 {
+    byte_t tmp;
+
     switch (addr) {
-        case LCDC       : return gb->screen.lcdc;
-        case LCDC_STATUS: return gb->screen.lcdc_status;
-        case LCDC_SCY   : return gb->screen.pos.scy;
-        case LCDC_SCX   : return gb->screen.pos.scx;
-        case LCDC_LY    : return gb->screen.pos.ly;
-        case LCDC_LYC   : return gb->screen.pos.lyc;
-        case LCDC_WY    : return gb->screen.pos.wy;
-        case LCDC_WX    : return gb->screen.pos.wx;
-        case LCDC_BGP   : return gb->screen.gb_pal.bgp;
-        case LCDC_OBP0  : return gb->screen.gb_pal.obp0;
-        case LCDC_OBP1  : return gb->screen.gb_pal.obp1;
+        case LCDC:
+            tmp = 0;
+            if (gb->screen.bg_display)        tmp |= 1;
+            if (gb->screen.obj_display)       tmp |= (1 << 1);
+            if (gb->screen.obj_size)          tmp |= (1 << 2);
+            if (gb->screen.bg_tilemap_select) tmp |= (1 << 3);
+            if (gb->screen.bg_select)         tmp |= (1 << 4);
+            if (gb->screen.window_display)    tmp |= (1 << 5);
+            if (gb->screen.window_select)     tmp |= (1 << 6);
+            if (gb->screen.enable)            tmp |= (1 << 7);
+            return tmp;
+
+        case LCDC_STATUS:
+            tmp = gb->screen.mode & 0b11;
+            if (gb->screen.coincidence_flag) tmp |= (1 << 2);
+            if (gb->screen.hblank_int)       tmp |= (1 << 3);
+            if (gb->screen.vblank_int)       tmp |= (1 << 4);
+            if (gb->screen.oam_int)          tmp |= (1 << 5);
+            if (gb->screen.coincidence_int)  tmp |= (1 << 6);
+            return tmp;
+
+        case LCDC_SCY   : return gb->screen.scy;
+        case LCDC_SCX   : return gb->screen.scx;
+        case LCDC_LY    : return gb->screen.ly;
+        case LCDC_LYC   : return gb->screen.lyc;
+        case LCDC_WY    : return gb->screen.wy;
+        case LCDC_WX    : return gb->screen.wx;
+        case LCDC_BGP   : return gb->screen.bgp;
+        case LCDC_OBP0  : return gb->screen.obp0;
+        case LCDC_OBP1  : return gb->screen.obp1;
         case LCDC_DMA   : return gb->screen.dma;
         default:
             logger(LOG_ERROR, "lcd_reg_readb failed: unhandled address $%04X", addr);
@@ -45,17 +66,24 @@ byte_t lcd_reg_readb(uint16_t addr, gb_system_t *gb)
 bool lcd_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
     switch (addr) {
-        case LCDC       : gb->screen.lcdc = value;        break;
-        case LCDC_STATUS: gb->screen.lcdc_status = value; break;
-        case LCDC_SCY   : gb->screen.pos.scy = value;     break;
-        case LCDC_SCX   : gb->screen.pos.scx = value;     break;
-        case LCDC_LY    : gb->screen.pos.ly = value;      break;
-        case LCDC_LYC   : gb->screen.pos.lyc = value;     break;
-        case LCDC_WY    : gb->screen.pos.wy = value;      break;
-        case LCDC_WX    : gb->screen.pos.wx = value;      break;
-        case LCDC_BGP   : gb->screen.gb_pal.bgp = value;  break;
-        case LCDC_OBP0  : gb->screen.gb_pal.obp0 = value; break;
-        case LCDC_OBP1  : gb->screen.gb_pal.obp1 = value; break;
+        case LCDC:
+            gb->screen.bg_display        = value & 1;
+            gb->screen.obj_display       = (value >> 1) & 1;
+            gb->screen.obj_size          = (value >> 2) & 1;
+            gb->screen.bg_tilemap_select = (value >> 3) & 1;
+            gb->screen.bg_select         = (value >> 4) & 1;
+            gb->screen.window_display    = (value >> 5) & 1;
+            gb->screen.window_select     = (value >> 6) & 1;
+            gb->screen.enable            = (value >> 7) & 1;
+            break;
+
+        case LCDC_STATUS:
+            gb->screen.hblank_int      = (value >> 3) & 1;
+            gb->screen.vblank_int      = (value >> 4) & 1;
+            gb->screen.oam_int         = (value >> 5) & 1;
+            gb->screen.coincidence_int = (value >> 6) & 1;
+            break;
+
         case LCDC_DMA:
             // TODO: How should the system react to an invalid value?
             gb->screen.dma = value;
@@ -69,6 +97,14 @@ bool lcd_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
             }
             break;
 
+        case LCDC_SCY   : gb->screen.scy = value;  break;
+        case LCDC_SCX   : gb->screen.scx = value;  break;
+        case LCDC_LYC   : gb->screen.lyc = value;  break;
+        case LCDC_WY    : gb->screen.wy = value;   break;
+        case LCDC_WX    : gb->screen.wx = value;   break;
+        case LCDC_BGP   : gb->screen.bgp = value;  break;
+        case LCDC_OBP0  : gb->screen.obp0 = value; break;
+        case LCDC_OBP1  : gb->screen.obp1 = value; break;
         default:
             logger(LOG_ERROR, "lcd_reg_writeb failed: unhandled address $%04X", addr);
             return false;
