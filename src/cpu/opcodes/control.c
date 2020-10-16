@@ -42,6 +42,21 @@ int opcode_di(const opcode_t *opcode, gb_system_t *gb)
     return opcode->cycles_true;
 }
 
+int opcode_halt(const opcode_t *opcode, gb_system_t *gb)
+{
+    gb->halt = true;
+    return opcode->cycles_true;
+}
+
+int opcode_stop(const opcode_t *opcode, gb_system_t *gb)
+{
+    // TODO: Properly implement STOP when button input is handled
+    // Stop only if all IE flags are reset
+    //              inputs P10-P13 LOW
+    gb->stop = false;
+    return opcode->cycles_true;
+}
+
 int opcode_daa(const opcode_t *opcode, gb_system_t *gb)
 {
     byte_t A = reg_readb(REG_A, gb);

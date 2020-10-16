@@ -69,7 +69,15 @@ int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
 
     }
 
-    if (!(handler_ret = cpu_int_isr(gb))) {
+    // Execute ISR if an enabled interrupt is requested
+    handler_ret = cpu_int_isr(gb);
+    CB = false;
+
+    if (!handler_ret && (gb->halt || gb->stop)) {
+        // CPU Halted
+        return 0;
+
+    } else if (!handler_ret) {
         // No ISR executed, continue on normal operation
         // Fetch and execute opcode
         if ((opcode_value = cpu_fetchb(gb)) == 0xCB) {
@@ -77,7 +85,6 @@ int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
             opcode_value = cpu_fetchb(gb);
             opcode = opcode_cb_identify(opcode_value);
         } else {
-            CB = false;
             opcode = opcode_identify(opcode_value);
         }
 
@@ -133,7 +140,7 @@ int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
 
 void cpu_dump(gb_system_t *gb)
 {
-    if (gb->halt) printf("CPU Halted\n");
+    if (gb->halt || gb->stop) printf("CPU Halted (%s)\n", gb->halt ? "HALT" : "STOP");
 
     printf("PC: $%04X    SP: $%04X\n", gb->pc, gb->sp);
     printf("Cycle #%lu (idle: %u)\n", gb->cycle_nb, gb->idle_cycles);

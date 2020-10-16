@@ -189,7 +189,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Halt CPU and LCD display until button is pressed",
-        .handler      = NULL
+        .handler      = &opcode_stop
     },
     {
         .mnemonic     = "LD DE,nn",
@@ -1107,7 +1107,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Halt CPU until an interrupt occurs",
-        .handler      = NULL
+        .handler      = &opcode_halt
     },
     {
         .mnemonic     = "LD (HL),A",
