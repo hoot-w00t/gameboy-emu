@@ -101,3 +101,30 @@ int opcode_daa(const opcode_t *opcode, gb_system_t *gb)
 
     return opcode->cycles_true;
 }
+
+int opcode_cpl(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, reg_readb(REG_A, gb) ^ 0xFF, gb);
+    reg_flag_set(FLAG_N, gb);
+    reg_flag_set(FLAG_H, gb);
+
+    return opcode->cycles_true;
+}
+
+int opcode_ccf(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_flag_clear(FLAG_N, gb);
+    reg_flag_clear(FLAG_H, gb);
+    if (reg_flag(FLAG_C, gb)) reg_flag_clear(FLAG_C, gb); else reg_flag_set(FLAG_C, gb);
+
+    return opcode->cycles_true;
+}
+
+int opcode_scf(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_flag_clear(FLAG_N, gb);
+    reg_flag_clear(FLAG_H, gb);
+    reg_flag_set(FLAG_C, gb);
+
+    return opcode->cycles_true;
+}

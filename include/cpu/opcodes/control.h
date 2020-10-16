@@ -26,5 +26,8 @@ int opcode_nop(const opcode_t *opcode, __attribute__((unused)) gb_system_t *gb);
 int opcode_ei(const opcode_t *opcode, gb_system_t *gb);
 int opcode_di(const opcode_t *opcode, gb_system_t *gb);
 int opcode_daa(const opcode_t *opcode, gb_system_t *gb);
+int opcode_cpl(const opcode_t *opcode, gb_system_t *gb);
+int opcode_ccf(const opcode_t *opcode, gb_system_t *gb);
+int opcode_scf(const opcode_t *opcode, gb_system_t *gb);
 
 #endif

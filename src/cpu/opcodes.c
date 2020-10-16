@@ -414,6 +414,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_r8
     },
     {
+        .mnemonic     = "CPL",
+        .opcode       = 0x2F,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Complement A (flip all bits)",
+        .handler      = &opcode_cpl
+    },
+    {
         .mnemonic     = "JR NC,n",
         .opcode       = 0x30,
         .length       = 2,
@@ -477,6 +486,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_r8
     },
     {
+        .mnemonic     = "SCF",
+        .opcode       = 0x37,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Set Carry Flag",
+        .handler      = &opcode_scf
+    },
+    {
         .mnemonic     = "JR C,n",
         .opcode       = 0x38,
         .length       = 2,
@@ -538,6 +556,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load n to A",
         .handler      = &opcode_ld_a
+    },
+    {
+        .mnemonic     = "CCF",
+        .opcode       = 0x3F,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Complement Carry Flag (flip bit)",
+        .handler      = &opcode_ccf
     },
     {
         .mnemonic     = "LD B,B",
