@@ -203,7 +203,7 @@ void gb_system_reset(gb_system_t *gb)
     gb->memory.ioregs[0x4B] = 0x00; // WX
 
     // Interrupts
-    gb->memory.ioregs[0xFF] = 0x00; // IE
+    gb->interrupts.ie_reg = 0x00;
 }
 
 // Destroy gb_system_t and free all allocated memory
