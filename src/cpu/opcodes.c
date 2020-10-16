@@ -25,6 +25,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/calls.h"
 #include "cpu/opcodes/rotate.h"
 #include "cpu/opcodes/swap.h"
+#include "cpu/opcodes/shifts.h"
 #include "cpu/opcodes/alu/add.h"
 #include "cpu/opcodes/alu/adc.h"
 #include "cpu/opcodes/alu/sub.h"
@@ -2544,7 +2545,150 @@ const opcode_t opcode_cb_table[256] = {
         .comment      = "Rotate A right through carry",
         .handler      = &opcode_cb_rr_r
     },
-    // TODO: Fill the gap
+    {
+        .mnemonic     = "SLA B",
+        .opcode       = 0x20,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift B left (LSB=0)",
+        .handler      = &opcode_cb_sla_r
+    },
+    {
+        .mnemonic     = "SLA C",
+        .opcode       = 0x21,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift C left (LSB=0)",
+        .handler      = &opcode_cb_sla_r
+    },
+    {
+        .mnemonic     = "SLA D",
+        .opcode       = 0x22,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift D left (LSB=0)",
+        .handler      = &opcode_cb_sla_r
+    },
+    {
+        .mnemonic     = "SLA E",
+        .opcode       = 0x23,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift E left (LSB=0)",
+        .handler      = &opcode_cb_sla_r
+    },
+    {
+        .mnemonic     = "SLA H",
+        .opcode       = 0x24,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift H left (LSB=0)",
+        .handler      = &opcode_cb_sla_r
+    },
+    {
+        .mnemonic     = "SLA L",
+        .opcode       = 0x25,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift L left (LSB=0)",
+        .handler      = &opcode_cb_sla_r
+    },
+    {
+        .mnemonic     = "SLA (HL)",
+        .opcode       = 0x26,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Shift (HL) left (LSB=0)",
+        .handler      = &opcode_cb_shift_hl
+    },
+    {
+        .mnemonic     = "SLA A",
+        .opcode       = 0x27,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift A left (LSB=0)",
+        .handler      = &opcode_cb_sla_r
+    },
+    {
+        .mnemonic     = "SRA B",
+        .opcode       = 0x28,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift B right (MSB doesn't change)",
+        .handler      = &opcode_cb_sra_r
+    },
+    {
+        .mnemonic     = "SRA C",
+        .opcode       = 0x29,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift C right (MSB doesn't change)",
+        .handler      = &opcode_cb_sra_r
+    },
+    {
+        .mnemonic     = "SRA D",
+        .opcode       = 0x2A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift D right (MSB doesn't change)",
+        .handler      = &opcode_cb_sra_r
+    },
+    {
+        .mnemonic     = "SRA E",
+        .opcode       = 0x2B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift E right (MSB doesn't change)",
+        .handler      = &opcode_cb_sra_r
+    },
+    {
+        .mnemonic     = "SRA H",
+        .opcode       = 0x2C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift H right (MSB doesn't change)",
+        .handler      = &opcode_cb_sra_r
+    },
+    {
+        .mnemonic     = "SRA L",
+        .opcode       = 0x2D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift L right (MSB doesn't change)",
+        .handler      = &opcode_cb_sra_r
+    },
+    {
+        .mnemonic     = "SRA (HL)",
+        .opcode       = 0x2E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Shift (HL) right (MSB doesn't change)",
+        .handler      = &opcode_cb_shift_hl
+    },
+    {
+        .mnemonic     = "SRA A",
+        .opcode       = 0x2F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift A right (MSB doesn't change)",
+        .handler      = &opcode_cb_sra_r
+    },
     {
         .mnemonic     = "SWAP B",
         .opcode       = 0x30,
@@ -2617,4 +2761,76 @@ const opcode_t opcode_cb_table[256] = {
         .comment      = "Swap lower and higher 4 bits of A",
         .handler      = &opcode_cb_swap_r
     },
+    {
+        .mnemonic     = "SRL B",
+        .opcode       = 0x38,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift B right",
+        .handler      = &opcode_cb_srl_r
+    },
+    {
+        .mnemonic     = "SRL C",
+        .opcode       = 0x39,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift C right (MSB=0)",
+        .handler      = &opcode_cb_srl_r
+    },
+    {
+        .mnemonic     = "SRL D",
+        .opcode       = 0x3A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift D right (MSB=0)",
+        .handler      = &opcode_cb_srl_r
+    },
+    {
+        .mnemonic     = "SRL E",
+        .opcode       = 0x3B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift E right (MSB=0)",
+        .handler      = &opcode_cb_srl_r
+    },
+    {
+        .mnemonic     = "SRL H",
+        .opcode       = 0x3C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift H right (MSB=0)",
+        .handler      = &opcode_cb_srl_r
+    },
+    {
+        .mnemonic     = "SRL L",
+        .opcode       = 0x3D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift L right (MSB=0)",
+        .handler      = &opcode_cb_srl_r
+    },
+    {
+        .mnemonic     = "SRL (HL)",
+        .opcode       = 0x3E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Shift (HL) right (MSB=0)",
+        .handler      = &opcode_cb_shift_hl
+    },
+    {
+        .mnemonic     = "SRL A",
+        .opcode       = 0x3F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift A right (MSB=0)",
+        .handler      = &opcode_cb_srl_r
+    }
 };
