@@ -24,6 +24,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/jumps.h"
 #include "cpu/opcodes/calls.h"
 #include "cpu/opcodes/rotate.h"
+#include "cpu/opcodes/swap.h"
 #include "cpu/opcodes/alu/add.h"
 #include "cpu/opcodes/alu/adc.h"
 #include "cpu/opcodes/alu/sub.h"
@@ -2542,5 +2543,78 @@ const opcode_t opcode_cb_table[256] = {
         .cycles_false = 8,
         .comment      = "Rotate A right through carry",
         .handler      = &opcode_cb_rr_r
-    }
+    },
+    // TODO: Fill the gap
+    {
+        .mnemonic     = "SWAP B",
+        .opcode       = 0x30,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Swap lower and higher 4 bits of B",
+        .handler      = &opcode_cb_swap_r
+    },
+    {
+        .mnemonic     = "SWAP C",
+        .opcode       = 0x31,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Swap lower and higher 4 bits of C",
+        .handler      = &opcode_cb_swap_r
+    },
+    {
+        .mnemonic     = "SWAP D",
+        .opcode       = 0x32,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Swap lower and higher 4 bits of D",
+        .handler      = &opcode_cb_swap_r
+    },
+    {
+        .mnemonic     = "SWAP E",
+        .opcode       = 0x33,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Swap lower and higher 4 bits of E",
+        .handler      = &opcode_cb_swap_r
+    },
+    {
+        .mnemonic     = "SWAP H",
+        .opcode       = 0x34,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Swap lower and higher 4 bits of H",
+        .handler      = &opcode_cb_swap_r
+    },
+    {
+        .mnemonic     = "SWAP L",
+        .opcode       = 0x35,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Swap lower and higher 4 bits of L",
+        .handler      = &opcode_cb_swap_r
+    },
+    {
+        .mnemonic     = "SWAP (HL)",
+        .opcode       = 0x36,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Swap lower and higher 4 bits of (HL)",
+        .handler      = &opcode_cb_swap_n
+    },
+    {
+        .mnemonic     = "SWAP A",
+        .opcode       = 0x37,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Swap lower and higher 4 bits of A",
+        .handler      = &opcode_cb_swap_r
+    },
 };
