@@ -1869,7 +1869,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "PREFIX CB",
-        .handler      = NULL
+        .handler      = &opcode_prefix_cb
     },
     {
         .mnemonic     = "CALL Z,nn",

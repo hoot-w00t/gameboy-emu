@@ -73,11 +73,13 @@ int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
         // Fetch and execute opcode
         opcode_value = cpu_fetchb(gb);
         if ((opcode = opcode_identify(opcode_value))) {
-            logger(LOG_DEBUG,
-                "$%04X: $%02X: %s",
-                gb->pc - 1,
-                opcode_value,
-                opcode->mnemonic);
+            if (opcode->opcode != 0xCB) {
+                logger(LOG_DEBUG,
+                    "$%04X: $%02X: %s",
+                    gb->pc - 1,
+                    opcode_value,
+                    opcode->mnemonic);
+            }
 
             handler_ret = (*opcode->handler)(opcode, gb);
         } else {

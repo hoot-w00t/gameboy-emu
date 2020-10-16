@@ -17,8 +17,11 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "logger.h"
 #include "gameboy.h"
+#include "cpu/cpu.h"
 #include "cpu/registers.h"
+#include "cpu/opcodes.h"
 
 int opcode_nop(const opcode_t *opcode, __attribute__((unused)) gb_system_t *gb)
 {
@@ -37,6 +40,24 @@ int opcode_di(const opcode_t *opcode, gb_system_t *gb)
 {
     gb->interrupts.ime = IME_DISABLE;
     return opcode->cycles_true;
+}
+
+int opcode_prefix_cb(__attribute__((unused)) const opcode_t *opcode, gb_system_t *gb)
+{
+    byte_t opcode_cb_value = cpu_fetchb(gb);
+    const opcode_t *opcode_cb;
+
+    if ((opcode_cb = opcode_cb_identify(opcode_cb_value))) {
+        logger(LOG_DEBUG,
+            "$%04X: CB $%02X: %s",
+            gb->pc - 2,
+            opcode_cb_value,
+            opcode_cb->mnemonic);
+
+        return (*opcode_cb->handler)(opcode_cb, gb);
+    }
+
+    return OPCODE_ILLEGAL;
 }
 
 int opcode_daa(const opcode_t *opcode, gb_system_t *gb)
