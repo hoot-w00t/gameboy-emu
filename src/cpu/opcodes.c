@@ -1,7 +1,7 @@
 /*
 opcodes.c
-Handle opcode identification
 Define opcode_table containing all the CPU's opcodes
+Define opcode_cb_table containing all the PREFIX CB opcodes
 
 Copyright (C) 2020 akrocynova
 
@@ -34,7 +34,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/alu/inc.h"
 #include "cpu/opcodes/alu/dec.h"
 
-const opcode_t opcode_table[] = {
+const opcode_t opcode_table[256] = {
     {
         .mnemonic     = "NOP",
         .opcode       = 0x00,
@@ -97,6 +97,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load n to B",
         .handler      = &opcode_ld_r8
+    },
+    {
+        .mnemonic     = "RLCA",
+        .opcode       = 0x07,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Rotate A left",
+        .handler      = NULL
     },
     {
         .mnemonic     = "LD (nn),SP",
@@ -162,6 +171,24 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_r8
     },
     {
+        .mnemonic     = "RRCA",
+        .opcode       = 0x0F,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Rotate A right",
+        .handler      = NULL
+    },
+    {
+        .mnemonic     = "STOP",
+        .opcode       = 0x10,
+        .length       = 2,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Halt CPU and LCD display until button is pressed",
+        .handler      = NULL
+    },
+    {
         .mnemonic     = "LD DE,nn",
         .opcode       = 0x11,
         .length       = 3,
@@ -214,6 +241,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load n to D",
         .handler      = &opcode_ld_r8
+    },
+    {
+        .mnemonic     = "RLA",
+        .opcode       = 0x17,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Rotate A left through Carry Flag",
+        .handler      = NULL
     },
     {
         .mnemonic     = "JR n",
@@ -277,6 +313,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load n to E",
         .handler      = &opcode_ld_r8
+    },
+    {
+        .mnemonic     = "RRA",
+        .opcode       = 0x1F,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Rotate A right through Carry Flag",
+        .handler      = NULL
     },
     {
         .mnemonic     = "JR NZ,n",
@@ -1053,6 +1098,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_r8
     },
     {
+        .mnemonic     = "HALT",
+        .opcode       = 0x76,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Halt CPU until an interrupt occurs",
+        .handler      = NULL
+    },
+    {
         .mnemonic     = "LD (HL),A",
         .opcode       = 0x77,
         .length       = 1,
@@ -1809,6 +1863,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_jp
     },
     {
+        .mnemonic     = "PREFIX CB",
+        .opcode       = 0xCB,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "PREFIX CB",
+        .handler      = NULL
+    },
+    {
         .mnemonic     = "CALL Z,nn",
         .opcode       = 0xCC,
         .length       = 3,
@@ -1871,6 +1934,7 @@ const opcode_t opcode_table[] = {
         .comment      = "Jump to nn if C if reset",
         .handler      = &opcode_jp
     },
+    {NULL, 0, 0, 0, 0, NULL, NULL},
     {
         .mnemonic     = "CALL NC,nn",
         .opcode       = 0xD4,
@@ -1934,6 +1998,7 @@ const opcode_t opcode_table[] = {
         .comment      = "Jump to nn if C if set",
         .handler      = &opcode_jp
     },
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $DB doesn't exist, empty element for alignment
     {
         .mnemonic     = "CALL C,nn",
         .opcode       = 0xDC,
@@ -1943,6 +2008,7 @@ const opcode_t opcode_table[] = {
         .comment      = "Push PC and jump to nn if C if set",
         .handler      = &opcode_call
     },
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $DD doesn't exist, empty element for alignment
     {
         .mnemonic     = "SBC A,n",
         .opcode       = 0xDE,
@@ -1988,6 +2054,8 @@ const opcode_t opcode_table[] = {
         .comment      = "Load A at address $FF00+C",
         .handler      = &opcode_ld_a
     },
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $E3 doesn't exist, empty element for alignment
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $E4 doesn't exist, empty element for alignment
     {
         .mnemonic     = "PUSH HL",
         .opcode       = 0xE5,
@@ -2042,6 +2110,9 @@ const opcode_t opcode_table[] = {
         .comment      = "Load A at address nn",
         .handler      = &opcode_ld_a
     },
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $EB doesn't exist, empty element for alignment
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $EC doesn't exist, empty element for alignment
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $ED doesn't exist, empty element for alignment
     {
         .mnemonic     = "XOR n",
         .opcode       = 0xEE,
@@ -2096,6 +2167,7 @@ const opcode_t opcode_table[] = {
         .comment      = "Disable Interrupts",
         .handler      = &opcode_di
     },
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $F4 doesn't exist, empty element for alignment
     {
         .mnemonic     = "PUSH AF",
         .opcode       = 0xF5,
@@ -2159,6 +2231,8 @@ const opcode_t opcode_table[] = {
         .comment      = "Enable Interrupts",
         .handler      = &opcode_ei
     },
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $FC doesn't exist, empty element for alignment
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $FD doesn't exist, empty element for alignment
     {
         .mnemonic     = "CP n",
         .opcode       = 0xFE,
@@ -2176,16 +2250,7 @@ const opcode_t opcode_table[] = {
         .cycles_false = 16,
         .comment      = "Call $FF",
         .handler      = &opcode_rst
-    },
-    {NULL, 0, 0, 0, 0, NULL, NULL}
+    }
 };
 
-const opcode_t *opcode_identify(byte_t opcode)
-{
-    for (int i = 0; opcode_table[i].handler; ++i) {
-        if (opcode_table[i].opcode == opcode)
-            return &opcode_table[i];
-    }
-
-    return NULL;
-}
+const opcode_t opcode_cb_table[256];
