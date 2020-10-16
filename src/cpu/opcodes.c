@@ -1989,7 +1989,7 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_a
     },
     {
-        .mnemonic     = "Push HL",
+        .mnemonic     = "PUSH HL",
         .opcode       = 0xE5,
         .length       = 1,
         .cycles_true  = 16,
