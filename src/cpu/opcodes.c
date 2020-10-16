@@ -342,6 +342,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_r8
     },
     {
+        .mnemonic     = "DAA",
+        .opcode       = 0x27,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Decimal adjust A",
+        .handler      = &opcode_daa
+    },
+    {
         .mnemonic     = "JR Z,n",
         .opcode       = 0x28,
         .length       = 2,
