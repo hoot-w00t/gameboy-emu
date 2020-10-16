@@ -1980,6 +1980,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_rst
     },
     {
+        .mnemonic     = "ADD SP,n",
+        .opcode       = 0xE8,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Add signed n to SP",
+        .handler      = &opcode_add_sp_n
+    },
+    {
         .mnemonic     = "JP (HL)",
         .opcode       = 0xE9,
         .length       = 1,

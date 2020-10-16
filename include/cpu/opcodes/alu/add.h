@@ -27,5 +27,6 @@ uint16_t cpu_add_u16(const uint16_t target, const uint16_t value, gb_system_t *g
 uint16_t cpu_add_sb_u16(const uint16_t target, const sbyte_t value, gb_system_t *gb);
 int opcode_add_a_n(const opcode_t *opcode, gb_system_t *gb);
 int opcode_add_hl_n(const opcode_t *opcode, gb_system_t *gb);
+int opcode_add_sp_n(const opcode_t *opcode, gb_system_t *gb);
 
 #endif

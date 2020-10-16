@@ -129,4 +129,9 @@ int opcode_add_hl_n(const opcode_t *opcode, gb_system_t *gb)
     return opcode->cycles_true;
 }
 
-// TODO: Implement ADD SP,n (0xE8) when cpu_sub() is implemented
+int opcode_add_sp_n(const opcode_t *opcode, gb_system_t *gb)
+{
+    gb->sp = cpu_add_sb_u16(gb->sp, (sbyte_t) cpu_fetchb(gb), gb);
+
+    return opcode->cycles_true;
+}
