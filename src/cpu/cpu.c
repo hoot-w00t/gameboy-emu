@@ -72,6 +72,7 @@ int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
     // Execute ISR if an enabled interrupt is requested
     handler_ret = cpu_int_isr(gb);
     CB = false;
+    opcode_value = 0;
 
     if (!handler_ret && (gb->halt || gb->stop)) {
         // CPU Halted
