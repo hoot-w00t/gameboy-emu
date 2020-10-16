@@ -23,6 +23,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/ld.h"
 #include "cpu/opcodes/jumps.h"
 #include "cpu/opcodes/calls.h"
+#include "cpu/opcodes/rotate.h"
 #include "cpu/opcodes/alu/add.h"
 #include "cpu/opcodes/alu/adc.h"
 #include "cpu/opcodes/alu/sub.h"
@@ -105,7 +106,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Rotate A left",
-        .handler      = NULL
+        .handler      = &opcode_rotate_a
     },
     {
         .mnemonic     = "LD (nn),SP",
@@ -177,7 +178,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Rotate A right",
-        .handler      = NULL
+        .handler      = &opcode_rotate_a
     },
     {
         .mnemonic     = "STOP",
@@ -249,7 +250,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Rotate A left through Carry Flag",
-        .handler      = NULL
+        .handler      = &opcode_rotate_a
     },
     {
         .mnemonic     = "JR n",
@@ -321,7 +322,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Rotate A right through Carry Flag",
-        .handler      = NULL
+        .handler      = &opcode_rotate_a
     },
     {
         .mnemonic     = "JR NZ,n",
@@ -2253,4 +2254,293 @@ const opcode_t opcode_table[256] = {
     }
 };
 
-const opcode_t opcode_cb_table[256];
+const opcode_t opcode_cb_table[256] = {
+    {
+        .mnemonic     = "RLC B",
+        .opcode       = 0x00,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate B left",
+        .handler      = &opcode_cb_rlc_r
+    },
+    {
+        .mnemonic     = "RLC C",
+        .opcode       = 0x01,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate C left",
+        .handler      = &opcode_cb_rlc_r
+    },
+    {
+        .mnemonic     = "RLC D",
+        .opcode       = 0x02,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate D left",
+        .handler      = &opcode_cb_rlc_r
+    },
+    {
+        .mnemonic     = "RLC E",
+        .opcode       = 0x03,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate E left",
+        .handler      = &opcode_cb_rlc_r
+    },
+    {
+        .mnemonic     = "RLC H",
+        .opcode       = 0x04,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate H left",
+        .handler      = &opcode_cb_rlc_r
+    },
+    {
+        .mnemonic     = "RLC L",
+        .opcode       = 0x05,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate L left",
+        .handler      = &opcode_cb_rlc_r
+    },
+    {
+        .mnemonic     = "RLC (HL)",
+        .opcode       = 0x06,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Rotate (HL) left",
+        .handler      = &opcode_cb_rotate_n
+    },
+    {
+        .mnemonic     = "RLC A",
+        .opcode       = 0x07,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate A left",
+        .handler      = &opcode_cb_rlc_r
+    },
+    {
+        .mnemonic     = "RRC B",
+        .opcode       = 0x08,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate B right",
+        .handler      = &opcode_cb_rrc_r
+    },
+    {
+        .mnemonic     = "RRC C",
+        .opcode       = 0x09,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate C right",
+        .handler      = &opcode_cb_rrc_r
+    },
+    {
+        .mnemonic     = "RRC D",
+        .opcode       = 0x0A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate D right",
+        .handler      = &opcode_cb_rrc_r
+    },
+    {
+        .mnemonic     = "RRC E",
+        .opcode       = 0x0B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate E right",
+        .handler      = &opcode_cb_rrc_r
+    },
+    {
+        .mnemonic     = "RRC H",
+        .opcode       = 0x0C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate H right",
+        .handler      = &opcode_cb_rrc_r
+    },
+    {
+        .mnemonic     = "RRC L",
+        .opcode       = 0x0D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate L right",
+        .handler      = &opcode_cb_rrc_r
+    },
+    {
+        .mnemonic     = "RRC (HL)",
+        .opcode       = 0x0E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Rotate (HL) right",
+        .handler      = &opcode_cb_rotate_n
+    },
+    {
+        .mnemonic     = "RRC A",
+        .opcode       = 0x0F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate A right",
+        .handler      = &opcode_cb_rrc_r
+    },
+    {
+        .mnemonic     = "RL B",
+        .opcode       = 0x10,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate B left through carry",
+        .handler      = &opcode_cb_rl_r
+    },
+    {
+        .mnemonic     = "RL C",
+        .opcode       = 0x11,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate C left through carry",
+        .handler      = &opcode_cb_rl_r
+    },
+    {
+        .mnemonic     = "RL D",
+        .opcode       = 0x12,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate D left through carry",
+        .handler      = &opcode_cb_rl_r
+    },
+    {
+        .mnemonic     = "RL E",
+        .opcode       = 0x13,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate E left through carry",
+        .handler      = &opcode_cb_rl_r
+    },
+    {
+        .mnemonic     = "RL H",
+        .opcode       = 0x14,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate H left through carry",
+        .handler      = &opcode_cb_rl_r
+    },
+    {
+        .mnemonic     = "RL L",
+        .opcode       = 0x15,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate L left through carry",
+        .handler      = &opcode_cb_rl_r
+    },
+    {
+        .mnemonic     = "RL (HL)",
+        .opcode       = 0x16,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Rotate (HL) left through carry",
+        .handler      = &opcode_cb_rotate_n
+    },
+    {
+        .mnemonic     = "RL A",
+        .opcode       = 0x17,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate A left through carry",
+        .handler      = &opcode_cb_rl_r
+    },
+    {
+        .mnemonic     = "RR B",
+        .opcode       = 0x18,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate B right through carry",
+        .handler      = &opcode_cb_rr_r
+    },
+    {
+        .mnemonic     = "RR C",
+        .opcode       = 0x19,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate C right through carry",
+        .handler      = &opcode_cb_rr_r
+    },
+    {
+        .mnemonic     = "RR D",
+        .opcode       = 0x1A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate D right through carry",
+        .handler      = &opcode_cb_rr_r
+    },
+    {
+        .mnemonic     = "RR E",
+        .opcode       = 0x1B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate E right through carry",
+        .handler      = &opcode_cb_rr_r
+    },
+    {
+        .mnemonic     = "RR H",
+        .opcode       = 0x1C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate H right through carry",
+        .handler      = &opcode_cb_rr_r
+    },
+    {
+        .mnemonic     = "RR L",
+        .opcode       = 0x1D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate L right through carry",
+        .handler      = &opcode_cb_rr_r
+    },
+    {
+        .mnemonic     = "RR (HL)",
+        .opcode       = 0x1E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Rotate (HL) right through carry",
+        .handler      = &opcode_cb_rotate_n
+    },
+    {
+        .mnemonic     = "RR A",
+        .opcode       = 0x1F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate A right through carry",
+        .handler      = &opcode_cb_rr_r
+    }
+};
