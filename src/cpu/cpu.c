@@ -52,6 +52,7 @@ uint16_t cpu_fetch_u16(gb_system_t *gb)
 //      OPCODE_EXIT   : break the emulation loop
 int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
 {
+    bool CB;
     byte_t opcode_value;
     const opcode_t *opcode;
     int handler_ret;
@@ -71,9 +72,23 @@ int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
     if (!(handler_ret = cpu_int_isr(gb))) {
         // No ISR executed, continue on normal operation
         // Fetch and execute opcode
-        opcode_value = cpu_fetchb(gb);
-        if ((opcode = opcode_identify(opcode_value))) {
-            if (opcode->opcode != 0xCB) {
+        if ((opcode_value = cpu_fetchb(gb)) == 0xCB) {
+            CB = true;
+            opcode_value = cpu_fetchb(gb);
+            opcode = opcode_cb_identify(opcode_value);
+        } else {
+            CB = false;
+            opcode = opcode_identify(opcode_value);
+        }
+
+        if (opcode) {
+            if (CB) {
+                logger(LOG_DEBUG,
+                    "$%04X: CB $%02X: %s",
+                    gb->pc - 2,
+                    opcode_value,
+                    opcode->mnemonic);
+            } else {
                 logger(LOG_DEBUG,
                     "$%04X: $%02X: %s",
                     gb->pc - 1,
@@ -89,10 +104,17 @@ int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
 
     if (handler_ret < 0) {
         if (handler_ret == OPCODE_ILLEGAL) {
-            logger(LOG_CRIT,
-                "$%04X: $%02X: Illegal opcode",
-                gb->pc - 1,
-                opcode_value);
+            if (CB) {
+                logger(LOG_CRIT,
+                    "$%04X: CB $%02X: Illegal opcode",
+                    gb->pc - 2,
+                    opcode_value);
+            } else {
+                logger(LOG_CRIT,
+                    "$%04X: $%02X: Illegal opcode",
+                    gb->pc - 1,
+                    opcode_value);
+            }
         }
         return handler_ret;
     }

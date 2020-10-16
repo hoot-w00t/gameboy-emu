@@ -42,24 +42,6 @@ int opcode_di(const opcode_t *opcode, gb_system_t *gb)
     return opcode->cycles_true;
 }
 
-int opcode_prefix_cb(__attribute__((unused)) const opcode_t *opcode, gb_system_t *gb)
-{
-    byte_t opcode_cb_value = cpu_fetchb(gb);
-    const opcode_t *opcode_cb;
-
-    if ((opcode_cb = opcode_cb_identify(opcode_cb_value))) {
-        logger(LOG_DEBUG,
-            "$%04X: CB $%02X: %s",
-            gb->pc - 2,
-            opcode_cb_value,
-            opcode_cb->mnemonic);
-
-        return (*opcode_cb->handler)(opcode_cb, gb);
-    }
-
-    return OPCODE_ILLEGAL;
-}
-
 int opcode_daa(const opcode_t *opcode, gb_system_t *gb)
 {
     byte_t A = reg_readb(REG_A, gb);
