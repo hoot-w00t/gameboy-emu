@@ -26,6 +26,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/rotate.h"
 #include "cpu/opcodes/swap.h"
 #include "cpu/opcodes/shifts.h"
+#include "cpu/opcodes/bit.h"
 #include "cpu/opcodes/alu/add.h"
 #include "cpu/opcodes/alu/adc.h"
 #include "cpu/opcodes/alu/sub.h"
@@ -2832,5 +2833,581 @@ const opcode_t opcode_cb_table[256] = {
         .cycles_false = 8,
         .comment      = "Shift A right (MSB=0)",
         .handler      = &opcode_cb_srl_r
+    },
+    {
+        .mnemonic     = "BIT 0,B",
+        .opcode       = 0x40,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 0 in B",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 0,C",
+        .opcode       = 0x41,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 0 in C",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 0,D",
+        .opcode       = 0x42,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 0 in D",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 0,E",
+        .opcode       = 0x43,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 0 in E",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 0,H",
+        .opcode       = 0x44,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 0 in H",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 0,L",
+        .opcode       = 0x45,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 0 in L",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 0,(HL)",
+        .opcode       = 0x46,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Test bit 0 in (HL)",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 0,A",
+        .opcode       = 0x47,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 0 in A",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 1,B",
+        .opcode       = 0x48,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 1 in B",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 1,C",
+        .opcode       = 0x49,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 1 in C",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 1,D",
+        .opcode       = 0x4A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 1 in D",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 1,E",
+        .opcode       = 0x4B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 1 in E",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 1,H",
+        .opcode       = 0x4C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 1 in H",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 1,L",
+        .opcode       = 0x4D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 1 in L",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 1,(HL)",
+        .opcode       = 0x4E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Test bit 1 in (HL)",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 1,A",
+        .opcode       = 0x4F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 1 in A",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 2,B",
+        .opcode       = 0x50,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 2 in B",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 2,C",
+        .opcode       = 0x51,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 2 in C",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 2,D",
+        .opcode       = 0x52,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 2 in D",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 2,E",
+        .opcode       = 0x53,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 2 in E",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 2,H",
+        .opcode       = 0x54,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 2 in H",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 2,L",
+        .opcode       = 0x55,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 2 in L",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 2,(HL)",
+        .opcode       = 0x56,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Test bit 2 in (HL)",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 2,A",
+        .opcode       = 0x57,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 2 in A",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 3,B",
+        .opcode       = 0x58,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 3 in B",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 3,C",
+        .opcode       = 0x59,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 3 in C",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 3,D",
+        .opcode       = 0x5A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 3 in D",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 3,E",
+        .opcode       = 0x5B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 3 in E",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 3,H",
+        .opcode       = 0x5C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 3 in H",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 3,L",
+        .opcode       = 0x5D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 3 in L",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 3,(HL)",
+        .opcode       = 0x5E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Test bit 3 in (HL)",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 3,A",
+        .opcode       = 0x5F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 3 in A",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 4,B",
+        .opcode       = 0x60,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 4 in B",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 4,C",
+        .opcode       = 0x61,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 4 in C",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 4,D",
+        .opcode       = 0x62,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 4 in D",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 4,E",
+        .opcode       = 0x63,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 4 in E",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 4,H",
+        .opcode       = 0x64,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 4 in H",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 4,L",
+        .opcode       = 0x65,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 4 in L",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 4,(HL)",
+        .opcode       = 0x66,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Test bit 4 in (HL)",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 4,A",
+        .opcode       = 0x67,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 4 in A",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 5,B",
+        .opcode       = 0x68,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 5 in B",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 5,C",
+        .opcode       = 0x69,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 5 in C",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 5,D",
+        .opcode       = 0x6A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 5 in D",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 5,E",
+        .opcode       = 0x6B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 5 in E",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 5,H",
+        .opcode       = 0x6C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 5 in H",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 5,L",
+        .opcode       = 0x6D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 5 in L",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 5,(HL)",
+        .opcode       = 0x6E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Test bit 5 in (HL)",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 5,A",
+        .opcode       = 0x6F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 5 in A",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 6,B",
+        .opcode       = 0x70,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 6 in B",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 6,C",
+        .opcode       = 0x71,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 6 in C",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 6,D",
+        .opcode       = 0x72,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 6 in D",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 6,E",
+        .opcode       = 0x73,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 6 in E",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 6,H",
+        .opcode       = 0x74,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 6 in H",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 6,L",
+        .opcode       = 0x75,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 6 in L",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 6,(HL)",
+        .opcode       = 0x76,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Test bit 6 in (HL)",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 6,A",
+        .opcode       = 0x77,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 6 in A",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 7,B",
+        .opcode       = 0x78,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 7 in B",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 7,C",
+        .opcode       = 0x79,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 7 in C",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 7,D",
+        .opcode       = 0x7A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 7 in D",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 7,E",
+        .opcode       = 0x7B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 7 in E",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 7,H",
+        .opcode       = 0x7C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 7 in H",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 7,L",
+        .opcode       = 0x7D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 7 in L",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 7,(HL)",
+        .opcode       = 0x7E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Test bit 7 in (HL)",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 7,A",
+        .opcode       = 0x7F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 7 in A",
+        .handler      = &opcode_cb_bit
     }
 };
