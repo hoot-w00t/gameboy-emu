@@ -28,6 +28,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/shifts.h"
 #include "cpu/opcodes/bit.h"
 #include "cpu/opcodes/res.h"
+#include "cpu/opcodes/set.h"
 #include "cpu/opcodes/alu/add.h"
 #include "cpu/opcodes/alu/adc.h"
 #include "cpu/opcodes/alu/sub.h"
@@ -3986,5 +3987,581 @@ const opcode_t opcode_cb_table[256] = {
         .cycles_false = 8,
         .comment      = "Reset bit 7 in A",
         .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "SET 0,B",
+        .opcode       = 0xC0,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 0 in B",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 0,C",
+        .opcode       = 0xC1,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 0 in C",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 0,D",
+        .opcode       = 0xC2,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 0 in D",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 0,E",
+        .opcode       = 0xC3,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 0 in E",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 0,H",
+        .opcode       = 0xC4,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 0 in H",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 0,L",
+        .opcode       = 0xC5,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 0 in L",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 0,(HL)",
+        .opcode       = 0xC6,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Set bit 0 in (HL)",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 0,A",
+        .opcode       = 0xC7,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 0 in A",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 1,B",
+        .opcode       = 0xC8,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 1 in B",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 1,C",
+        .opcode       = 0xC9,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 1 in C",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 1,D",
+        .opcode       = 0xCA,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 1 in D",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 1,E",
+        .opcode       = 0xCB,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 1 in E",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 1,H",
+        .opcode       = 0xCC,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 1 in H",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 1,L",
+        .opcode       = 0xCD,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 1 in L",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 1,(HL)",
+        .opcode       = 0xCE,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Set bit 1 in (HL)",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 1,A",
+        .opcode       = 0xCF,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 1 in A",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 2,B",
+        .opcode       = 0xD0,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 2 in B",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 2,C",
+        .opcode       = 0xD1,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 2 in C",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 2,D",
+        .opcode       = 0xD2,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 2 in D",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 2,E",
+        .opcode       = 0xD3,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 2 in E",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 2,H",
+        .opcode       = 0xD4,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 2 in H",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 2,L",
+        .opcode       = 0xD5,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 2 in L",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 2,(HL)",
+        .opcode       = 0xD6,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Set bit 2 in (HL)",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 2,A",
+        .opcode       = 0xD7,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 2 in A",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 3,B",
+        .opcode       = 0xD8,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 3 in B",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 3,C",
+        .opcode       = 0xD9,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 3 in C",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 3,D",
+        .opcode       = 0xDA,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 3 in D",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 3,E",
+        .opcode       = 0xDB,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 3 in E",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 3,H",
+        .opcode       = 0xDC,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 3 in H",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 3,L",
+        .opcode       = 0xDD,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 3 in L",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 3,(HL)",
+        .opcode       = 0xDE,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Set bit 3 in (HL)",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 3,A",
+        .opcode       = 0xDF,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 3 in A",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 4,B",
+        .opcode       = 0xE0,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 4 in B",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 4,C",
+        .opcode       = 0xE1,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 4 in C",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 4,D",
+        .opcode       = 0xE2,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 4 in D",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 4,E",
+        .opcode       = 0xE3,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 4 in E",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 4,H",
+        .opcode       = 0xE4,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 4 in H",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 4,L",
+        .opcode       = 0xE5,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 4 in L",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 4,(HL)",
+        .opcode       = 0xE6,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Set bit 4 in (HL)",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 4,A",
+        .opcode       = 0xE7,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 4 in A",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 5,B",
+        .opcode       = 0xE8,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 5 in B",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 5,C",
+        .opcode       = 0xE9,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 5 in C",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 5,D",
+        .opcode       = 0xEA,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 5 in D",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 5,E",
+        .opcode       = 0xEB,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 5 in E",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 5,H",
+        .opcode       = 0xEC,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 5 in H",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 5,L",
+        .opcode       = 0xED,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 5 in L",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 5,(HL)",
+        .opcode       = 0xEE,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Set bit 5 in (HL)",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 5,A",
+        .opcode       = 0xEF,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 5 in A",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 6,B",
+        .opcode       = 0xF0,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 6 in B",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 6,C",
+        .opcode       = 0xF1,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 6 in C",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 6,D",
+        .opcode       = 0xF2,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 6 in D",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 6,E",
+        .opcode       = 0xF3,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 6 in E",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 6,H",
+        .opcode       = 0xF4,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 6 in H",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 6,L",
+        .opcode       = 0xF5,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 6 in L",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 6,(HL)",
+        .opcode       = 0xF6,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Set bit 6 in (HL)",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 6,A",
+        .opcode       = 0xF7,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 6 in A",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 7,B",
+        .opcode       = 0xF8,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 7 in B",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 7,C",
+        .opcode       = 0xF9,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 7 in C",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 7,D",
+        .opcode       = 0xFA,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 7 in D",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 7,E",
+        .opcode       = 0xFB,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 7 in E",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 7,H",
+        .opcode       = 0xFC,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 7 in H",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 7,L",
+        .opcode       = 0xFD,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 7 in L",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 7,(HL)",
+        .opcode       = 0xFE,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Set bit 7 in (HL)",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 7,A",
+        .opcode       = 0xFF,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 7 in A",
+        .handler      = &opcode_cb_set
     }
 };
