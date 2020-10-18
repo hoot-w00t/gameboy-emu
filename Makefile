@@ -24,6 +24,7 @@ SRC	=	logger.c				\
 		cpu/opcodes/swap.c		\
 		cpu/opcodes/shifts.c	\
 		cpu/opcodes/bit.c		\
+		cpu/opcodes/res.c		\
 		cpu/opcodes/alu/add.c	\
 		cpu/opcodes/alu/adc.c	\
 		cpu/opcodes/alu/sub.c	\

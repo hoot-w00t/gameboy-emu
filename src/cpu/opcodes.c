@@ -27,6 +27,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/swap.h"
 #include "cpu/opcodes/shifts.h"
 #include "cpu/opcodes/bit.h"
+#include "cpu/opcodes/res.h"
 #include "cpu/opcodes/alu/add.h"
 #include "cpu/opcodes/alu/adc.h"
 #include "cpu/opcodes/alu/sub.h"
@@ -3409,5 +3410,581 @@ const opcode_t opcode_cb_table[256] = {
         .cycles_false = 8,
         .comment      = "Test bit 7 in A",
         .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "RES 0,B",
+        .opcode       = 0x80,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 0 in B",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 0,C",
+        .opcode       = 0x81,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 0 in C",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 0,D",
+        .opcode       = 0x82,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 0 in D",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 0,E",
+        .opcode       = 0x83,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 0 in E",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 0,H",
+        .opcode       = 0x84,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 0 in H",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 0,L",
+        .opcode       = 0x85,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 0 in L",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 0,(HL)",
+        .opcode       = 0x86,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Reset bit 0 in (HL)",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 0,A",
+        .opcode       = 0x87,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 0 in A",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 1,B",
+        .opcode       = 0x88,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 1 in B",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 1,C",
+        .opcode       = 0x89,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 1 in C",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 1,D",
+        .opcode       = 0x8A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 1 in D",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 1,E",
+        .opcode       = 0x8B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 1 in E",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 1,H",
+        .opcode       = 0x8C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 1 in H",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 1,L",
+        .opcode       = 0x8D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 1 in L",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 1,(HL)",
+        .opcode       = 0x8E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Reset bit 1 in (HL)",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 1,A",
+        .opcode       = 0x8F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 1 in A",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 2,B",
+        .opcode       = 0x90,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 2 in B",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 2,C",
+        .opcode       = 0x91,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 2 in C",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 2,D",
+        .opcode       = 0x92,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 2 in D",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 2,E",
+        .opcode       = 0x93,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 2 in E",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 2,H",
+        .opcode       = 0x94,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 2 in H",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 2,L",
+        .opcode       = 0x95,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 2 in L",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 2,(HL)",
+        .opcode       = 0x96,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Reset bit 2 in (HL)",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 2,A",
+        .opcode       = 0x97,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 2 in A",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 3,B",
+        .opcode       = 0x98,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 3 in B",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 3,C",
+        .opcode       = 0x99,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 3 in C",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 3,D",
+        .opcode       = 0x9A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 3 in D",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 3,E",
+        .opcode       = 0x9B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 3 in E",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 3,H",
+        .opcode       = 0x9C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 3 in H",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 3,L",
+        .opcode       = 0x9D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 3 in L",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 3,(HL)",
+        .opcode       = 0x9E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Reset bit 3 in (HL)",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 3,A",
+        .opcode       = 0x9F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 3 in A",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 4,B",
+        .opcode       = 0xA0,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 4 in B",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 4,C",
+        .opcode       = 0xA1,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 4 in C",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 4,D",
+        .opcode       = 0xA2,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 4 in D",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 4,E",
+        .opcode       = 0xA3,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 4 in E",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 4,H",
+        .opcode       = 0xA4,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 4 in H",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 4,L",
+        .opcode       = 0xA5,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 4 in L",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 4,(HL)",
+        .opcode       = 0xA6,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Reset bit 4 in (HL)",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 4,A",
+        .opcode       = 0xA7,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 4 in A",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 5,B",
+        .opcode       = 0xA8,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 5 in B",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 5,C",
+        .opcode       = 0xA9,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 5 in C",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 5,D",
+        .opcode       = 0xAA,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 5 in D",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 5,E",
+        .opcode       = 0xAB,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 5 in E",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 5,H",
+        .opcode       = 0xAC,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 5 in H",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 5,L",
+        .opcode       = 0xAD,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 5 in L",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 5,(HL)",
+        .opcode       = 0xAE,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Reset bit 5 in (HL)",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 5,A",
+        .opcode       = 0xAF,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 5 in A",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 6,B",
+        .opcode       = 0xB0,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 6 in B",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 6,C",
+        .opcode       = 0xB1,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 6 in C",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 6,D",
+        .opcode       = 0xB2,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 6 in D",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 6,E",
+        .opcode       = 0xB3,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 6 in E",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 6,H",
+        .opcode       = 0xB4,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 6 in H",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 6,L",
+        .opcode       = 0xB5,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 6 in L",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 6,(HL)",
+        .opcode       = 0xB6,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Reset bit 6 in (HL)",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 6,A",
+        .opcode       = 0xB7,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 6 in A",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 7,B",
+        .opcode       = 0xB8,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 7 in B",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 7,C",
+        .opcode       = 0xB9,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 7 in C",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 7,D",
+        .opcode       = 0xBA,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 7 in D",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 7,E",
+        .opcode       = 0xBB,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 7 in E",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 7,H",
+        .opcode       = 0xBC,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 7 in H",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 7,L",
+        .opcode       = 0xBD,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 7 in L",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 7,(HL)",
+        .opcode       = 0xBE,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Reset bit 7 in (HL)",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 7,A",
+        .opcode       = 0xBF,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 7 in A",
+        .handler      = &opcode_cb_res
     }
 };
