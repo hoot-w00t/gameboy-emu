@@ -1,6 +1,6 @@
 CC	=	cc
 INCLUDE	=	-Iinclude $(shell sdl2-config --cflags)
-OFLAGS	=	-g
+OFLAGS	=	-O3
 CFLAGS	=	$(OFLAGS) -W -Wall -Wextra -pipe $(INCLUDE)
 LDFLAGS	=	$(shell pkg-config --libs readline) $(shell sdl2-config --libs)
 
@@ -20,6 +20,12 @@ SRC	=	logger.c				\
 		cpu/opcodes/ld.c		\
 		cpu/opcodes/jumps.c		\
 		cpu/opcodes/calls.c		\
+		cpu/opcodes/rotate.c	\
+		cpu/opcodes/swap.c		\
+		cpu/opcodes/shifts.c	\
+		cpu/opcodes/bit.c		\
+		cpu/opcodes/res.c		\
+		cpu/opcodes/set.c		\
 		cpu/opcodes/alu/add.c	\
 		cpu/opcodes/alu/adc.c	\
 		cpu/opcodes/alu/sub.c	\

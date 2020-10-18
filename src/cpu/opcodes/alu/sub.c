@@ -38,6 +38,22 @@ byte_t cpu_subb(const byte_t target, const byte_t value, gb_system_t *gb)
     return result;
 }
 
+// Subtract two uint16
+// Affected flags
+//     N set
+//     H if no borrow from bit 11
+//     C if no borrow
+uint16_t cpu_sub_u16(const uint16_t target, const uint16_t value, gb_system_t *gb)
+{
+    uint16_t result = target - value;
+
+    reg_flag_set(FLAG_N, gb);
+    if ((target & 0xFFF) < (value & 0xFFF)) reg_flag_clear(FLAG_H, gb); else reg_flag_set(FLAG_H, gb);
+    if (target < value) reg_flag_clear(FLAG_C, gb); else reg_flag_set(FLAG_C, gb);
+
+    return result;
+}
+
 // SUB A,n opcodes
 // Zero Flag = (result == 0)
 int opcode_sub(const opcode_t *opcode, gb_system_t *gb)

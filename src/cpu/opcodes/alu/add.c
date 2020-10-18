@@ -20,6 +20,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "gameboy.h"
 #include "cpu/cpu.h"
 #include "cpu/registers.h"
+#include "cpu/opcodes/alu/sub.h"
 #include "mmu/mmu.h"
 
 // Add two bytes
@@ -54,6 +55,27 @@ uint16_t cpu_add_u16(const uint16_t target, const uint16_t value, gb_system_t *g
     if (result > 0xFFFF) reg_flag_set(FLAG_C, gb); else reg_flag_clear(FLAG_C, gb);
 
     return (uint16_t) (result & 0xFFFF);
+}
+
+// Add signed byte to uint16
+// Affected flags
+//     Z reset
+//     N reset
+//     H carry/borrow from bit 11
+//     C carry/borrow from bit 15
+uint16_t cpu_add_sb_u16(const uint16_t target, const sbyte_t value, gb_system_t *gb)
+{
+    uint16_t result;
+
+    if (value >= 0) {
+        result = cpu_add_u16(target, value, gb);
+    } else {
+        result = cpu_sub_u16(target, -value, gb);
+    }
+    reg_flag_clear(FLAG_Z, gb);
+    reg_flag_clear(FLAG_N, gb);
+
+    return result;
 }
 
 // ADD A,n and ADD A,(HL) opcodes
@@ -107,4 +129,9 @@ int opcode_add_hl_n(const opcode_t *opcode, gb_system_t *gb)
     return opcode->cycles_true;
 }
 
-// TODO: Implement ADD SP,n (0xE8) when cpu_sub() is implemented
+int opcode_add_sp_n(const opcode_t *opcode, gb_system_t *gb)
+{
+    gb->sp = cpu_add_sb_u16(gb->sp, (sbyte_t) cpu_fetchb(gb), gb);
+
+    return opcode->cycles_true;
+}

@@ -1,6 +1,7 @@
 /*
 opcodes.h
 Header file for opcodes.c
+Handle opcode identification
 
 Copyright (C) 2020 akrocynova
 
@@ -22,8 +23,19 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _CPU_OPCODES_H
 #define _CPU_OPCODES_H
 
-const opcode_t *opcode_identify(byte_t opcode);
+extern const opcode_t opcode_table[256];
+extern const opcode_t opcode_cb_table[256];
 
-extern const opcode_t *opcode_table;
+// Return a pointer the identified opcode in opcode_table or NULL on fail
+static inline const opcode_t *opcode_identify(const byte_t opcode)
+{
+    return opcode_table[opcode].handler ? &opcode_table[opcode] : NULL;
+}
+
+// Return a pointer the identified opcode in opcode_cb_table or NULL on fail
+static inline const opcode_t *opcode_cb_identify(const byte_t opcode)
+{
+    return opcode_cb_table[opcode].handler ? &opcode_cb_table[opcode] : NULL;
+}
 
 #endif

@@ -49,13 +49,13 @@ int cpu_int_isr(gb_system_t *gb)
     byte_t exec_bits;
     uint16_t addr;
 
-    if (gb->interrupts.ime != IME_ENABLE) return 0;
-
     exec_bits = (gb->interrupts.if_reg & gb->interrupts.ie_reg);
     for (byte_t i = 0; i < 5; ++i) {
         if ((exec_bits & (1 << i))) {
-            addr = INT_VBLANK + (i * 8);
+            gb->halt = false; // Exit HALT even if IME=0
+            if (gb->interrupts.ime != IME_ENABLE) return 0;
 
+            addr = INT_VBLANK + (i * 8);
             logger(LOG_DEBUG, "ISR $%02X", addr);
             gb->interrupts.ime = IME_DISABLE;
             cpu_int_flag_clear(i, gb);

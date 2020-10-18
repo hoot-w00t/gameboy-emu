@@ -1,7 +1,7 @@
 /*
 opcodes.c
-Handle opcode identification
 Define opcode_table containing all the CPU's opcodes
+Define opcode_cb_table containing all the PREFIX CB opcodes
 
 Copyright (C) 2020 akrocynova
 
@@ -23,6 +23,12 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/ld.h"
 #include "cpu/opcodes/jumps.h"
 #include "cpu/opcodes/calls.h"
+#include "cpu/opcodes/rotate.h"
+#include "cpu/opcodes/swap.h"
+#include "cpu/opcodes/shifts.h"
+#include "cpu/opcodes/bit.h"
+#include "cpu/opcodes/res.h"
+#include "cpu/opcodes/set.h"
 #include "cpu/opcodes/alu/add.h"
 #include "cpu/opcodes/alu/adc.h"
 #include "cpu/opcodes/alu/sub.h"
@@ -34,7 +40,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/alu/inc.h"
 #include "cpu/opcodes/alu/dec.h"
 
-const opcode_t opcode_table[] = {
+const opcode_t opcode_table[256] = {
     {
         .mnemonic     = "NOP",
         .opcode       = 0x00,
@@ -97,6 +103,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load n to B",
         .handler      = &opcode_ld_r8
+    },
+    {
+        .mnemonic     = "RLCA",
+        .opcode       = 0x07,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Rotate A left",
+        .handler      = &opcode_rotate_a
     },
     {
         .mnemonic     = "LD (nn),SP",
@@ -162,6 +177,24 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_r8
     },
     {
+        .mnemonic     = "RRCA",
+        .opcode       = 0x0F,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Rotate A right",
+        .handler      = &opcode_rotate_a
+    },
+    {
+        .mnemonic     = "STOP",
+        .opcode       = 0x10,
+        .length       = 2,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Halt CPU and LCD display until button is pressed",
+        .handler      = &opcode_stop
+    },
+    {
         .mnemonic     = "LD DE,nn",
         .opcode       = 0x11,
         .length       = 3,
@@ -214,6 +247,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load n to D",
         .handler      = &opcode_ld_r8
+    },
+    {
+        .mnemonic     = "RLA",
+        .opcode       = 0x17,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Rotate A left through Carry Flag",
+        .handler      = &opcode_rotate_a
     },
     {
         .mnemonic     = "JR n",
@@ -279,6 +321,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_r8
     },
     {
+        .mnemonic     = "RRA",
+        .opcode       = 0x1F,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Rotate A right through Carry Flag",
+        .handler      = &opcode_rotate_a
+    },
+    {
         .mnemonic     = "JR NZ,n",
         .opcode       = 0x20,
         .length       = 2,
@@ -340,6 +391,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load n to H",
         .handler      = &opcode_ld_r8
+    },
+    {
+        .mnemonic     = "DAA",
+        .opcode       = 0x27,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Decimal adjust A",
+        .handler      = &opcode_daa
     },
     {
         .mnemonic     = "JR Z,n",
@@ -405,6 +465,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_ld_r8
     },
     {
+        .mnemonic     = "CPL",
+        .opcode       = 0x2F,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Complement A (flip all bits)",
+        .handler      = &opcode_cpl
+    },
+    {
         .mnemonic     = "JR NC,n",
         .opcode       = 0x30,
         .length       = 2,
@@ -457,6 +526,24 @@ const opcode_t opcode_table[] = {
         .cycles_false = 12,
         .comment      = "Decrement (HL)",
         .handler      = &opcode_dec_n_hl
+    },
+    {
+        .mnemonic     = "LD (HL),n",
+        .opcode       = 0x36,
+        .length       = 2,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Load n to (HL)",
+        .handler      = &opcode_ld_r8
+    },
+    {
+        .mnemonic     = "SCF",
+        .opcode       = 0x37,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Set Carry Flag",
+        .handler      = &opcode_scf
     },
     {
         .mnemonic     = "JR C,n",
@@ -520,6 +607,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load n to A",
         .handler      = &opcode_ld_a
+    },
+    {
+        .mnemonic     = "CCF",
+        .opcode       = 0x3F,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Complement Carry Flag (flip bit)",
+        .handler      = &opcode_ccf
     },
     {
         .mnemonic     = "LD B,B",
@@ -1006,6 +1102,15 @@ const opcode_t opcode_table[] = {
         .cycles_false = 8,
         .comment      = "Load L at address HL",
         .handler      = &opcode_ld_r8
+    },
+    {
+        .mnemonic     = "HALT",
+        .opcode       = 0x76,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "Halt CPU until an interrupt occurs",
+        .handler      = &opcode_halt
     },
     {
         .mnemonic     = "LD (HL),A",
@@ -1764,6 +1869,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_jp
     },
     {
+        .mnemonic     = "PREFIX CB",
+        .opcode       = 0xCB,
+        .length       = 1,
+        .cycles_true  = 4,
+        .cycles_false = 4,
+        .comment      = "PREFIX CB",
+        .handler      = NULL
+    },
+    {
         .mnemonic     = "CALL Z,nn",
         .opcode       = 0xCC,
         .length       = 3,
@@ -1826,6 +1940,7 @@ const opcode_t opcode_table[] = {
         .comment      = "Jump to nn if C if reset",
         .handler      = &opcode_jp
     },
+    {NULL, 0, 0, 0, 0, NULL, NULL},
     {
         .mnemonic     = "CALL NC,nn",
         .opcode       = 0xD4,
@@ -1889,6 +2004,7 @@ const opcode_t opcode_table[] = {
         .comment      = "Jump to nn if C if set",
         .handler      = &opcode_jp
     },
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $DB doesn't exist, empty element for alignment
     {
         .mnemonic     = "CALL C,nn",
         .opcode       = 0xDC,
@@ -1898,6 +2014,7 @@ const opcode_t opcode_table[] = {
         .comment      = "Push PC and jump to nn if C if set",
         .handler      = &opcode_call
     },
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $DD doesn't exist, empty element for alignment
     {
         .mnemonic     = "SBC A,n",
         .opcode       = 0xDE,
@@ -1943,8 +2060,10 @@ const opcode_t opcode_table[] = {
         .comment      = "Load A at address $FF00+C",
         .handler      = &opcode_ld_a
     },
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $E3 doesn't exist, empty element for alignment
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $E4 doesn't exist, empty element for alignment
     {
-        .mnemonic     = "Push HL",
+        .mnemonic     = "PUSH HL",
         .opcode       = 0xE5,
         .length       = 1,
         .cycles_true  = 16,
@@ -1971,6 +2090,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_rst
     },
     {
+        .mnemonic     = "ADD SP,n",
+        .opcode       = 0xE8,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Add signed n to SP",
+        .handler      = &opcode_add_sp_n
+    },
+    {
         .mnemonic     = "JP (HL)",
         .opcode       = 0xE9,
         .length       = 1,
@@ -1988,6 +2116,9 @@ const opcode_t opcode_table[] = {
         .comment      = "Load A at address nn",
         .handler      = &opcode_ld_a
     },
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $EB doesn't exist, empty element for alignment
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $EC doesn't exist, empty element for alignment
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $ED doesn't exist, empty element for alignment
     {
         .mnemonic     = "XOR n",
         .opcode       = 0xEE,
@@ -2042,6 +2173,7 @@ const opcode_t opcode_table[] = {
         .comment      = "Disable Interrupts",
         .handler      = &opcode_di
     },
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $F4 doesn't exist, empty element for alignment
     {
         .mnemonic     = "PUSH AF",
         .opcode       = 0xF5,
@@ -2070,6 +2202,15 @@ const opcode_t opcode_table[] = {
         .handler      = &opcode_rst
     },
     {
+        .mnemonic     = "LDHL SP,n",
+        .opcode       = 0xF8,
+        .length       = 2,
+        .cycles_true  = 12,
+        .cycles_false = 12,
+        .comment      = "Load SP+n (signed) to HL",
+        .handler      = &opcode_ld_sp
+    },
+    {
         .mnemonic     = "LD SP,HL",
         .opcode       = 0xF9,
         .length       = 1,
@@ -2096,6 +2237,8 @@ const opcode_t opcode_table[] = {
         .comment      = "Enable Interrupts",
         .handler      = &opcode_ei
     },
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $FC doesn't exist, empty element for alignment
+    {NULL, 0, 0, 0, 0, NULL, NULL}, // $FD doesn't exist, empty element for alignment
     {
         .mnemonic     = "CP n",
         .opcode       = 0xFE,
@@ -2113,16 +2256,2312 @@ const opcode_t opcode_table[] = {
         .cycles_false = 16,
         .comment      = "Call $FF",
         .handler      = &opcode_rst
-    },
-    {NULL, 0, 0, 0, 0, NULL, NULL}
+    }
 };
 
-const opcode_t *opcode_identify(byte_t opcode)
-{
-    for (int i = 0; opcode_table[i].handler; ++i) {
-        if (opcode_table[i].opcode == opcode)
-            return &opcode_table[i];
+const opcode_t opcode_cb_table[256] = {
+    {
+        .mnemonic     = "RLC B",
+        .opcode       = 0x00,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate B left",
+        .handler      = &opcode_cb_rlc_r
+    },
+    {
+        .mnemonic     = "RLC C",
+        .opcode       = 0x01,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate C left",
+        .handler      = &opcode_cb_rlc_r
+    },
+    {
+        .mnemonic     = "RLC D",
+        .opcode       = 0x02,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate D left",
+        .handler      = &opcode_cb_rlc_r
+    },
+    {
+        .mnemonic     = "RLC E",
+        .opcode       = 0x03,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate E left",
+        .handler      = &opcode_cb_rlc_r
+    },
+    {
+        .mnemonic     = "RLC H",
+        .opcode       = 0x04,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate H left",
+        .handler      = &opcode_cb_rlc_r
+    },
+    {
+        .mnemonic     = "RLC L",
+        .opcode       = 0x05,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate L left",
+        .handler      = &opcode_cb_rlc_r
+    },
+    {
+        .mnemonic     = "RLC (HL)",
+        .opcode       = 0x06,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Rotate (HL) left",
+        .handler      = &opcode_cb_rotate_n
+    },
+    {
+        .mnemonic     = "RLC A",
+        .opcode       = 0x07,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate A left",
+        .handler      = &opcode_cb_rlc_r
+    },
+    {
+        .mnemonic     = "RRC B",
+        .opcode       = 0x08,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate B right",
+        .handler      = &opcode_cb_rrc_r
+    },
+    {
+        .mnemonic     = "RRC C",
+        .opcode       = 0x09,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate C right",
+        .handler      = &opcode_cb_rrc_r
+    },
+    {
+        .mnemonic     = "RRC D",
+        .opcode       = 0x0A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate D right",
+        .handler      = &opcode_cb_rrc_r
+    },
+    {
+        .mnemonic     = "RRC E",
+        .opcode       = 0x0B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate E right",
+        .handler      = &opcode_cb_rrc_r
+    },
+    {
+        .mnemonic     = "RRC H",
+        .opcode       = 0x0C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate H right",
+        .handler      = &opcode_cb_rrc_r
+    },
+    {
+        .mnemonic     = "RRC L",
+        .opcode       = 0x0D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate L right",
+        .handler      = &opcode_cb_rrc_r
+    },
+    {
+        .mnemonic     = "RRC (HL)",
+        .opcode       = 0x0E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Rotate (HL) right",
+        .handler      = &opcode_cb_rotate_n
+    },
+    {
+        .mnemonic     = "RRC A",
+        .opcode       = 0x0F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate A right",
+        .handler      = &opcode_cb_rrc_r
+    },
+    {
+        .mnemonic     = "RL B",
+        .opcode       = 0x10,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate B left through carry",
+        .handler      = &opcode_cb_rl_r
+    },
+    {
+        .mnemonic     = "RL C",
+        .opcode       = 0x11,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate C left through carry",
+        .handler      = &opcode_cb_rl_r
+    },
+    {
+        .mnemonic     = "RL D",
+        .opcode       = 0x12,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate D left through carry",
+        .handler      = &opcode_cb_rl_r
+    },
+    {
+        .mnemonic     = "RL E",
+        .opcode       = 0x13,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate E left through carry",
+        .handler      = &opcode_cb_rl_r
+    },
+    {
+        .mnemonic     = "RL H",
+        .opcode       = 0x14,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate H left through carry",
+        .handler      = &opcode_cb_rl_r
+    },
+    {
+        .mnemonic     = "RL L",
+        .opcode       = 0x15,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate L left through carry",
+        .handler      = &opcode_cb_rl_r
+    },
+    {
+        .mnemonic     = "RL (HL)",
+        .opcode       = 0x16,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Rotate (HL) left through carry",
+        .handler      = &opcode_cb_rotate_n
+    },
+    {
+        .mnemonic     = "RL A",
+        .opcode       = 0x17,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate A left through carry",
+        .handler      = &opcode_cb_rl_r
+    },
+    {
+        .mnemonic     = "RR B",
+        .opcode       = 0x18,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate B right through carry",
+        .handler      = &opcode_cb_rr_r
+    },
+    {
+        .mnemonic     = "RR C",
+        .opcode       = 0x19,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate C right through carry",
+        .handler      = &opcode_cb_rr_r
+    },
+    {
+        .mnemonic     = "RR D",
+        .opcode       = 0x1A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate D right through carry",
+        .handler      = &opcode_cb_rr_r
+    },
+    {
+        .mnemonic     = "RR E",
+        .opcode       = 0x1B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate E right through carry",
+        .handler      = &opcode_cb_rr_r
+    },
+    {
+        .mnemonic     = "RR H",
+        .opcode       = 0x1C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate H right through carry",
+        .handler      = &opcode_cb_rr_r
+    },
+    {
+        .mnemonic     = "RR L",
+        .opcode       = 0x1D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate L right through carry",
+        .handler      = &opcode_cb_rr_r
+    },
+    {
+        .mnemonic     = "RR (HL)",
+        .opcode       = 0x1E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Rotate (HL) right through carry",
+        .handler      = &opcode_cb_rotate_n
+    },
+    {
+        .mnemonic     = "RR A",
+        .opcode       = 0x1F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Rotate A right through carry",
+        .handler      = &opcode_cb_rr_r
+    },
+    {
+        .mnemonic     = "SLA B",
+        .opcode       = 0x20,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift B left (LSB=0)",
+        .handler      = &opcode_cb_sla_r
+    },
+    {
+        .mnemonic     = "SLA C",
+        .opcode       = 0x21,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift C left (LSB=0)",
+        .handler      = &opcode_cb_sla_r
+    },
+    {
+        .mnemonic     = "SLA D",
+        .opcode       = 0x22,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift D left (LSB=0)",
+        .handler      = &opcode_cb_sla_r
+    },
+    {
+        .mnemonic     = "SLA E",
+        .opcode       = 0x23,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift E left (LSB=0)",
+        .handler      = &opcode_cb_sla_r
+    },
+    {
+        .mnemonic     = "SLA H",
+        .opcode       = 0x24,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift H left (LSB=0)",
+        .handler      = &opcode_cb_sla_r
+    },
+    {
+        .mnemonic     = "SLA L",
+        .opcode       = 0x25,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift L left (LSB=0)",
+        .handler      = &opcode_cb_sla_r
+    },
+    {
+        .mnemonic     = "SLA (HL)",
+        .opcode       = 0x26,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Shift (HL) left (LSB=0)",
+        .handler      = &opcode_cb_shift_hl
+    },
+    {
+        .mnemonic     = "SLA A",
+        .opcode       = 0x27,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift A left (LSB=0)",
+        .handler      = &opcode_cb_sla_r
+    },
+    {
+        .mnemonic     = "SRA B",
+        .opcode       = 0x28,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift B right (MSB doesn't change)",
+        .handler      = &opcode_cb_sra_r
+    },
+    {
+        .mnemonic     = "SRA C",
+        .opcode       = 0x29,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift C right (MSB doesn't change)",
+        .handler      = &opcode_cb_sra_r
+    },
+    {
+        .mnemonic     = "SRA D",
+        .opcode       = 0x2A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift D right (MSB doesn't change)",
+        .handler      = &opcode_cb_sra_r
+    },
+    {
+        .mnemonic     = "SRA E",
+        .opcode       = 0x2B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift E right (MSB doesn't change)",
+        .handler      = &opcode_cb_sra_r
+    },
+    {
+        .mnemonic     = "SRA H",
+        .opcode       = 0x2C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift H right (MSB doesn't change)",
+        .handler      = &opcode_cb_sra_r
+    },
+    {
+        .mnemonic     = "SRA L",
+        .opcode       = 0x2D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift L right (MSB doesn't change)",
+        .handler      = &opcode_cb_sra_r
+    },
+    {
+        .mnemonic     = "SRA (HL)",
+        .opcode       = 0x2E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Shift (HL) right (MSB doesn't change)",
+        .handler      = &opcode_cb_shift_hl
+    },
+    {
+        .mnemonic     = "SRA A",
+        .opcode       = 0x2F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift A right (MSB doesn't change)",
+        .handler      = &opcode_cb_sra_r
+    },
+    {
+        .mnemonic     = "SWAP B",
+        .opcode       = 0x30,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Swap lower and higher 4 bits of B",
+        .handler      = &opcode_cb_swap_r
+    },
+    {
+        .mnemonic     = "SWAP C",
+        .opcode       = 0x31,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Swap lower and higher 4 bits of C",
+        .handler      = &opcode_cb_swap_r
+    },
+    {
+        .mnemonic     = "SWAP D",
+        .opcode       = 0x32,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Swap lower and higher 4 bits of D",
+        .handler      = &opcode_cb_swap_r
+    },
+    {
+        .mnemonic     = "SWAP E",
+        .opcode       = 0x33,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Swap lower and higher 4 bits of E",
+        .handler      = &opcode_cb_swap_r
+    },
+    {
+        .mnemonic     = "SWAP H",
+        .opcode       = 0x34,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Swap lower and higher 4 bits of H",
+        .handler      = &opcode_cb_swap_r
+    },
+    {
+        .mnemonic     = "SWAP L",
+        .opcode       = 0x35,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Swap lower and higher 4 bits of L",
+        .handler      = &opcode_cb_swap_r
+    },
+    {
+        .mnemonic     = "SWAP (HL)",
+        .opcode       = 0x36,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Swap lower and higher 4 bits of (HL)",
+        .handler      = &opcode_cb_swap_n
+    },
+    {
+        .mnemonic     = "SWAP A",
+        .opcode       = 0x37,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Swap lower and higher 4 bits of A",
+        .handler      = &opcode_cb_swap_r
+    },
+    {
+        .mnemonic     = "SRL B",
+        .opcode       = 0x38,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift B right",
+        .handler      = &opcode_cb_srl_r
+    },
+    {
+        .mnemonic     = "SRL C",
+        .opcode       = 0x39,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift C right (MSB=0)",
+        .handler      = &opcode_cb_srl_r
+    },
+    {
+        .mnemonic     = "SRL D",
+        .opcode       = 0x3A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift D right (MSB=0)",
+        .handler      = &opcode_cb_srl_r
+    },
+    {
+        .mnemonic     = "SRL E",
+        .opcode       = 0x3B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift E right (MSB=0)",
+        .handler      = &opcode_cb_srl_r
+    },
+    {
+        .mnemonic     = "SRL H",
+        .opcode       = 0x3C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift H right (MSB=0)",
+        .handler      = &opcode_cb_srl_r
+    },
+    {
+        .mnemonic     = "SRL L",
+        .opcode       = 0x3D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift L right (MSB=0)",
+        .handler      = &opcode_cb_srl_r
+    },
+    {
+        .mnemonic     = "SRL (HL)",
+        .opcode       = 0x3E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Shift (HL) right (MSB=0)",
+        .handler      = &opcode_cb_shift_hl
+    },
+    {
+        .mnemonic     = "SRL A",
+        .opcode       = 0x3F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Shift A right (MSB=0)",
+        .handler      = &opcode_cb_srl_r
+    },
+    {
+        .mnemonic     = "BIT 0,B",
+        .opcode       = 0x40,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 0 in B",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 0,C",
+        .opcode       = 0x41,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 0 in C",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 0,D",
+        .opcode       = 0x42,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 0 in D",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 0,E",
+        .opcode       = 0x43,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 0 in E",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 0,H",
+        .opcode       = 0x44,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 0 in H",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 0,L",
+        .opcode       = 0x45,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 0 in L",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 0,(HL)",
+        .opcode       = 0x46,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Test bit 0 in (HL)",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 0,A",
+        .opcode       = 0x47,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 0 in A",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 1,B",
+        .opcode       = 0x48,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 1 in B",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 1,C",
+        .opcode       = 0x49,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 1 in C",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 1,D",
+        .opcode       = 0x4A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 1 in D",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 1,E",
+        .opcode       = 0x4B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 1 in E",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 1,H",
+        .opcode       = 0x4C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 1 in H",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 1,L",
+        .opcode       = 0x4D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 1 in L",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 1,(HL)",
+        .opcode       = 0x4E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Test bit 1 in (HL)",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 1,A",
+        .opcode       = 0x4F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 1 in A",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 2,B",
+        .opcode       = 0x50,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 2 in B",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 2,C",
+        .opcode       = 0x51,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 2 in C",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 2,D",
+        .opcode       = 0x52,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 2 in D",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 2,E",
+        .opcode       = 0x53,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 2 in E",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 2,H",
+        .opcode       = 0x54,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 2 in H",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 2,L",
+        .opcode       = 0x55,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 2 in L",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 2,(HL)",
+        .opcode       = 0x56,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Test bit 2 in (HL)",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 2,A",
+        .opcode       = 0x57,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 2 in A",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 3,B",
+        .opcode       = 0x58,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 3 in B",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 3,C",
+        .opcode       = 0x59,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 3 in C",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 3,D",
+        .opcode       = 0x5A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 3 in D",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 3,E",
+        .opcode       = 0x5B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 3 in E",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 3,H",
+        .opcode       = 0x5C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 3 in H",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 3,L",
+        .opcode       = 0x5D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 3 in L",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 3,(HL)",
+        .opcode       = 0x5E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Test bit 3 in (HL)",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 3,A",
+        .opcode       = 0x5F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 3 in A",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 4,B",
+        .opcode       = 0x60,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 4 in B",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 4,C",
+        .opcode       = 0x61,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 4 in C",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 4,D",
+        .opcode       = 0x62,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 4 in D",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 4,E",
+        .opcode       = 0x63,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 4 in E",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 4,H",
+        .opcode       = 0x64,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 4 in H",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 4,L",
+        .opcode       = 0x65,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 4 in L",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 4,(HL)",
+        .opcode       = 0x66,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Test bit 4 in (HL)",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 4,A",
+        .opcode       = 0x67,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 4 in A",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 5,B",
+        .opcode       = 0x68,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 5 in B",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 5,C",
+        .opcode       = 0x69,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 5 in C",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 5,D",
+        .opcode       = 0x6A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 5 in D",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 5,E",
+        .opcode       = 0x6B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 5 in E",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 5,H",
+        .opcode       = 0x6C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 5 in H",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 5,L",
+        .opcode       = 0x6D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 5 in L",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 5,(HL)",
+        .opcode       = 0x6E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Test bit 5 in (HL)",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 5,A",
+        .opcode       = 0x6F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 5 in A",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 6,B",
+        .opcode       = 0x70,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 6 in B",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 6,C",
+        .opcode       = 0x71,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 6 in C",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 6,D",
+        .opcode       = 0x72,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 6 in D",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 6,E",
+        .opcode       = 0x73,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 6 in E",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 6,H",
+        .opcode       = 0x74,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 6 in H",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 6,L",
+        .opcode       = 0x75,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 6 in L",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 6,(HL)",
+        .opcode       = 0x76,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Test bit 6 in (HL)",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 6,A",
+        .opcode       = 0x77,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 6 in A",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 7,B",
+        .opcode       = 0x78,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 7 in B",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 7,C",
+        .opcode       = 0x79,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 7 in C",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 7,D",
+        .opcode       = 0x7A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 7 in D",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 7,E",
+        .opcode       = 0x7B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 7 in E",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 7,H",
+        .opcode       = 0x7C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 7 in H",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 7,L",
+        .opcode       = 0x7D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 7 in L",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 7,(HL)",
+        .opcode       = 0x7E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Test bit 7 in (HL)",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "BIT 7,A",
+        .opcode       = 0x7F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Test bit 7 in A",
+        .handler      = &opcode_cb_bit
+    },
+    {
+        .mnemonic     = "RES 0,B",
+        .opcode       = 0x80,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 0 in B",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 0,C",
+        .opcode       = 0x81,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 0 in C",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 0,D",
+        .opcode       = 0x82,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 0 in D",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 0,E",
+        .opcode       = 0x83,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 0 in E",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 0,H",
+        .opcode       = 0x84,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 0 in H",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 0,L",
+        .opcode       = 0x85,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 0 in L",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 0,(HL)",
+        .opcode       = 0x86,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Reset bit 0 in (HL)",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 0,A",
+        .opcode       = 0x87,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 0 in A",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 1,B",
+        .opcode       = 0x88,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 1 in B",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 1,C",
+        .opcode       = 0x89,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 1 in C",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 1,D",
+        .opcode       = 0x8A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 1 in D",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 1,E",
+        .opcode       = 0x8B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 1 in E",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 1,H",
+        .opcode       = 0x8C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 1 in H",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 1,L",
+        .opcode       = 0x8D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 1 in L",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 1,(HL)",
+        .opcode       = 0x8E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Reset bit 1 in (HL)",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 1,A",
+        .opcode       = 0x8F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 1 in A",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 2,B",
+        .opcode       = 0x90,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 2 in B",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 2,C",
+        .opcode       = 0x91,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 2 in C",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 2,D",
+        .opcode       = 0x92,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 2 in D",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 2,E",
+        .opcode       = 0x93,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 2 in E",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 2,H",
+        .opcode       = 0x94,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 2 in H",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 2,L",
+        .opcode       = 0x95,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 2 in L",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 2,(HL)",
+        .opcode       = 0x96,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Reset bit 2 in (HL)",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 2,A",
+        .opcode       = 0x97,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 2 in A",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 3,B",
+        .opcode       = 0x98,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 3 in B",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 3,C",
+        .opcode       = 0x99,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 3 in C",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 3,D",
+        .opcode       = 0x9A,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 3 in D",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 3,E",
+        .opcode       = 0x9B,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 3 in E",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 3,H",
+        .opcode       = 0x9C,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 3 in H",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 3,L",
+        .opcode       = 0x9D,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 3 in L",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 3,(HL)",
+        .opcode       = 0x9E,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Reset bit 3 in (HL)",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 3,A",
+        .opcode       = 0x9F,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 3 in A",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 4,B",
+        .opcode       = 0xA0,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 4 in B",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 4,C",
+        .opcode       = 0xA1,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 4 in C",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 4,D",
+        .opcode       = 0xA2,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 4 in D",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 4,E",
+        .opcode       = 0xA3,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 4 in E",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 4,H",
+        .opcode       = 0xA4,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 4 in H",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 4,L",
+        .opcode       = 0xA5,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 4 in L",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 4,(HL)",
+        .opcode       = 0xA6,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Reset bit 4 in (HL)",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 4,A",
+        .opcode       = 0xA7,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 4 in A",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 5,B",
+        .opcode       = 0xA8,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 5 in B",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 5,C",
+        .opcode       = 0xA9,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 5 in C",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 5,D",
+        .opcode       = 0xAA,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 5 in D",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 5,E",
+        .opcode       = 0xAB,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 5 in E",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 5,H",
+        .opcode       = 0xAC,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 5 in H",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 5,L",
+        .opcode       = 0xAD,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 5 in L",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 5,(HL)",
+        .opcode       = 0xAE,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Reset bit 5 in (HL)",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 5,A",
+        .opcode       = 0xAF,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 5 in A",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 6,B",
+        .opcode       = 0xB0,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 6 in B",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 6,C",
+        .opcode       = 0xB1,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 6 in C",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 6,D",
+        .opcode       = 0xB2,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 6 in D",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 6,E",
+        .opcode       = 0xB3,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 6 in E",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 6,H",
+        .opcode       = 0xB4,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 6 in H",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 6,L",
+        .opcode       = 0xB5,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 6 in L",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 6,(HL)",
+        .opcode       = 0xB6,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Reset bit 6 in (HL)",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 6,A",
+        .opcode       = 0xB7,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 6 in A",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 7,B",
+        .opcode       = 0xB8,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 7 in B",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 7,C",
+        .opcode       = 0xB9,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 7 in C",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 7,D",
+        .opcode       = 0xBA,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 7 in D",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 7,E",
+        .opcode       = 0xBB,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 7 in E",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 7,H",
+        .opcode       = 0xBC,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 7 in H",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 7,L",
+        .opcode       = 0xBD,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 7 in L",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 7,(HL)",
+        .opcode       = 0xBE,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Reset bit 7 in (HL)",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "RES 7,A",
+        .opcode       = 0xBF,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Reset bit 7 in A",
+        .handler      = &opcode_cb_res
+    },
+    {
+        .mnemonic     = "SET 0,B",
+        .opcode       = 0xC0,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 0 in B",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 0,C",
+        .opcode       = 0xC1,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 0 in C",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 0,D",
+        .opcode       = 0xC2,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 0 in D",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 0,E",
+        .opcode       = 0xC3,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 0 in E",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 0,H",
+        .opcode       = 0xC4,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 0 in H",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 0,L",
+        .opcode       = 0xC5,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 0 in L",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 0,(HL)",
+        .opcode       = 0xC6,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Set bit 0 in (HL)",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 0,A",
+        .opcode       = 0xC7,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 0 in A",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 1,B",
+        .opcode       = 0xC8,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 1 in B",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 1,C",
+        .opcode       = 0xC9,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 1 in C",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 1,D",
+        .opcode       = 0xCA,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 1 in D",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 1,E",
+        .opcode       = 0xCB,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 1 in E",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 1,H",
+        .opcode       = 0xCC,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 1 in H",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 1,L",
+        .opcode       = 0xCD,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 1 in L",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 1,(HL)",
+        .opcode       = 0xCE,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Set bit 1 in (HL)",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 1,A",
+        .opcode       = 0xCF,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 1 in A",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 2,B",
+        .opcode       = 0xD0,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 2 in B",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 2,C",
+        .opcode       = 0xD1,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 2 in C",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 2,D",
+        .opcode       = 0xD2,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 2 in D",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 2,E",
+        .opcode       = 0xD3,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 2 in E",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 2,H",
+        .opcode       = 0xD4,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 2 in H",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 2,L",
+        .opcode       = 0xD5,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 2 in L",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 2,(HL)",
+        .opcode       = 0xD6,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Set bit 2 in (HL)",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 2,A",
+        .opcode       = 0xD7,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 2 in A",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 3,B",
+        .opcode       = 0xD8,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 3 in B",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 3,C",
+        .opcode       = 0xD9,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 3 in C",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 3,D",
+        .opcode       = 0xDA,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 3 in D",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 3,E",
+        .opcode       = 0xDB,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 3 in E",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 3,H",
+        .opcode       = 0xDC,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 3 in H",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 3,L",
+        .opcode       = 0xDD,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 3 in L",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 3,(HL)",
+        .opcode       = 0xDE,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Set bit 3 in (HL)",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 3,A",
+        .opcode       = 0xDF,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 3 in A",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 4,B",
+        .opcode       = 0xE0,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 4 in B",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 4,C",
+        .opcode       = 0xE1,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 4 in C",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 4,D",
+        .opcode       = 0xE2,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 4 in D",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 4,E",
+        .opcode       = 0xE3,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 4 in E",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 4,H",
+        .opcode       = 0xE4,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 4 in H",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 4,L",
+        .opcode       = 0xE5,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 4 in L",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 4,(HL)",
+        .opcode       = 0xE6,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Set bit 4 in (HL)",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 4,A",
+        .opcode       = 0xE7,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 4 in A",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 5,B",
+        .opcode       = 0xE8,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 5 in B",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 5,C",
+        .opcode       = 0xE9,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 5 in C",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 5,D",
+        .opcode       = 0xEA,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 5 in D",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 5,E",
+        .opcode       = 0xEB,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 5 in E",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 5,H",
+        .opcode       = 0xEC,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 5 in H",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 5,L",
+        .opcode       = 0xED,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 5 in L",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 5,(HL)",
+        .opcode       = 0xEE,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Set bit 5 in (HL)",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 5,A",
+        .opcode       = 0xEF,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 5 in A",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 6,B",
+        .opcode       = 0xF0,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 6 in B",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 6,C",
+        .opcode       = 0xF1,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 6 in C",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 6,D",
+        .opcode       = 0xF2,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 6 in D",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 6,E",
+        .opcode       = 0xF3,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 6 in E",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 6,H",
+        .opcode       = 0xF4,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 6 in H",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 6,L",
+        .opcode       = 0xF5,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 6 in L",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 6,(HL)",
+        .opcode       = 0xF6,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Set bit 6 in (HL)",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 6,A",
+        .opcode       = 0xF7,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 6 in A",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 7,B",
+        .opcode       = 0xF8,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 7 in B",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 7,C",
+        .opcode       = 0xF9,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 7 in C",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 7,D",
+        .opcode       = 0xFA,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 7 in D",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 7,E",
+        .opcode       = 0xFB,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 7 in E",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 7,H",
+        .opcode       = 0xFC,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 7 in H",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 7,L",
+        .opcode       = 0xFD,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 7 in L",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 7,(HL)",
+        .opcode       = 0xFE,
+        .length       = 2,
+        .cycles_true  = 16,
+        .cycles_false = 16,
+        .comment      = "Set bit 7 in (HL)",
+        .handler      = &opcode_cb_set
+    },
+    {
+        .mnemonic     = "SET 7,A",
+        .opcode       = 0xFF,
+        .length       = 2,
+        .cycles_true  = 8,
+        .cycles_false = 8,
+        .comment      = "Set bit 7 in A",
+        .handler      = &opcode_cb_set
     }
-
-    return NULL;
-}
+};

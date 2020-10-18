@@ -1,6 +1,6 @@
 /*
-registers.h
-Function prototypes for registers.c
+bit.h
+Function prototypes for bit.c
 
 Copyright (C) 2020 akrocynova
 
@@ -19,15 +19,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "gameboy.h"
 
-#ifndef _CPU_REGISTERS_H
-#define _CPU_REGISTERS_H
+#ifndef _CPU_OPCODE_BIT_H
+#define _CPU_OPCODE_BIT_H
 
-byte_t reg_readb(byte_t reg, gb_system_t *gb);
-void reg_writeb(byte_t reg, byte_t value, gb_system_t *gb);
-uint16_t reg_read_u16(byte_t reg, gb_system_t *gb);
-void reg_write_u16(byte_t reg, uint16_t value, gb_system_t *gb);
-bool reg_flag(byte_t flag, gb_system_t *gb);
-void reg_flag_set(byte_t flag, gb_system_t *gb);
-void reg_flag_clear(byte_t flag, gb_system_t *gb);
+int opcode_cb_bit(const opcode_t *opcode, gb_system_t *gb);
 
 #endif

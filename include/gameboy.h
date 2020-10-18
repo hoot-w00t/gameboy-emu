@@ -294,7 +294,8 @@ struct gb_system {
     struct mmu memory;                 // Memory areas
     struct interrupts interrupts;      // Interrupt registers
     byte_t registers[8];               // CPU Registers
-    bool halt;                         // Is CPU halted
+    bool halt;                         // HALT (CPU halted until interrupt)
+    bool stop;                         // STOP (CPU and LCD halted until button press)
     uint16_t pc;                       // Program Counter (Initialized with CARTRIDGE_HEADER_LADDR)
     uint16_t sp;                       // Stack pointer (Initialized with HRAM_UADDR)
     uint16_t idle_cycles;              // Remaining cycles to idle (decrease at every cycle)
