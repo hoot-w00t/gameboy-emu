@@ -26,7 +26,7 @@ int opcode_cb_set(const opcode_t *opcode, gb_system_t *gb)
 {
     byte_t bit;
     byte_t value;
-    byte_t op_lo = 0x80;
+    byte_t op_lo = 0xC0;
 
     for (bit = 0; bit < 8; ++bit, op_lo += 8) {
         if (opcode->opcode >= op_lo && opcode->opcode <= op_lo + 7)
