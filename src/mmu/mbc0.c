@@ -20,6 +20,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "logger.h"
 #include "gameboy.h"
 #include "mmu/banks.h"
+#include "timer.h"
 
 byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
 {
@@ -43,6 +44,9 @@ byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
 
     } else if (ADDR_IN_RANGE(addr, HRAM_LADDR, HRAM_UADDR)) {
         return gb->memory.hram[addr - HRAM_LADDR];
+
+    } else if (ADDR_IN_RANGE(addr, TIM_DIV, TIM_TAC)) {
+        return timer_reg_readb(addr, gb);
 
     } else if (addr == INTERRUPT_FLAG) {
         return gb->interrupts.if_reg;
@@ -79,6 +83,9 @@ bool mbc0_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
     } else if (ADDR_IN_RANGE(addr, HRAM_LADDR, HRAM_UADDR)) {
         gb->memory.hram[addr - HRAM_LADDR] = value;
         return true;
+
+    } else if (ADDR_IN_RANGE(addr, TIM_DIV, TIM_TAC)) {
+        return timer_reg_writeb(addr, value, gb);
 
     } else if (addr == INTERRUPT_FLAG) {
         gb->interrupts.if_reg = value;

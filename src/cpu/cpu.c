@@ -23,6 +23,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/registers.h"
 #include "cpu/interrupts.h"
 #include "mmu/mmu.h"
+#include "timer.h"
 #include <stdio.h>
 
 // Fetch byte from PC and increment PC
@@ -56,6 +57,9 @@ int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
     byte_t opcode_value;
     const opcode_t *opcode;
     int handler_ret;
+
+    // Emulate the built-in timers
+    timer_cycle(gb);
 
     // Emulate real CPU cycles
     if (gb->idle_cycles > 0 && emulate_cycles) {

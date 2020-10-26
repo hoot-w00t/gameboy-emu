@@ -24,6 +24,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/registers.h"
 #include "mmu/mmu.h"
 #include "mmu/banks.h"
+#include "timer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -167,9 +168,9 @@ void gb_system_reset(gb_system_t *gb)
 
     // Initialize IO registers
     // Timer
-    gb->memory.ioregs[0x05] = 0x00; // TIMA
-    gb->memory.ioregs[0x06] = 0x00; // TMA
-    gb->memory.ioregs[0x07] = 0x00; // TAC
+    timer_reg_writeb(TIM_TIMA, 0, gb);
+    timer_reg_writeb(TIM_TMA, 0, gb);
+    timer_reg_writeb(TIM_TAC, 0, gb);
 
     // Sound
     gb->memory.ioregs[0x10] = 0x80; // NR10

@@ -24,7 +24,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 int gb_system_emulate_loop(gb_system_t *gb)
 {
-    const uint32_t cpu_clock_speed = 4194304; // 4.194304 MHz
+    const uint32_t cpu_clock_speed = CPU_CLOCK_SPEED; // 4.194304 MHz
     const int target_framerate = 60;
     const int target_framerate_delay = 1000 / target_framerate;
     bool stop_loop = false;

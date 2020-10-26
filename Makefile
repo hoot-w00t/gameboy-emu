@@ -12,6 +12,7 @@ SRC	=	logger.c				\
 		emulator.c				\
 		gb_system.c				\
 		cartridge.c				\
+		timer.c					\
 		cpu/registers.c			\
 		cpu/interrupts.c		\
 		cpu/cpu.c				\

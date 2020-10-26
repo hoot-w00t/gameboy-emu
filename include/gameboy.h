@@ -131,6 +131,18 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define INT_SERIAL_BIT   (3)
 #define INT_JOYPAD_BIT   (4)
 
+// Timer definitions
+#define CPU_CLOCK_SPEED (4194304)                // CPU Clock Speed in Hz
+#define TIM_DIV         (0xFF04)                 // Timer Divider (RW)
+#define TIM_TIMA        (0xFF05)                 // Timer Counter (RW)
+#define TIM_TMA         (0xFF06)                 // Timer Modulo (RW)
+#define TIM_TAC         (0xFF07)                 // Timer Control (RW)
+#define TIM_CLOCK_0     (CPU_CLOCK_SPEED / 1024) // TAC Clock Select 0 (4096)
+#define TIM_CLOCK_1     (CPU_CLOCK_SPEED / 16)   // TAC Clock Select 1 (262144)
+#define TIM_CLOCK_2     (CPU_CLOCK_SPEED / 64)   // TAC Clock Select 2 (65536)
+#define TIM_CLOCK_3     (CPU_CLOCK_SPEED / 256)  // TAC Clock Select 3 (16384)
+#define TIM_CLOCK_DIV   (16384)                  // Timer Divider Clock
+
 // Return values for the opcode handlers
 #define OPCODE_ILLEGAL   (-1)  // Illegal opcode
 #define OPCODE_EXIT      (-2)  // Break out of the CPU loop
@@ -190,10 +202,25 @@ struct interrupts {
     byte_t if_reg;  // Interrupt Enable register
 };
 
+struct builtin_timer {
+    byte_t reg_div;        // Timer Divider
+    byte_t reg_tima;       // Timer Counter
+    byte_t reg_tma;        // Timer Modulo
+
+    // TAC register
+    bool enable;           // Timer Enable (bit 2)
+    byte_t clock_select;   // Input Clock Select (bits 0-1)
+
+    uint16_t div_cycles;   // Divider Cycles
+    uint32_t timer_clock;  // Input Clock Select frequency
+    uint32_t timer_cycles; // Timer Cycles
+};
+
 struct gb_system {
     struct cartridge_hdr cartridge;    // Cartridge information
     struct mmu memory;                 // Memory areas
     struct interrupts interrupts;      // Interrupt registers
+    struct builtin_timer timer;        // Built-in GameBoy timer
     byte_t registers[8];               // CPU Registers
     bool halt;                         // HALT (CPU halted until interrupt)
     bool stop;                         // STOP (CPU and LCD halted until button press)
