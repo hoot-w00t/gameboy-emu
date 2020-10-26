@@ -109,7 +109,7 @@ int gb_system_emulate_loop(SDL_Window *win, SDL_Renderer *ren, gb_system_t *gb)
     Uint32 ticks = 0, last_ticks;
     double elapsed; // Elasped time in seconds
     double elapsed_ms; // Elapsed time in milliseconds
-    double timer_second; // One second timer
+    double timer_second = 0; // One second timer
     size_t remaining_cpu_cycles;
     size_t cpu_cycles_per_second = 0;
     uint32_t frames_per_second = 0;

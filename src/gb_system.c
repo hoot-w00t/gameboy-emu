@@ -193,6 +193,7 @@ void gb_system_reset(gb_system_t *gb)
     gb->memory.ioregs[0x26] = 0xF1; // NR52
 
     // LCD
+    memset(&gb->screen, 0, sizeof(struct lcd_screen));
     lcd_reg_writeb(LCDC,      0x91, gb);
     lcd_reg_writeb(LCDC_SCY,  0x00, gb);
     lcd_reg_writeb(LCDC_SCX,  0x00, gb);

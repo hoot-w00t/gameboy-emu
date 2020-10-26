@@ -39,7 +39,7 @@ byte_t lcd_reg_readb(uint16_t addr, gb_system_t *gb)
             return tmp;
 
         case LCDC_STATUS:
-            tmp = gb->screen.mode & 0b11;
+            tmp = (gb->screen.mode & 0b11);
             if (gb->screen.coincidence_flag) tmp |= (1 << 2);
             if (gb->screen.hblank_int)       tmp |= (1 << 3);
             if (gb->screen.vblank_int)       tmp |= (1 << 4);
@@ -65,8 +65,11 @@ byte_t lcd_reg_readb(uint16_t addr, gb_system_t *gb)
 
 bool lcd_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
+    bool tmp;
+
     switch (addr) {
         case LCDC:
+            tmp = gb->screen.enable;
             gb->screen.bg_display        = value & 1;
             gb->screen.obj_display       = (value >> 1) & 1;
             gb->screen.obj_size          = (value >> 2) & 1;
@@ -75,6 +78,15 @@ bool lcd_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
             gb->screen.window_display    = (value >> 5) & 1;
             gb->screen.window_select     = (value >> 6) & 1;
             gb->screen.enable            = (value >> 7) & 1;
+
+            if (!gb->screen.enable) {
+                if (gb->screen.mode != LCDC_MODE_VBLANK && tmp)
+                    logger(LOG_CRIT, "LCD Display was disabled during mode %u", gb->screen.mode);
+
+                gb->screen.mode = LCDC_MODE_VBLANK;
+                gb->screen.ly = 0;
+                gb->screen.line_cycle = 0;
+            }
             break;
 
         case LCDC_STATUS:
@@ -99,6 +111,8 @@ bool lcd_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 
         case LCDC_SCY   : gb->screen.scy = value;  break;
         case LCDC_SCX   : gb->screen.scx = value;  break;
+        // TODO: Should LY be set to 0 when trying to write any value to LCDC_LY?
+        //case LCDC_LY    : gb->screen.ly = 0; break;
         case LCDC_LYC   : gb->screen.lyc = value;  break;
         case LCDC_WY    : gb->screen.wy = value;   break;
         case LCDC_WX    : gb->screen.wx = value;   break;

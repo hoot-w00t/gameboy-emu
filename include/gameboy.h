@@ -165,6 +165,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define LCD_LINES                       (154)
 #define LCD_DMA_CYCLES                  (160)
 #define LCD_MODE_2_CYCLES               (80)
+#define LCD_MODE_3_CYCLES               (172) // Shortest mode 3
 #define LCD_LINE_CYCLES                 (456)
 #define LCD_FRAME_CYCLES                (LCD_LINES * LCD_LINE_CYCLES)
 
@@ -173,6 +174,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define GB_PALETTE_LIGHT_GRAY (1)
 #define GB_PALETTE_DARK_GRAY  (2)
 #define GB_PALETTE_BLACK      (3)
+
+// Tile definitions
+#define TILE_SIZE (16)
 
 // Return values for the opcode handlers
 #define OPCODE_ILLEGAL   (-1)  // Illegal opcode
@@ -242,7 +246,6 @@ struct lcd_screen {
     bool framebuffer_updated; // Set to true when framebuffer was updated
 
     // LCD State
-    uint32_t frame_cycle;
     uint32_t line_cycle;
 };
 
