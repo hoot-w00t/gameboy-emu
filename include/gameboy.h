@@ -178,6 +178,23 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 // Tile definitions
 #define TILE_SIZE (16)
 
+// Joypad definitions
+#define JOYPAD_REG (0xFF00)
+#define P10 (0) // Input Right or Button A
+#define P11 (1) // Input Left  or Button B
+#define P12 (2) // Input Up    or Select
+#define P13 (3) // Input Down  or Start
+#define P14 (4) // Select directions
+#define P15 (5) // Select buttons
+#define BTN_UP     (0)
+#define BTN_DOWN   (1)
+#define BTN_RIGHT  (2)
+#define BTN_LEFT   (3)
+#define BTN_A      (4)
+#define BTN_B      (5)
+#define BTN_SELECT (6)
+#define BTN_START  (7)
+
 // Return values for the opcode handlers
 #define OPCODE_ILLEGAL   (-1)  // Illegal opcode
 #define OPCODE_EXIT      (-2)  // Break out of the CPU loop
@@ -249,6 +266,21 @@ struct lcd_screen {
     uint32_t line_cycle;
 };
 
+struct joypad {
+    bool select_buttons;
+    bool select_directions;
+
+    // Buttons (true == pressed, false == not pressed)
+    bool button_up;
+    bool button_down;
+    bool button_right;
+    bool button_left;
+    bool button_a;
+    bool button_b;
+    bool button_start;
+    bool button_select;
+};
+
 struct cartridge_hdr {
     byte_t logo[48];          // Nintendo Logo Bitmap
     char title[17];           // Up to 16 characters + trailing zero
@@ -296,6 +328,7 @@ struct gb_system {
     struct cartridge_hdr cartridge;    // Cartridge information
     struct mmu memory;                 // Memory areas
     struct interrupts interrupts;      // Interrupt registers
+    struct joypad joypad;              // Joypad
     byte_t registers[8];               // CPU Registers
     bool halt;                         // HALT (CPU halted until interrupt)
     bool stop;                         // STOP (CPU and LCD halted until button press)

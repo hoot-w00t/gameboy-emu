@@ -25,6 +25,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "mmu/mmu.h"
 #include "mmu/banks.h"
 #include "ppu/lcd_regs.h"
+#include "joypad.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -167,6 +168,9 @@ void gb_system_reset(gb_system_t *gb)
     gb->sp = HRAM_UADDR;
 
     // Initialize IO registers
+    // Joypad
+    memset(&gb->joypad, 0, sizeof(gb->joypad));
+
     // Timer
     gb->memory.ioregs[0x05] = 0x00; // TIMA
     gb->memory.ioregs[0x06] = 0x00; // TMA
