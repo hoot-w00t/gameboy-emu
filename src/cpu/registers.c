@@ -61,10 +61,8 @@ void reg_flag_set(byte_t flag, gb_system_t *gb)
 // Clear flag
 void reg_flag_clear(byte_t flag, gb_system_t *gb)
 {
-    byte_t reg_value;
+    byte_t reg_value = reg_readb(REG_F, gb);
 
-    if (reg_flag(flag, gb)) {
-        reg_value = reg_readb(REG_F, gb);
-        reg_writeb(REG_F, (reg_value ^ (1 << flag)), gb);
-    }
+    reg_value &= ~(1 << flag);
+    reg_writeb(REG_F, reg_value, gb);
 }

@@ -46,7 +46,7 @@ int opcode_cb_res(const opcode_t *opcode, gb_system_t *gb)
         default: return OPCODE_ILLEGAL;
     }
 
-    if ((value & (1 << bit))) value ^= (1 << bit);
+    value &= ~(1 << bit);
 
     switch (opcode->opcode - op_lo) {
         case 0: reg_writeb(REG_B, value, gb); break;

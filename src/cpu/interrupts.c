@@ -36,9 +36,7 @@ void cpu_int_flag_set(byte_t int_bit, gb_system_t *gb)
 // Clear Interrupt Flag bit
 void cpu_int_flag_clear(byte_t int_bit, gb_system_t *gb)
 {
-    if (cpu_int_flag(int_bit, gb)) {
-        gb->interrupts.if_reg ^= (1 << int_bit);
-    }
+    gb->interrupts.if_reg &= ~(1 << int_bit);
 }
 
 // Execute the prioritary requested interrupt (if enabled)
