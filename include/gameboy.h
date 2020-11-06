@@ -142,6 +142,69 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define TIM_CLOCK_2     (CPU_CLOCK_SPEED / 64)   // TAC Clock Select 2 (65536)
 #define TIM_CLOCK_3     (CPU_CLOCK_SPEED / 256)  // TAC Clock Select 3 (16384)
 #define TIM_CLOCK_DIV   (16384)                  // Timer Divider Clock
+// LCD IO Registers
+#define LCDC         (0xFF40) // LCD Control Register
+#define LCDC_STATUS  (0xFF41) // LCD Status Register
+
+// Positions and scrolling
+#define LCDC_SCY     (0xFF42) // Scroll Y (RW)
+#define LCDC_SCX     (0xFF43) // Scroll X (RW)
+#define LCDC_LY      (0xFF44) // Y-Coordinate (RO)
+#define LCDC_LYC     (0xFF45) // LY Compare (RW)
+#define LCDC_WY      (0xFF4A) // Window Y Position (RW)
+#define LCDC_WX      (0xFF4B) // Window X Position -7 (RW)
+
+// Monochrome Palettes
+#define LCDC_BGP     (0xFF47) // BG Palette Data (RW)
+#define LCDC_OBP0    (0xFF48) // Object Palette 0 Data (RW)
+#define LCDC_OBP1    (0xFF49) // Object Palette 1 Data (RW)
+
+// OAM DMA Transfers
+#define LCDC_DMA     (0xFF46) // DMA Transfer
+
+// VRAM Modes
+#define LCDC_MODE_0           (0)         // H-Blank Period
+#define LCDC_MODE_HBLANK      LCDC_MODE_0
+#define LCDC_MODE_1           (1)         // V-Blank Period
+#define LCDC_MODE_VBLANK      LCDC_MODE_1
+#define LCDC_MODE_2           (2)         // Searching objects
+#define LCDC_MODE_SEARCH      LCDC_MODE_2
+#define LCDC_MODE_3           (3)         // Drawing
+#define LCDC_MODE_DRAW        LCDC_MODE_3
+
+// LCD Definitions
+#define LCD_LINES                       (154)
+#define LCD_DMA_CYCLES                  (160)
+#define LCD_MODE_2_CYCLES               (80)
+#define LCD_MODE_3_CYCLES               (172) // Shortest mode 3
+#define LCD_LINE_CYCLES                 (456)
+#define LCD_FRAME_CYCLES                (LCD_LINES * LCD_LINE_CYCLES)
+
+// Video Monochrome shades
+#define GB_PALETTE_WHITE      (0)
+#define GB_PALETTE_LIGHT_GRAY (1)
+#define GB_PALETTE_DARK_GRAY  (2)
+#define GB_PALETTE_BLACK      (3)
+
+// Tile definitions
+#define TILE_SIZE (16)
+
+// Joypad definitions
+#define JOYPAD_REG (0xFF00)
+#define P10 (0) // Input Right or Button A
+#define P11 (1) // Input Left  or Button B
+#define P12 (2) // Input Up    or Select
+#define P13 (3) // Input Down  or Start
+#define P14 (4) // Select directions
+#define P15 (5) // Select buttons
+#define BTN_UP     (0)
+#define BTN_DOWN   (1)
+#define BTN_RIGHT  (2)
+#define BTN_LEFT   (3)
+#define BTN_A      (4)
+#define BTN_B      (5)
+#define BTN_SELECT (6)
+#define BTN_START  (7)
 
 // Return values for the opcode handlers
 #define OPCODE_ILLEGAL   (-1)  // Illegal opcode
@@ -150,6 +213,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 // Type definitions
 typedef uint8_t byte_t;
 typedef int8_t sbyte_t;
+typedef struct pixel pixel_t;
+typedef struct lcd_screen lcd_screen_t;
 typedef struct cartridge_hdr cartridge_hdr_t;
 typedef struct membank membank_t;
 typedef struct mmu mmu_t;
@@ -160,6 +225,73 @@ typedef struct opcode opcode_t;
 typedef int (*opcode_handler_t)(const opcode_t *, gb_system_t *);
 
 // Structures
+struct pixel {
+    byte_t r;
+    byte_t g;
+    byte_t b;
+};
+
+struct lcd_screen {
+    // LCD Control Register (RW)
+    bool bg_display;        // Bit 0 -- Background/Window display
+    bool obj_display;       // Bit 1 -- Object display (sprites)
+    bool obj_size;          // Bit 2 -- Object size (8x8 or 8x16 tiles)
+    bool bg_tilemap_select; // Bit 3 -- Background Tile Map Select
+    bool bg_select;         // Bit 4 -- Background and Window Tile Data Select
+    bool window_display;    // Bit 5 -- Window Display
+    bool window_select;     // Bit 6 -- Window Tile Map Select
+    bool enable;            // Bit 7 -- LCD Enable
+
+    // LCD Status Register
+    byte_t mode;            // Bits 0-1 -- LCD Mode (RO)
+    bool coincidence_flag;  // Bit 2    -- Coincidence Flag (RO)
+    bool hblank_int;        // Bit 3    -- H-Blank Interrupt (RW)
+    bool vblank_int;        // Bit 4    -- V-Blank Interrupt (RW)
+    bool oam_int;           // Bit 5    -- OAM Interrupt (RW)
+    bool coincidence_int;   // Bit 6    -- Coincidence Interrupt (RW)
+
+    // LCD Positions and Scrolling Registers
+    byte_t scy; // Scroll Y (RW)
+    byte_t scx; // Scroll X (RW)
+    byte_t ly;  // Current scanline (RO)
+    byte_t lyc; // Value to compare with LY (RW)
+    byte_t wy;  // Window Y position (RW)
+    byte_t wx;  // Window X position minus 7 (RW)
+
+    // LCD Monochrome Palettes (RW)
+    byte_t bgp;     // BG Palette Data
+    byte_t obp0;    // Object Palette 0 Data
+    byte_t obp1;    // Object Palette 1 Data
+
+    // DMA
+    byte_t dma;                     // DMA Transfer
+    uint16_t dma_src;               // DMA Source Address
+    byte_t dma_offset;              // DMA Address Offset
+    byte_t dma_running;             // DMA Transfer Remaining Cycles
+
+    // Screen framebuffer to hold the pixels
+    pixel_t framebuffer[SCREEN_HEIGHT][SCREEN_WIDTH];
+    bool framebuffer_updated; // Set to true when framebuffer was updated
+
+    // LCD State
+    uint32_t line_cycle;
+};
+
+struct joypad {
+    bool select_buttons;
+    bool select_directions;
+
+    // Buttons (true == pressed, false == not pressed)
+    bool button_up;
+    bool button_down;
+    bool button_right;
+    bool button_left;
+    bool button_a;
+    bool button_b;
+    bool button_start;
+    bool button_select;
+};
+
 struct cartridge_hdr {
     byte_t logo[48];          // Nintendo Logo Bitmap
     char title[17];           // Up to 16 characters + trailing zero
@@ -217,10 +349,12 @@ struct builtin_timer {
 };
 
 struct gb_system {
+    struct lcd_screen screen;          // GameBoy Video Screen
     struct cartridge_hdr cartridge;    // Cartridge information
     struct mmu memory;                 // Memory areas
     struct interrupts interrupts;      // Interrupt registers
     struct builtin_timer timer;        // Built-in GameBoy timer
+    struct joypad joypad;              // Joypad
     byte_t registers[8];               // CPU Registers
     bool halt;                         // HALT (CPU halted until interrupt)
     bool stop;                         // STOP (CPU and LCD halted until button press)

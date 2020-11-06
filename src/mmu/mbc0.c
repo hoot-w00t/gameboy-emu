@@ -21,6 +21,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "gameboy.h"
 #include "mmu/banks.h"
 #include "timer.h"
+#include "ppu/lcd_regs.h"
+#include "joypad.h"
 
 byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
 {
@@ -31,6 +33,11 @@ byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
         return membank_readb(addr - ROM_BANK_N_LADDR, &gb->memory.rom);
 
     } else if (ADDR_IN_RANGE(addr, VRAM_LADDR, VRAM_UADDR)) {
+        if (gb->screen.enable && gb->screen.mode > LCDC_MODE_2) {
+            logger(LOG_ERROR, "mbc0_readb failed: address $%04X: VRAM is not accessible", addr);
+            return 0xFF;
+        }
+
         return gb->memory.vram[addr - VRAM_LADDR];
 
     } else if (ADDR_IN_RANGE(addr, RAM_BANK_0_LADDR, RAM_BANK_0_UADDR)) {
@@ -40,6 +47,11 @@ byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
         return membank_readb(addr - RAM_BANK_N_LADDR, &gb->memory.ram);
 
     } else if (ADDR_IN_RANGE(addr, OAM_LADDR, OAM_UADDR)) {
+        if (gb->screen.dma_running || (gb->screen.enable && gb->screen.mode > LCDC_MODE_1)) {
+            logger(LOG_ERROR, "mbc0_readb failed: address $%04X: OAM is not accessible", addr);
+            return 0;
+        }
+
         return gb->memory.oam[addr - OAM_LADDR];
 
     } else if (ADDR_IN_RANGE(addr, HRAM_LADDR, HRAM_UADDR)) {
@@ -47,6 +59,12 @@ byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
 
     } else if (ADDR_IN_RANGE(addr, TIM_DIV, TIM_TAC)) {
         return timer_reg_readb(addr, gb);
+
+    } else if (ADDR_IN_RANGE(addr, LCDC, LCDC_WX)) {
+        return lcd_reg_readb(addr, gb);
+
+    } else if (addr == JOYPAD_REG) {
+        return joypad_reg_readb(gb);
 
     } else if (addr == INTERRUPT_FLAG) {
         return gb->interrupts.if_reg;
@@ -67,6 +85,11 @@ bool mbc0_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
         return false;
 
     } else if (ADDR_IN_RANGE(addr, VRAM_LADDR, VRAM_UADDR)) {
+        if (gb->screen.enable && gb->screen.mode > LCDC_MODE_2) {
+            logger(LOG_ERROR, "mbc0_writeb failed: address $%04X: VRAM is not accessible", addr);
+            return false;
+        }
+
         gb->memory.vram[addr - VRAM_LADDR] = value;
         return true;
 
@@ -77,6 +100,11 @@ bool mbc0_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
         return membank_writeb(addr - RAM_BANK_N_LADDR, value, &gb->memory.ram);
 
     } else if (ADDR_IN_RANGE(addr, OAM_LADDR, OAM_UADDR)) {
+        if (gb->screen.dma_running || (gb->screen.enable && gb->screen.mode > LCDC_MODE_1)) {
+            logger(LOG_ERROR, "mbc0_writeb failed: address $%04X: OAM is not accessible", addr);
+            return false;
+        }
+
         gb->memory.oam[addr - OAM_LADDR] = value;
         return true;
 
@@ -86,6 +114,12 @@ bool mbc0_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 
     } else if (ADDR_IN_RANGE(addr, TIM_DIV, TIM_TAC)) {
         return timer_reg_writeb(addr, value, gb);
+
+    } else if (ADDR_IN_RANGE(addr, LCDC, LCDC_WX)) {
+        return lcd_reg_writeb(addr, value, gb);
+
+    } else if (addr == JOYPAD_REG) {
+        return joypad_reg_writeb(value, gb);
 
     } else if (addr == INTERRUPT_FLAG) {
         gb->interrupts.if_reg = value;

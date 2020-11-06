@@ -13,6 +13,7 @@ SRC	=	logger.c				\
 		gb_system.c				\
 		cartridge.c				\
 		timer.c					\
+		joypad.c				\
 		cpu/registers.c			\
 		cpu/interrupts.c		\
 		cpu/cpu.c				\
@@ -39,7 +40,9 @@ SRC	=	logger.c				\
 		cpu/opcodes/alu/dec.c	\
 		mmu/banks.c				\
 		mmu/mmu.c				\
-		mmu/mbc0.c
+		mmu/mbc0.c				\
+		ppu/ppu.c				\
+		ppu/lcd_regs.c
 
 OBJ	=	$(SRC:%.c=obj/%.o)
 DEP	=	$(OBJ:.o=.d)
