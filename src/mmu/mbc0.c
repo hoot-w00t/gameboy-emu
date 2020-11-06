@@ -80,7 +80,7 @@ byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
 
 bool mbc0_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
-    if (ADDR_IN_RANGE(addr, ROM_BANK_0_LADDR, ROM_BANK_N_UADDR)) {
+    if (addr <= ROM_BANK_N_UADDR) {
         logger(LOG_ERROR, "mbc0_writeb failed: address $%04X is read-only", addr);
         return false;
 
