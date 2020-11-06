@@ -46,17 +46,17 @@ void ppu_draw_background(const byte_t scanline, gb_system_t *gb)
     byte_t y, x;
 
     if (gb->screen.bg_select) {
-        base_tile_data_addr = TILE_LADDR;
+        base_tile_data_addr = 0;
     } else {
-        base_tile_data_addr = TILE_LADDR + 0x800;
+        base_tile_data_addr = 0x800;
         signed_tile_id = true;
     }
 
     if (use_window) {
-        base_tile_map_addr = gb->screen.window_select ? BG_MAP_2_LADDR : BG_MAP_1_LADDR;
+        base_tile_map_addr = gb->screen.window_select ? BG_MAP_2_LADDR - TILE_LADDR : BG_MAP_1_LADDR - TILE_LADDR;
         y = scanline - wy;
     } else {
-        base_tile_map_addr = gb->screen.bg_tilemap_select ? BG_MAP_2_LADDR : BG_MAP_1_LADDR;
+        base_tile_map_addr = gb->screen.bg_tilemap_select ? BG_MAP_2_LADDR - TILE_LADDR : BG_MAP_1_LADDR - TILE_LADDR;
         y = scanline + scy;
     }
 
@@ -70,14 +70,14 @@ void ppu_draw_background(const byte_t scanline, gb_system_t *gb)
         uint16_t tile_data_addr = base_tile_data_addr;
 
         if (signed_tile_id) {
-            tile_data_addr += (((sbyte_t) mmu_readb(tile_map_addr, gb)) + 128) * 16;
+            tile_data_addr += (((sbyte_t) gb->memory.vram[tile_map_addr]) + 128) * 16;
         } else {
-            tile_data_addr += mmu_readb(tile_map_addr, gb) * 16;
+            tile_data_addr += gb->memory.vram[tile_map_addr] * 16;
         }
 
         byte_t line = (y % 8) * 2;
-        byte_t lo = mmu_readb(tile_data_addr + line, gb);
-        byte_t hi = mmu_readb(tile_data_addr + line + 1, gb);
+        byte_t lo = gb->memory.vram[tile_data_addr + line];
+        byte_t hi = gb->memory.vram[tile_data_addr + line + 1];;
         byte_t pixel_bit = 7 - (x % 8);
         byte_t pixel_shade_id = (((hi >> pixel_bit) & 1) << 1) | ((lo >> pixel_bit) & 1);
         byte_t pixel_shade = SHADE_FROM_PALETTE(pixel_shade_id, gb->screen.bgp);
