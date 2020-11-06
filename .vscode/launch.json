@@ -5,7 +5,7 @@
             "name": "Debug project",
             "type": "cppdbg",
             "request": "launch",
-            "program": "./gameboy",
+            "program": "${workspaceFolder}/gameboy",
             "args": [
                 "tetris.gb"
             ],
