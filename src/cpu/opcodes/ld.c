@@ -74,7 +74,7 @@ int opcode_pop(const opcode_t *opcode, gb_system_t *gb)
         case 0xC1: reg_write_u16(REG_BC, cpu_pop_u16(gb), gb); break;
         case 0xD1: reg_write_u16(REG_DE, cpu_pop_u16(gb), gb); break;
         case 0xE1: reg_write_u16(REG_HL, cpu_pop_u16(gb), gb); break;
-        case 0xF1: reg_write_u16(REG_AF, cpu_pop_u16(gb), gb); break;
+        case 0xF1: reg_write_u16(REG_AF, cpu_pop_u16(gb) & 0xFFF0, gb); break;
         default: return OPCODE_ILLEGAL;
     }
     return opcode->cycles_true;
