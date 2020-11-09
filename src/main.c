@@ -20,6 +20,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "logger.h"
 #include "gb_system.h"
 #include "emulator.h"
+#include "cartridge.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -100,6 +101,10 @@ int main(int ac, char **av)
     parse_args(ac, av);
     if (!(gb = gb_system_create_load_rom(args.filename, args.enable_bootrom)))
         return EXIT_FAILURE;
+
+    if (args.debug) {
+        cartridge_dump(&gb->cartridge);
+    }
 
     emulation_ret = gb_system_emulate(gb);
     gb_system_destroy(gb);
