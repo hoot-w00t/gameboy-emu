@@ -32,7 +32,7 @@ byte_t cpu_incb(const byte_t target, gb_system_t *gb)
 
     if (result == 0) reg_flag_set(FLAG_Z, gb); else reg_flag_clear(FLAG_Z, gb);
     reg_flag_clear(FLAG_N, gb);
-    if (((target & 0xF) + 1) > 0xF) reg_flag_set(FLAG_H, gb); else reg_flag_clear(FLAG_H, gb);
+    if ((target & 0xF) == 0xF) reg_flag_set(FLAG_H, gb); else reg_flag_clear(FLAG_H, gb);
 
     return result;
 }
