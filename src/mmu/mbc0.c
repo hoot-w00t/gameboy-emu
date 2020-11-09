@@ -136,7 +136,7 @@ bool mbc0_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
         return true;
 
     } else {
-        logger(LOG_ERROR, "mbc0_writeb failed: address $%04X", addr);
+        logger(LOG_ERROR, "mbc0_writeb failed: value $%02X at address $%04X", value, addr);
         return false;
     }
 }
