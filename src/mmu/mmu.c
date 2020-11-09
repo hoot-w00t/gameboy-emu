@@ -62,6 +62,17 @@ bool mmu_write_u16(uint16_t addr, uint16_t value, gb_system_t *gb)
     return mmu_writeb(addr + 1, (value >> 8), gb) && tmp;
 }
 
+// Returns true if OAM is inaccessible to the CPU
+bool mmu_oam_blocked(gb_system_t *gb)
+{
+    return (gb->screen.enable && (gb->screen.mode == LCDC_MODE_2 || gb->screen.mode == LCDC_MODE_3));
+}
+
+bool mmu_vram_blocked(gb_system_t *gb)
+{
+    return (gb->screen.enable && gb->screen.mode == LCDC_MODE_3);
+}
+
 // Set MBC type and initialize MBC-related functions and variables
 bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb)
 {

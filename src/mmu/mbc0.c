@@ -19,6 +19,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "logger.h"
 #include "gameboy.h"
+#include "mmu/mmu.h"
 #include "mmu/banks.h"
 #include "timer.h"
 #include "ppu/lcd_regs.h"
@@ -33,7 +34,7 @@ byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
         return membank_readb(addr - ROM_BANK_N_LADDR, &gb->memory.rom);
 
     } else if (ADDR_IN_RANGE(addr, VRAM_LADDR, VRAM_UADDR)) {
-        if (gb->screen.enable && gb->screen.mode > LCDC_MODE_2) {
+        if (mmu_vram_blocked(gb)) {
             logger(LOG_ERROR, "mbc0_readb failed: address $%04X: VRAM is not accessible", addr);
             return 0xFF;
         }
@@ -50,7 +51,7 @@ byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
         return membank_readb(addr - RAM_BANK_N_LADDR, &gb->memory.ram);
 
     } else if (ADDR_IN_RANGE(addr, OAM_LADDR, OAM_UADDR)) {
-        if (gb->screen.dma_running || (gb->screen.enable && gb->screen.mode > LCDC_MODE_1)) {
+        if (mmu_oam_blocked(gb)) {
             logger(LOG_ERROR, "mbc0_readb failed: address $%04X: OAM is not accessible", addr);
             return 0;
         }
@@ -88,7 +89,7 @@ bool mbc0_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
         return false;
 
     } else if (ADDR_IN_RANGE(addr, VRAM_LADDR, VRAM_UADDR)) {
-        if (gb->screen.enable && gb->screen.mode > LCDC_MODE_2) {
+        if (mmu_vram_blocked(gb)) {
             logger(LOG_ERROR, "mbc0_writeb failed: address $%04X: VRAM is not accessible", addr);
             return false;
         }
@@ -106,7 +107,7 @@ bool mbc0_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
         return membank_writeb(addr - RAM_BANK_N_LADDR, value, &gb->memory.ram);
 
     } else if (ADDR_IN_RANGE(addr, OAM_LADDR, OAM_UADDR)) {
-        if (gb->screen.dma_running || (gb->screen.enable && gb->screen.mode > LCDC_MODE_1)) {
+        if (mmu_oam_blocked(gb)) {
             logger(LOG_ERROR, "mbc0_writeb failed: address $%04X: OAM is not accessible", addr);
             return false;
         }
