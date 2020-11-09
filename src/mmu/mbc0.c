@@ -43,6 +43,9 @@ byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
     } else if (ADDR_IN_RANGE(addr, RAM_BANK_0_LADDR, RAM_BANK_0_UADDR)) {
         return membank_readb_bank(addr - RAM_BANK_0_LADDR, 0, &gb->memory.ram);
 
+    } else if (ADDR_IN_RANGE(addr, RAM_ECHO_LADDR, RAM_ECHO_UADDR)) {
+        return membank_readb_bank(addr - RAM_ECHO_LADDR, 0, &gb->memory.ram);
+
     } else if (ADDR_IN_RANGE(addr, RAM_BANK_N_LADDR, RAM_BANK_N_UADDR)) {
         return membank_readb(addr - RAM_BANK_N_LADDR, &gb->memory.ram);
 
@@ -95,6 +98,9 @@ bool mbc0_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 
     } else if (ADDR_IN_RANGE(addr, RAM_BANK_0_LADDR, RAM_BANK_0_UADDR)) {
         return membank_writeb_bank(addr - RAM_BANK_0_LADDR, value, 0, &gb->memory.ram);
+
+    } else if (ADDR_IN_RANGE(addr, RAM_ECHO_LADDR, RAM_ECHO_UADDR)) {
+        return membank_writeb_bank(addr - RAM_ECHO_LADDR, value, 0, &gb->memory.ram);
 
     } else if (ADDR_IN_RANGE(addr, RAM_BANK_N_LADDR, RAM_BANK_N_UADDR)) {
         return membank_writeb(addr - RAM_BANK_N_LADDR, value, &gb->memory.ram);
