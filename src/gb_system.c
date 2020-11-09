@@ -158,59 +158,66 @@ int load_rom_from_file(const char *filename, gb_system_t *gb)
 }
 
 // Reset a gb_system_t to its startup state
-void gb_system_reset(gb_system_t *gb)
+void gb_system_reset(bool enable_bootrom, gb_system_t *gb)
 {
-    // Initialize registers
-    reg_write_u16(REG_AF, 0x01B0, gb);
-    reg_write_u16(REG_BC, 0x0013, gb);
-    reg_write_u16(REG_DE, 0x00D8, gb);
-    reg_write_u16(REG_HL, 0x014D, gb);
-    gb->pc = CARTRIDGE_HEADER_LADDR;
-    gb->sp = HRAM_UADDR;
+    if (enable_bootrom) {
+        gb->memory.bootrom_reg = 0;
+        gb->pc = 0x0;
+    } else {
+        gb->memory.bootrom_reg = 1;
+        gb->pc = CARTRIDGE_HEADER_LADDR;
 
-    // Initialize IO registers
-    // Joypad
-    memset(&gb->joypad, 0, sizeof(gb->joypad));
+        // Initialize registers
+        reg_write_u16(REG_AF, 0x01B0, gb);
+        reg_write_u16(REG_BC, 0x0013, gb);
+        reg_write_u16(REG_DE, 0x00D8, gb);
+        reg_write_u16(REG_HL, 0x014D, gb);
+        gb->sp = HRAM_UADDR;
 
-    // Timer
-    timer_reg_writeb(TIM_TIMA, 0, gb);
-    timer_reg_writeb(TIM_TMA, 0, gb);
-    timer_reg_writeb(TIM_TAC, 0, gb);
+        // Initialize IO registers
+        // Joypad
+        memset(&gb->joypad, 0, sizeof(gb->joypad));
 
-    // Sound
-    gb->memory.ioregs[0x10] = 0x80; // NR10
-    gb->memory.ioregs[0x11] = 0xBF; // NR11
-    gb->memory.ioregs[0x12] = 0xF3; // NR12
-    gb->memory.ioregs[0x14] = 0xBF; // NR14
-    gb->memory.ioregs[0x16] = 0x3F; // NR21
-    gb->memory.ioregs[0x17] = 0x00; // NR22
-    gb->memory.ioregs[0x19] = 0xBF; // NR24
-    gb->memory.ioregs[0x1A] = 0x7F; // NR30
-    gb->memory.ioregs[0x1B] = 0xFF; // NR31
-    gb->memory.ioregs[0x1C] = 0x9F; // NR32
-    gb->memory.ioregs[0x1E] = 0xBF; // NR33
-    gb->memory.ioregs[0x20] = 0xFF; // NR41
-    gb->memory.ioregs[0x21] = 0x00; // NR42
-    gb->memory.ioregs[0x22] = 0x00; // NR43
-    gb->memory.ioregs[0x23] = 0xBF; // NR30
-    gb->memory.ioregs[0x24] = 0x77; // NR50
-    gb->memory.ioregs[0x25] = 0xF3; // NR51
-    gb->memory.ioregs[0x26] = 0xF1; // NR52
+        // Timer
+        timer_reg_writeb(TIM_TIMA, 0, gb);
+        timer_reg_writeb(TIM_TMA, 0, gb);
+        timer_reg_writeb(TIM_TAC, 0, gb);
 
-    // LCD
-    memset(&gb->screen, 0, sizeof(struct lcd_screen));
-    lcd_reg_writeb(LCDC,      0x91, gb);
-    lcd_reg_writeb(LCDC_SCY,  0x00, gb);
-    lcd_reg_writeb(LCDC_SCX,  0x00, gb);
-    lcd_reg_writeb(LCDC_LYC,  0x00, gb);
-    lcd_reg_writeb(LCDC_BGP,  0xFC, gb);
-    lcd_reg_writeb(LCDC_OBP0, 0xFF, gb);
-    lcd_reg_writeb(LCDC_OBP1, 0xFF, gb);
-    lcd_reg_writeb(LCDC_WY,   0x00, gb);
-    lcd_reg_writeb(LCDC_WX,   0x00, gb);
+        // Sound
+        gb->memory.ioregs[0x10] = 0x80; // NR10
+        gb->memory.ioregs[0x11] = 0xBF; // NR11
+        gb->memory.ioregs[0x12] = 0xF3; // NR12
+        gb->memory.ioregs[0x14] = 0xBF; // NR14
+        gb->memory.ioregs[0x16] = 0x3F; // NR21
+        gb->memory.ioregs[0x17] = 0x00; // NR22
+        gb->memory.ioregs[0x19] = 0xBF; // NR24
+        gb->memory.ioregs[0x1A] = 0x7F; // NR30
+        gb->memory.ioregs[0x1B] = 0xFF; // NR31
+        gb->memory.ioregs[0x1C] = 0x9F; // NR32
+        gb->memory.ioregs[0x1E] = 0xBF; // NR33
+        gb->memory.ioregs[0x20] = 0xFF; // NR41
+        gb->memory.ioregs[0x21] = 0x00; // NR42
+        gb->memory.ioregs[0x22] = 0x00; // NR43
+        gb->memory.ioregs[0x23] = 0xBF; // NR30
+        gb->memory.ioregs[0x24] = 0x77; // NR50
+        gb->memory.ioregs[0x25] = 0xF3; // NR51
+        gb->memory.ioregs[0x26] = 0xF1; // NR52
 
-    // Interrupts
-    gb->interrupts.ie_reg = 0x00;
+        // LCD
+        memset(&gb->screen, 0, sizeof(struct lcd_screen));
+        lcd_reg_writeb(LCDC,      0x91, gb);
+        lcd_reg_writeb(LCDC_SCY,  0x00, gb);
+        lcd_reg_writeb(LCDC_SCX,  0x00, gb);
+        lcd_reg_writeb(LCDC_LYC,  0x00, gb);
+        lcd_reg_writeb(LCDC_BGP,  0xFC, gb);
+        lcd_reg_writeb(LCDC_OBP0, 0xFF, gb);
+        lcd_reg_writeb(LCDC_OBP1, 0xFF, gb);
+        lcd_reg_writeb(LCDC_WY,   0x00, gb);
+        lcd_reg_writeb(LCDC_WX,   0x00, gb);
+
+        // Interrupts
+        gb->interrupts.ie_reg = 0x00;
+    }
 }
 
 // Destroy gb_system_t and free all allocated memory
@@ -222,19 +229,19 @@ void gb_system_destroy(gb_system_t *gb)
 }
 
 // Allocate and initialize an empty gb_system_t
-gb_system_t *gb_system_create(void)
+gb_system_t *gb_system_create(bool enable_bootrom)
 {
     gb_system_t *gb = xzalloc(sizeof(gb_system_t));
 
-    gb_system_reset(gb);
+    gb_system_reset(enable_bootrom, gb);
     return gb;
 }
 
 // Create a gb_system_t and load ROM
 // Returns NULL if the ROM failed to load
-gb_system_t *gb_system_create_load_rom(const char *filename)
+gb_system_t *gb_system_create_load_rom(const char *filename, bool enable_bootrom)
 {
-    gb_system_t *gb = gb_system_create();
+    gb_system_t *gb = gb_system_create(enable_bootrom);
 
     if (load_rom_from_file(filename, gb) < 0) {
         gb_system_destroy(gb);

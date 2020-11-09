@@ -28,6 +28,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 static struct args {
     bool debug;
     char *filename;
+    bool enable_bootrom;
 } args;
 
 void print_usage(const char *cmd)
@@ -43,17 +44,19 @@ void print_help(const char *cmd)
     printf("    -h              Show this help message\n");
     printf("    -l level        Set logging to level (default: warn)\n");
     printf("                    Options: crit, error, warn, info, debug, all\n");
+    printf("    -b              Enable DMG bootrom\n");
     printf("    -d              Run in debugging mode\n");
 }
 
 void parse_args(int ac, char **av)
 {
-    const char shortopts[] = "hl:d";
+    const char shortopts[] = "hl:bd";
     int opt;
 
     // Default values
     args.debug = false;
     args.filename = NULL;
+    args.enable_bootrom = false;
 
     // Optionnal arguments
     while ((opt = getopt(ac, av, shortopts)) >= 0) {
@@ -67,6 +70,10 @@ void parse_args(int ac, char **av)
                     fprintf(stderr, "Invalid log level\n");
                     exit(EXIT_FAILURE);
                 }
+                break;
+
+            case 'b':
+                args.enable_bootrom = true;
                 break;
 
             case 'd':
@@ -91,7 +98,7 @@ int main(int ac, char **av)
     gb_system_t *gb;
 
     parse_args(ac, av);
-    if (!(gb = gb_system_create_load_rom(args.filename)))
+    if (!(gb = gb_system_create_load_rom(args.filename, args.enable_bootrom)))
         return EXIT_FAILURE;
 
     emulation_ret = gb_system_emulate(gb);

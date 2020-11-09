@@ -28,6 +28,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
 {
     if (addr <= ROM_BANK_0_UADDR) {
+        if (!gb->memory.bootrom_reg && addr <= 0xFF) return mmu_bootrom_readb(addr, gb);
         return membank_readb_bank(addr, 0, &gb->memory.rom);
 
     } else if (ADDR_IN_RANGE(addr, ROM_BANK_N_LADDR, ROM_BANK_N_UADDR)) {
@@ -69,6 +70,9 @@ byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
 
     } else if (addr == JOYPAD_REG) {
         return joypad_reg_readb(gb);
+
+    } else if (addr == BOOTROM_REG_ADDR) {
+        return gb->memory.bootrom_reg;
 
     } else if (addr == INTERRUPT_FLAG) {
         return gb->interrupts.if_reg;
@@ -127,6 +131,15 @@ bool mbc0_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 
     } else if (addr == JOYPAD_REG) {
         return joypad_reg_writeb(value, gb);
+
+    } else if (addr == BOOTROM_REG_ADDR) {
+        gb->memory.bootrom_reg = value;
+        if (value) {
+            logger(LOG_INFO, "Bootrom disabled");
+        } else {
+            logger(LOG_WARN, "Bootrom enabled");
+        }
+        return true;
 
     } else if (addr == INTERRUPT_FLAG) {
         gb->interrupts.if_reg = value;

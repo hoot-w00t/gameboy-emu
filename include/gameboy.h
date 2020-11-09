@@ -84,6 +84,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define OAM_LADDR                    (0xFE00)
 #define OAM_UADDR                    (0xFE9F)
 #define IO_REGISTERS_LADDR           (0xFF00)
+#define BOOTROM_REG_ADDR             (0xFF50)
 #define IO_REGISTERS_UADDR           (0xFF7F)
 #define HRAM_LADDR                   (0xFF80)
 #define HRAM_UADDR                   (0xFFFE)
@@ -318,6 +319,7 @@ struct membank {
 };
 
 struct mmu {
+    byte_t bootrom_reg;          // Register $FF50
     struct membank rom;          // ROM Banks
     struct membank ram;          // RAM Banks
     byte_t vram[VRAM_SIZE];      // Video RAM (Tiles + the 2 BG Maps)

@@ -25,9 +25,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 byte_t *load_file(const char *filename, int *size);
 int load_rom(byte_t *rom, int size, gb_system_t *gb);
 int load_rom_from_file(const char *filename, gb_system_t *gb);
-void gb_system_reset(gb_system_t *gb);
+void gb_system_reset(bool enable_bootrom, gb_system_t *gb);
 void gb_system_destroy(gb_system_t *gb);
-gb_system_t *gb_system_create(void);
-gb_system_t *gb_system_create_load_rom(const char *filename);
+gb_system_t *gb_system_create(bool enable_bootrom);
+gb_system_t *gb_system_create_load_rom(const char *filename, bool enable_bootrom);
 
 #endif
