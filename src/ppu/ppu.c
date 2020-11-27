@@ -32,6 +32,53 @@ const pixel_t monochrome_pal[4] = {
     { .r = 0x00, .g = 0x00, .b = 0x00}
 };
 
+// Draw sprites on given scanline
+void ppu_draw_sprites(const byte_t scanline, gb_system_t *gb)
+{
+    byte_t sprite_addr, y, x, tile_id, attributes, size, palette;
+    bool y_flip, x_flip, palette_nb;
+    uint16_t tile_data_addr;
+    sbyte_t line;
+    byte_t lo, hi;
+
+    for (byte_t sprite = 0; sprite < 40; ++sprite) {
+        sprite_addr = sprite * 4;
+        y = gb->memory.oam[sprite_addr] - 16;
+        x = gb->memory.oam[sprite_addr + 1] - 8;
+        tile_id = gb->memory.oam[sprite_addr + 2];
+        attributes = gb->memory.oam[sprite_addr + 3];
+        size = gb->screen.obj_size ? 16 : 8;
+        y_flip = (attributes >> 6) & 1;
+        x_flip = (attributes >> 5) & 1;
+        palette_nb = (attributes >> 4) & 1;
+        palette = palette_nb ? gb->screen.obp1 : gb->screen.obp0;
+
+        if (scanline >= y && scanline < y + size) {
+            line = y_flip ? (-(scanline - y - size) * 2) : ((scanline - y) * 2);
+
+            tile_data_addr = (tile_id * 16) + line;
+            lo = gb->memory.vram[tile_data_addr];
+            hi = gb->memory.vram[tile_data_addr + 1];
+
+            for (sbyte_t pixel = 7; pixel >= 0; --pixel) {
+                sbyte_t pixel_bit = x_flip ? (-(pixel - 7)) : pixel;
+                byte_t pixel_shade_id = (((hi >> pixel_bit) & 1) << 1) | ((lo >> pixel_bit) & 1);
+
+                // Shade 0 is transparent for sprites
+                if (pixel_shade_id == 0) continue;
+
+                byte_t pixel_shade = SHADE_FROM_PALETTE(pixel_shade_id, palette);
+                int16_t pixel_x = x + (7 - pixel);
+
+                if (scanline >= SCREEN_HEIGHT || pixel_x < 0 || pixel_x >= SCREEN_WIDTH)
+                    continue;
+
+                gb->screen.framebuffer[scanline][pixel_x] = monochrome_pal[pixel_shade];
+            }
+        }
+    }
+}
+
 // Draw background or window on given scanline
 void ppu_draw_background(const byte_t scanline, gb_system_t *gb)
 {
@@ -91,7 +138,7 @@ void ppu_draw_background(const byte_t scanline, gb_system_t *gb)
 void ppu_draw_scanline(const byte_t scanline, gb_system_t *gb)
 {
     if (gb->screen.bg_display) ppu_draw_background(scanline, gb);
-    //TODO: if (gb->screen.obj_display) ppu_draw_sprites(scanline, gb);
+    if (gb->screen.obj_display) ppu_draw_sprites(scanline, gb);
 }
 
 // TODO: Move DMA Transfer to CPU
