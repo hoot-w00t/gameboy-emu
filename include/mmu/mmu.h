@@ -24,6 +24,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 byte_t mmu_bootrom_readb(byte_t addr, gb_system_t *gb);
 byte_t mmu_readb(uint16_t addr, gb_system_t *gb);
+byte_t mmu_readb_nolog(uint16_t addr, gb_system_t *gb);
 bool mmu_writeb(uint16_t addr, byte_t value, gb_system_t *gb);
 uint16_t mmu_read_u16(uint16_t addr, gb_system_t *gb);
 bool mmu_write_u16(uint16_t addr, uint16_t value, gb_system_t *gb);

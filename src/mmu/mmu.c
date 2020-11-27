@@ -61,11 +61,24 @@ byte_t mmu_bootrom_readb(byte_t addr, __attribute__((unused)) gb_system_t *gb)
 // Read byte from addr
 byte_t mmu_readb(uint16_t addr, gb_system_t *gb)
 {
+    uint8_t value;
+
     if (gb->memory.readb_f) {
-        logger(LOG_ALL, "mmu_readb: read address $%04X", addr);
-        return (*gb->memory.readb_f)(addr, gb);
+        value = (*gb->memory.readb_f)(addr, gb);
+        logger(LOG_ALL, "mmu_readb: read $%02X from address $%04X", value, addr);
+        return value;
     } else {
         logger(LOG_ERROR, "mmu_readb failed: no readb handler");
+        return 0;
+    }
+}
+
+// Read byte from addr without logging
+byte_t mmu_readb_nolog(uint16_t addr, gb_system_t *gb)
+{
+    if (gb->memory.readb_f) {
+        return (*gb->memory.readb_f)(addr, gb);
+    } else {
         return 0;
     }
 }
