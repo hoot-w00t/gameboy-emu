@@ -23,6 +23,24 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/alu/add.h"
 #include "mmu/mmu.h"
 
+// Add two bytes + Carry
+// Affected flags
+//     N reset
+//     H carry from bit 3
+//     C carry from bit 7
+byte_t cpu_adc(const byte_t target, const byte_t value, gb_system_t *gb)
+{
+    byte_t cvalue = reg_flag(FLAG_C, gb) ? 1 : 0;
+    byte_t hresult = (target & 0xF) + (value & 0xF) + cvalue;
+    uint16_t result = target + value + cvalue;
+
+    reg_flag_clear(FLAG_N, gb);
+    if (hresult > 0xF) reg_flag_set(FLAG_H, gb); else reg_flag_clear(FLAG_H, gb);
+    if (result > 0xFF) reg_flag_set(FLAG_C, gb); else reg_flag_clear(FLAG_C, gb);
+
+    return (byte_t) (result & 0xFF);
+}
+
 // ADC A,n and ADC A,(HL) opcodes
 // Zero Flag = (result == 0)
 int opcode_adc_a_n(const opcode_t *opcode, gb_system_t *gb)
@@ -47,9 +65,7 @@ int opcode_adc_a_n(const opcode_t *opcode, gb_system_t *gb)
         default: return OPCODE_ILLEGAL;
     }
 
-    if (reg_flag(FLAG_C, gb)) value += 1;
-
-    result = cpu_addb(reg_readb(REG_A, gb), value, gb);
+    result = cpu_adc(reg_readb(REG_A, gb), value, gb);
     if (result == 0) reg_flag_set(FLAG_Z, gb); else reg_flag_clear(FLAG_Z, gb);
     reg_writeb(REG_A, result, gb);
 

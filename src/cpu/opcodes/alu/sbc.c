@@ -23,6 +23,24 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/alu/sub.h"
 #include "mmu/mmu.h"
 
+// Subtract two bytes + Carry
+// Affected flags
+//     N set
+//     H if no borrow from bit 4
+//     C if no borrow
+byte_t cpu_sbc(const byte_t target, const byte_t value, gb_system_t *gb)
+{
+    byte_t cvalue = reg_flag(FLAG_C, gb) ? 1 : 0;
+    int16_t result = target - value - cvalue;
+    int16_t hresult = (target & 0xF) - (value & 0xF) - cvalue;
+
+    reg_flag_set(FLAG_N, gb);
+    if (hresult < 0) reg_flag_set(FLAG_H, gb); else reg_flag_clear(FLAG_H, gb);
+    if (result < 0) reg_flag_set(FLAG_C, gb); else reg_flag_clear(FLAG_C, gb);
+
+    return result & 0xFF;
+}
+
 // SBC A,n opcodes
 // Zero Flag = (result == 0)
 int opcode_sbc(const opcode_t *opcode, gb_system_t *gb)
@@ -49,9 +67,7 @@ int opcode_sbc(const opcode_t *opcode, gb_system_t *gb)
         default: return OPCODE_ILLEGAL;
     }
 
-    if (reg_flag(FLAG_C, gb)) value += 1;
-
-    result = cpu_subb(reg_readb(REG_A, gb), value, gb);
+    result = cpu_sbc(reg_readb(REG_A, gb), value, gb);
     if (result == 0) reg_flag_set(FLAG_Z, gb); else reg_flag_clear(FLAG_Z, gb);
     reg_writeb(REG_A, result, gb);
 
