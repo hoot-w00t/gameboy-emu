@@ -23,7 +23,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 static inline void cpu_test_bit(const byte_t target, const byte_t bit, gb_system_t *gb)
 {
-    if ((target & (1 << bit))) reg_flag_set(FLAG_Z, gb); else reg_flag_clear(FLAG_Z, gb);
+    if ((target & (1 << bit))) reg_flag_clear(FLAG_Z, gb); else reg_flag_set(FLAG_Z, gb);
     reg_flag_clear(FLAG_N, gb);
     reg_flag_set(FLAG_H, gb);
 }
