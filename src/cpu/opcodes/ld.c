@@ -24,25 +24,11 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/opcodes/alu/add.h"
 #include "mmu/mmu.h"
 
-// Push byte to stack
-void cpu_pushb(byte_t value, gb_system_t *gb)
-{
-    mmu_writeb(gb->sp, value, gb);
-    gb->sp -= 1;
-}
-
 // Push uint16 to stack
 void cpu_push_u16(uint16_t value, gb_system_t *gb)
 {
-    cpu_pushb(value >> 8, gb);
-    cpu_pushb(value & 0xff, gb);
-}
-
-// Pop byte from stack
-byte_t cpu_popb(gb_system_t *gb)
-{
-    gb->sp += 1;
-    return mmu_readb(gb->sp, gb);
+    mmu_write_u16(gb->sp - 1, value, gb);
+    gb->sp -= 2;
 }
 
 // Pop uint16 from stack
