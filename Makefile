@@ -2,7 +2,7 @@ CC	=	cc
 INCLUDE	=	-Iinclude $(shell sdl2-config --cflags)
 OFLAGS	=	-O3
 CFLAGS	=	$(OFLAGS) -W -Wall -Wextra -pipe $(INCLUDE)
-LDFLAGS	=	$(shell pkg-config --libs readline) $(shell sdl2-config --libs)
+LDFLAGS	=	$(shell pkg-config --libs readline) $(shell sdl2-config --libs) -lSDL2_ttf
 
 BIN_NAME	=	gameboy
 

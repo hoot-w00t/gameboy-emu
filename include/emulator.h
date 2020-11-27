@@ -17,9 +17,11 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <stdbool.h>
+
 #ifndef _EMULATOR_H
 #define _EMULATOR_H
 
-int gb_system_emulate(gb_system_t *gb);
+int gb_system_emulate(gb_system_t *gb, const bool debug);
 
 #endif

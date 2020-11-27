@@ -106,7 +106,7 @@ int main(int ac, char **av)
         cartridge_dump(&gb->cartridge);
     }
 
-    emulation_ret = gb_system_emulate(gb);
+    emulation_ret = gb_system_emulate(gb, args.debug);
     gb_system_destroy(gb);
 
     if (emulation_ret < 0) {

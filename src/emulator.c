@@ -19,23 +19,28 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "gb_system.h"
 #include "cpu/cpu.h"
+#include "cpu/registers.h"
+#include "cpu/opcodes.h"
 #include "ppu/ppu.h"
+#include "mmu/mmu.h"
 #include "joypad.h"
+#include "moderndos8x16_ttf.h"
 #include <stdio.h>
 #include <SDL.h>
+#include <SDL_ttf.h>
 
 // TODO: Use a proper pixel size variable
 #define SDL_PIXEL_SIZE (4)
+static TTF_Font *font = NULL;
+static SDL_Rect debug_rect;
 
-// create SDL window
+// Create SDL window
 int create_window(SDL_Window **win, SDL_Renderer **ren)
 {
     SDL_CreateWindowAndRenderer(
-        SCREEN_WIDTH * SDL_PIXEL_SIZE,
+        SCREEN_WIDTH * SDL_PIXEL_SIZE + debug_rect.w,
         SCREEN_HEIGHT * SDL_PIXEL_SIZE,
-        0,
-        win,
-        ren);
+        0, win, ren);
 
     if (*win == NULL || *ren == NULL) {
         fprintf(stderr, "Unable to create SDL window: %s\n", SDL_GetError());
@@ -45,33 +50,89 @@ int create_window(SDL_Window **win, SDL_Renderer **ren)
     return 0;
 }
 
-// update SDL window size
-void update_window(SDL_Window *win)
-{
-    SDL_SetWindowSize(
-        win,
-        SCREEN_WIDTH * SDL_PIXEL_SIZE,
-        SCREEN_HEIGHT * SDL_PIXEL_SIZE);
-}
-
-// update SDL window title
+// Update SDL window title
 void update_window_title(SDL_Window *win, const char *format, ...)
 {
     char title[256];
     va_list ap;
 
     va_start(ap, format);
-    vsnprintf(
-        title,
-        sizeof(title),
-        format,
-        ap);
+    vsnprintf(title, sizeof(title), format, ap);
     va_end(ap);
-
     SDL_SetWindowTitle(win, title);
 }
 
-// draw a scaled pixel
+// Draw text using *font
+void draw_text(SDL_Renderer *ren, int x, int y, const char *format, ...)
+{
+    SDL_Surface *surface;
+    SDL_Texture *texture;
+    SDL_Rect rect;
+    char text[256];
+    va_list ap;
+
+    va_start(ap, format);
+    vsnprintf(text, sizeof(text), format, ap);
+    va_end(ap);
+    surface = TTF_RenderText_Solid(font, text, (SDL_Color) {0, 0, 0, 255});
+    texture = SDL_CreateTextureFromSurface(ren, surface);
+    rect.x = x;
+    rect.y = y;
+    TTF_SizeText(font, text, &rect.w, &rect.h);
+    SDL_RenderCopy(ren, texture, NULL, &rect);
+    SDL_FreeSurface(surface);
+    SDL_DestroyTexture(texture);
+}
+
+// Render the debug panel
+void render_debug(SDL_Renderer *ren, gb_system_t *gb)
+{
+    int coll = debug_rect.x + 5;
+    int colr = coll + ((debug_rect.w - 5) / 2);
+    int w4 = (debug_rect.w - 5) / 4;
+    int w3 = (debug_rect.w - 5) / 3;
+    int line_height = TTF_FontHeight(font);
+    const opcode_t *opcode;
+    byte_t pc_byte;
+
+    if ((pc_byte = mmu_readb_nolog(gb->pc, gb)) == 0xCB) {
+        opcode = opcode_cb_identify(mmu_readb_nolog(gb->pc + 1, gb));
+    } else {
+        opcode = opcode_identify(pc_byte);
+    }
+
+    SDL_SetRenderDrawColor(ren, 255, 204, 153, 255);
+    SDL_RenderFillRect(ren, &debug_rect);
+    draw_text(ren, coll, line_height * 0, "Cycle #%lu", gb->cycle_nb);
+    draw_text(ren, coll, line_height * 1, "PC: $%04X", gb->pc);
+    draw_text(ren, colr, line_height * 1, "SP: $%04X", gb->sp);
+    draw_text(ren, coll, line_height * 2, "A: $%02X", reg_readb(REG_A, gb));
+    draw_text(ren, colr, line_height * 2, "F: $%02X", reg_readb(REG_F, gb));
+    draw_text(ren, coll, line_height * 3, "B: $%02X", reg_readb(REG_B, gb));
+    draw_text(ren, colr, line_height * 3, "C: $%02X", reg_readb(REG_C, gb));
+    draw_text(ren, coll, line_height * 4, "D: $%02X", reg_readb(REG_D, gb));
+    draw_text(ren, colr, line_height * 4, "E: $%02X", reg_readb(REG_E, gb));
+    draw_text(ren, coll, line_height * 5, "H: $%02X", reg_readb(REG_H, gb));
+    draw_text(ren, colr, line_height * 5, "L: $%02X", reg_readb(REG_L, gb));
+    draw_text(ren, coll,          line_height * 6, "Z: %i", reg_flag(FLAG_Z, gb));
+    draw_text(ren, coll + w4,     line_height * 6, "H: %i", reg_flag(FLAG_H, gb));
+    draw_text(ren, coll + w4 * 2, line_height * 6, "N: %i", reg_flag(FLAG_N, gb));
+    draw_text(ren, coll + w4 * 3, line_height * 6, "C: %i", reg_flag(FLAG_C, gb));
+    draw_text(ren, coll,          line_height * 7, "IME: %u", gb->interrupts.ime);
+    draw_text(ren, coll + w3,     line_height * 7, "IE: $%02X", gb->interrupts.ie_reg);
+    draw_text(ren, coll + w3 * 2, line_height * 7, "IF: $%02X", gb->interrupts.if_reg);
+    if (gb->halt) draw_text(ren, coll, line_height * 8, "Halted");
+    if (gb->halt) draw_text(ren, colr, line_height * 8, "Stopped");
+    draw_text(ren, coll, line_height * 10, "Next instruction:");
+    if (opcode) {
+        draw_text(ren, coll, line_height * 11, opcode->mnemonic);
+        draw_text(ren, coll, line_height * 12, opcode->comment);
+    } else {
+        draw_text(ren, coll, line_height * 11, "Illegal ($%02X)", pc_byte);
+    }
+}
+
+// Draw a scaled pixel
 static inline void draw_pixel(SDL_Renderer *ren,
     int y, int x, int size, struct pixel *pixel)
 {
@@ -85,19 +146,14 @@ static inline void draw_pixel(SDL_Renderer *ren,
     SDL_RenderFillRect(ren, &rect);
 }
 
-// render the gb->screen.framebuffer
+// Render the gb->screen.framebuffer
 void render_framebuffer(SDL_Renderer *ren, gb_system_t *gb)
 {
-    SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
-    SDL_RenderClear(ren);
-
     for (uint16_t y = 0; y < SCREEN_HEIGHT; ++y) {
         for (uint16_t x = 0; x < SCREEN_WIDTH; ++x) {
             draw_pixel(ren, y, x, SDL_PIXEL_SIZE, &gb->screen.framebuffer[y][x]);
         }
     }
-
-    SDL_RenderPresent(ren);
 }
 
 void handle_joypad_input(SDL_Event *e, const bool pressed, gb_system_t *gb)
@@ -121,7 +177,10 @@ void handle_joypad_input(SDL_Event *e, const bool pressed, gb_system_t *gb)
     }
 }
 
-int gb_system_emulate_loop(SDL_Window *win, SDL_Renderer *ren, gb_system_t *gb)
+int gb_system_emulate_loop(SDL_Window *win,
+                           SDL_Renderer *ren,
+                           gb_system_t *gb,
+                           const bool debug)
 {
     const uint32_t cpu_clock_speed = CPU_CLOCK_SPEED; // 4.194304 MHz
     const int target_framerate = 60;
@@ -158,7 +217,6 @@ int gb_system_emulate_loop(SDL_Window *win, SDL_Renderer *ren, gb_system_t *gb)
                 }
                 ppu_cycle(gb);
             }
-
         }
 
         while (SDL_PollEvent(&e)) {
@@ -166,7 +224,8 @@ int gb_system_emulate_loop(SDL_Window *win, SDL_Renderer *ren, gb_system_t *gb)
                 case SDL_QUIT: stop_loop = true; break;
                 case SDL_KEYDOWN:
                     if (e.key.keysym.sym == SDLK_ESCAPE) stop_loop = true;
-                    else if (e.key.keysym.sym == SDLK_SPACE) pause_emulation = !pause_emulation;
+                    else if (e.key.keysym.sym == SDLK_SPACE)
+                        pause_emulation = !pause_emulation;
                     else handle_joypad_input(&e, true, gb);
                     break;
                 case SDL_KEYUP: handle_joypad_input(&e, false, gb); break;
@@ -196,9 +255,14 @@ int gb_system_emulate_loop(SDL_Window *win, SDL_Renderer *ren, gb_system_t *gb)
             frames_per_second = 0;
         }
 
-        if (gb->screen.framebuffer_updated) {
-            gb->screen.framebuffer_updated = false;
+        if (gb->screen.framebuffer_updated || debug) {
             render_framebuffer(ren, gb);
+            gb->screen.framebuffer_updated = false;
+
+            if (debug)
+                render_debug(ren, gb);
+
+            SDL_RenderPresent(ren);
             frames_per_second += 1;
         }
 
@@ -214,14 +278,37 @@ int gb_system_emulate_loop(SDL_Window *win, SDL_Renderer *ren, gb_system_t *gb)
 // Returns < 0 on initialization error
 // Returns 0 on success
 // Returns > 0 on error during emulation
-int gb_system_emulate(gb_system_t *gb)
+int gb_system_emulate(gb_system_t *gb, const bool debug)
 {
     SDL_Renderer *ren;
     SDL_Window *win;
+    SDL_RWops *fontrwo;
 
+    debug_rect.x = SCREEN_WIDTH * SDL_PIXEL_SIZE;
+    debug_rect.y = 0;
+    debug_rect.w = 0;
+    debug_rect.h = SCREEN_HEIGHT * SDL_PIXEL_SIZE;
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
         fprintf(stderr, "SDL initialization failed: %s\n", SDL_GetError());
         return -1;
+    }
+
+    if (debug) {
+        if (TTF_Init() < 0) {
+            fprintf(stderr, "SDL_ttf initialization failed: %s\n", TTF_GetError());
+            return -1;
+        }
+        if (!(fontrwo = SDL_RWFromConstMem(ModernDOS8x16_ttf,
+                                           ModernDOS8x16_ttf_len))) {
+            fprintf(stderr, "SDL_RWFromConstMem: %s\n", SDL_GetError());
+            return -1;
+        }
+
+        if (!(font = TTF_OpenFontRW(fontrwo, 1, 16))) {
+            fprintf(stderr, "TTF_OpenFont: %s\n", TTF_GetError());
+            return -1;
+        }
+        debug_rect.w = 300;
     }
 
     if (create_window(&win, &ren) < 0) {
@@ -233,9 +320,13 @@ int gb_system_emulate(gb_system_t *gb)
     SDL_RenderPresent(ren);
 
     printf("Emulating: %s\n", gb->cartridge.title);
-    gb_system_emulate_loop(win, ren, gb);
+    gb_system_emulate_loop(win, ren, gb, debug);
     printf("Emulation stopped\n");
 
+    if (debug) {
+        TTF_CloseFont(font);
+        TTF_Quit();
+    }
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
     SDL_Quit();
