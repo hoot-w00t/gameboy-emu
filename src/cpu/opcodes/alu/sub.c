@@ -32,9 +32,16 @@ byte_t cpu_subb(const byte_t target, const byte_t value, gb_system_t *gb)
     byte_t result = target - value;
 
     reg_flag_set(FLAG_N, gb);
-    if ((target & 0xF) < (value & 0xF)) reg_flag_clear(FLAG_H, gb); else reg_flag_set(FLAG_H, gb);
-    if (target < value) reg_flag_clear(FLAG_C, gb); else reg_flag_set(FLAG_C, gb);
-
+    if ((target & 0xF) < (value & 0xF)) {
+        reg_flag_set(FLAG_H, gb);
+    } else {
+        reg_flag_clear(FLAG_H, gb);
+    }
+    if (target < value) {
+        reg_flag_set(FLAG_C, gb);
+    } else {
+        reg_flag_clear(FLAG_C, gb);
+    }
     return result;
 }
 
@@ -48,9 +55,16 @@ uint16_t cpu_sub_u16(const uint16_t target, const uint16_t value, gb_system_t *g
     uint16_t result = target - value;
 
     reg_flag_set(FLAG_N, gb);
-    if ((target & 0xFFF) < (value & 0xFFF)) reg_flag_clear(FLAG_H, gb); else reg_flag_set(FLAG_H, gb);
-    if (target < value) reg_flag_clear(FLAG_C, gb); else reg_flag_set(FLAG_C, gb);
-
+    if ((target & 0xFFF) < (value & 0xFFF)) {
+        reg_flag_set(FLAG_H, gb);
+    } else {
+        reg_flag_clear(FLAG_H, gb);
+    }
+    if (target < value) {
+        reg_flag_set(FLAG_C, gb);
+    } else {
+        reg_flag_clear(FLAG_C, gb);
+    }
     return result;
 }
 

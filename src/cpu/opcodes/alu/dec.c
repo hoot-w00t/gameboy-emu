@@ -30,9 +30,17 @@ byte_t cpu_decb(const byte_t target, gb_system_t *gb)
 {
     byte_t result = target - 1;
 
-    if (result == 0) reg_flag_set(FLAG_Z, gb); else reg_flag_clear(FLAG_Z, gb);
+    if (result == 0) {
+        reg_flag_set(FLAG_Z, gb);
+    } else {
+        reg_flag_clear(FLAG_Z, gb);
+    }
     reg_flag_set(FLAG_N, gb);
-    if ((target & 0xF) < 1) reg_flag_clear(FLAG_H, gb); else reg_flag_set(FLAG_H, gb);
+    if ((target & 0xF) == 0) {
+        reg_flag_set(FLAG_H, gb);
+    } else {
+        reg_flag_clear(FLAG_H, gb);
+    }
 
     return result;
 }
