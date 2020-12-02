@@ -33,6 +33,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define SDL_PIXEL_SIZE (4)
 static TTF_Font *font = NULL;
 static SDL_Rect debug_rect;
+static bool debug_enabled = false;
 
 // Create SDL window
 int create_window(SDL_Window **win, SDL_Renderer **ren)
@@ -48,6 +49,24 @@ int create_window(SDL_Window **win, SDL_Renderer **ren)
     }
 
     return 0;
+}
+
+void debug_enable(SDL_Window *win)
+{
+    debug_enabled = true;
+    debug_rect.w = 300;
+    SDL_SetWindowSize(win,
+                      SCREEN_WIDTH * SDL_PIXEL_SIZE + debug_rect.w,
+                      SCREEN_HEIGHT * SDL_PIXEL_SIZE);
+}
+
+void debug_disable(SDL_Window *win)
+{
+    debug_enabled = false;
+    debug_rect.w = 0;
+    SDL_SetWindowSize(win,
+                      SCREEN_WIDTH * SDL_PIXEL_SIZE + debug_rect.w,
+                      SCREEN_HEIGHT * SDL_PIXEL_SIZE);
 }
 
 // Update SDL window title
@@ -122,7 +141,7 @@ void render_debug(SDL_Renderer *ren, gb_system_t *gb)
     draw_text(ren, coll + w3,     line_height * 7, "IE: $%02X", gb->interrupts.ie_reg);
     draw_text(ren, coll + w3 * 2, line_height * 7, "IF: $%02X", gb->interrupts.if_reg);
     if (gb->halt) draw_text(ren, coll, line_height * 8, "Halted");
-    if (gb->halt) draw_text(ren, colr, line_height * 8, "Stopped");
+    if (gb->stop) draw_text(ren, colr, line_height * 8, "Stopped");
     draw_text(ren, coll, line_height * 10, "Next instruction:");
     if (opcode) {
         draw_text(ren, coll, line_height * 11, opcode->mnemonic);
@@ -179,10 +198,9 @@ void handle_joypad_input(SDL_Event *e, const bool pressed, gb_system_t *gb)
 
 int gb_system_emulate_loop(SDL_Window *win,
                            SDL_Renderer *ren,
-                           gb_system_t *gb,
-                           const bool debug)
+                           gb_system_t *gb)
 {
-    const uint32_t cpu_clock_speed = CPU_CLOCK_SPEED; // 4.194304 MHz
+    uint32_t clock_speed = CPU_CLOCK_SPEED; // 4.194304 MHz
     const int target_framerate = 60;
     const double target_framerate_delay = (double) 1000.0 / (double) target_framerate;
     bool stop_loop = false;
@@ -191,8 +209,8 @@ int gb_system_emulate_loop(SDL_Window *win,
     double elapsed; // Elasped time in seconds
     double elapsed_ms; // Elapsed time in milliseconds
     double timer_second = 0; // One second timer
-    size_t remaining_cpu_cycles;
-    size_t cpu_cycles_per_second = 0;
+    size_t remaining_clocks;
+    size_t clocks_per_second = 0;
     uint32_t frames_per_second = 0;
     SDL_Event e;
 
@@ -206,10 +224,10 @@ int gb_system_emulate_loop(SDL_Window *win,
         if (!pause_emulation) {
             // Calculate how many CPU cycles should be emulated
             // since last frame
-            remaining_cpu_cycles = elapsed * cpu_clock_speed;
-            cpu_cycles_per_second += remaining_cpu_cycles;
+            remaining_clocks = elapsed * clock_speed;
+            clocks_per_second += remaining_clocks;
 
-            for (; remaining_cpu_cycles > 0; --remaining_cpu_cycles) {
+            for (; remaining_clocks > 0; --remaining_clocks) {
                 if (cpu_cycle(true, gb) < 0) {
                     // Emulation should be stopped
                     stop_loop = true;
@@ -221,14 +239,32 @@ int gb_system_emulate_loop(SDL_Window *win,
 
         while (SDL_PollEvent(&e)) {
             switch (e.type) {
-                case SDL_QUIT: stop_loop = true; break;
-                case SDL_KEYDOWN:
-                    if (e.key.keysym.sym == SDLK_ESCAPE) stop_loop = true;
-                    else if (e.key.keysym.sym == SDLK_SPACE)
-                        pause_emulation = !pause_emulation;
-                    else handle_joypad_input(&e, true, gb);
+                case SDL_QUIT:
+                    stop_loop = true;
                     break;
-                case SDL_KEYUP: handle_joypad_input(&e, false, gb); break;
+
+                case SDL_KEYDOWN:
+                    if (e.key.keysym.sym == SDLK_ESCAPE) {
+                        stop_loop = true;
+                    } else if (e.key.keysym.sym == SDLK_SPACE) {
+                        pause_emulation = !pause_emulation;
+                    } else if (e.key.keysym.sym == SDLK_s) {
+                        clock_speed = CPU_CLOCK_SPEED * 4;
+                    } else if (e.key.keysym.sym == SDLK_d) {
+                        debug_enabled ? debug_disable(win) : debug_enable(win);
+                    } else {
+                        handle_joypad_input(&e, true, gb);
+                    }
+                    break;
+
+                case SDL_KEYUP:
+                    if (e.key.keysym.sym == SDLK_s) {
+                        clock_speed = CPU_CLOCK_SPEED;
+                    } else {
+                        handle_joypad_input(&e, false, gb);
+                    }
+                    break;
+
                 default: break;
             }
         }
@@ -236,30 +272,28 @@ int gb_system_emulate_loop(SDL_Window *win,
         if (timer_second >= 1.0) {
             if (pause_emulation) {
                 update_window_title(
-                    win,
-                    "GameBoy (paused, %u fps)",
-                    (double) cpu_cycles_per_second / 1000000.0,
-                    (double) cpu_cycles_per_second / (double) cpu_clock_speed * 100.0,
+                    win, "GameBoy (paused, %u fps)",
+                    (double) clocks_per_second / 1000000.0,
+                    (double) clocks_per_second / (double) clock_speed * 100.0,
                     frames_per_second);
             } else {
                 update_window_title(
-                    win,
-                    "GameBoy (%.06f MHz: %.02f%%, %u fps)",
-                    (double) cpu_cycles_per_second / 1000000.0,
-                    (double) cpu_cycles_per_second / (double) cpu_clock_speed * 100.0,
+                    win, "GameBoy (%.06f MHz: %.02f%%, %u fps)",
+                    (double) clocks_per_second / 1000000.0,
+                    (double) clocks_per_second / (double) CPU_CLOCK_SPEED * 100.0,
                     frames_per_second);
             }
 
             timer_second = 0.0;
-            cpu_cycles_per_second = 0;
+            clocks_per_second = 0;
             frames_per_second = 0;
         }
 
-        if (gb->screen.framebuffer_updated || debug) {
+        if (gb->screen.framebuffer_updated || debug_enabled) {
             render_framebuffer(ren, gb);
             gb->screen.framebuffer_updated = false;
 
-            if (debug)
+            if (debug_enabled)
                 render_debug(ren, gb);
 
             SDL_RenderPresent(ren);
@@ -293,40 +327,37 @@ int gb_system_emulate(gb_system_t *gb, const bool debug)
         return -1;
     }
 
-    if (debug) {
-        if (TTF_Init() < 0) {
-            fprintf(stderr, "SDL_ttf initialization failed: %s\n", TTF_GetError());
-            return -1;
-        }
-        if (!(fontrwo = SDL_RWFromConstMem(ModernDOS8x16_ttf,
-                                           ModernDOS8x16_ttf_len))) {
-            fprintf(stderr, "SDL_RWFromConstMem: %s\n", SDL_GetError());
-            return -1;
-        }
+    if (TTF_Init() < 0) {
+        fprintf(stderr, "SDL_ttf initialization failed: %s\n", TTF_GetError());
+        return -1;
+    }
+    if (!(fontrwo = SDL_RWFromConstMem(ModernDOS8x16_ttf,
+                                        ModernDOS8x16_ttf_len))) {
+        fprintf(stderr, "SDL_RWFromConstMem: %s\n", SDL_GetError());
+        return -1;
+    }
 
-        if (!(font = TTF_OpenFontRW(fontrwo, 1, 16))) {
-            fprintf(stderr, "TTF_OpenFont: %s\n", TTF_GetError());
-            return -1;
-        }
-        debug_rect.w = 300;
+    if (!(font = TTF_OpenFontRW(fontrwo, 1, 16))) {
+        fprintf(stderr, "TTF_OpenFont: %s\n", TTF_GetError());
+        return -1;
     }
 
     if (create_window(&win, &ren) < 0) {
-        SDL_Quit();
         return -1;
     }
+
+    if (debug)
+        debug_enable(win);
 
     SDL_RenderClear(ren);
     SDL_RenderPresent(ren);
 
     printf("Emulating: %s\n", gb->cartridge.title);
-    gb_system_emulate_loop(win, ren, gb, debug);
+    gb_system_emulate_loop(win, ren, gb);
     printf("Emulation stopped\n");
 
-    if (debug) {
-        TTF_CloseFont(font);
-        TTF_Quit();
-    }
+    TTF_CloseFont(font);
+    TTF_Quit();
     SDL_DestroyRenderer(ren);
     SDL_DestroyWindow(win);
     SDL_Quit();
