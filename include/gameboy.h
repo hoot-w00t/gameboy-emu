@@ -225,8 +225,8 @@ typedef struct cartridge_hdr cartridge_hdr_t;
 typedef struct membank membank_t;
 typedef struct mmu mmu_t;
 typedef struct gb_system gb_system_t;
-typedef byte_t (*mmu_readb_t)(uint16_t, gb_system_t *);
-typedef bool (*mmu_writeb_t)(uint16_t, byte_t, gb_system_t *);
+typedef int16_t (*mbc_readb_t)(uint16_t, gb_system_t *);
+typedef bool (*mbc_writeb_t)(uint16_t, byte_t, gb_system_t *);
 typedef struct opcode opcode_t;
 typedef int (*opcode_handler_t)(const opcode_t *, gb_system_t *);
 
@@ -345,8 +345,8 @@ struct mmu {
     byte_t oam[OAM_SIZE];        // Object Attribute Memory
     byte_t ioregs[IO_REGS_SIZE]; // IO Registers
     byte_t hram[HRAM_SIZE];      // HRAM
-    mmu_readb_t readb_f;         // mbc_readb function pointer
-    mmu_writeb_t writeb_f;       // mbc_writeb function pointer
+    mbc_readb_t mbc_readb;       // mbc_readb function pointer
+    mbc_writeb_t mbc_writeb;     // mbc_writeb function pointer
 };
 
 struct interrupts {

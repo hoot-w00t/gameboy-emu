@@ -1,6 +1,6 @@
 /*
-mbc0.c
-MBC0 (ROM only)
+mmu_internal.c
+Internal MMU
 
 Copyright (C) 2020 akrocynova
 
@@ -26,7 +26,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "joypad.h"
 #include "serial.h"
 
-byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
+byte_t mmu_internal_readb(uint16_t addr, gb_system_t *gb)
 {
     if (addr <= ROM_BANK_0_UADDR) {
         if (!gb->memory.bootrom_reg && addr <= 0xFF) return mmu_bootrom_readb(addr, gb);
@@ -37,7 +37,7 @@ byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
 
     } else if (ADDR_IN_RANGE(addr, VRAM_LADDR, VRAM_UADDR)) {
         if (mmu_vram_blocked(gb)) {
-            logger(LOG_ERROR, "mbc0_readb failed: address $%04X: VRAM is not accessible", addr);
+            logger(LOG_ERROR, "mmu_readb failed: address $%04X: VRAM is not accessible", addr);
             return 0xFF;
         }
 
@@ -54,7 +54,7 @@ byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
 
     } else if (ADDR_IN_RANGE(addr, OAM_LADDR, OAM_UADDR)) {
         if (mmu_oam_blocked(gb)) {
-            logger(LOG_ERROR, "mbc0_readb failed: address $%04X: OAM is not accessible", addr);
+            logger(LOG_ERROR, "mmu_readb failed: address $%04X: OAM is not accessible", addr);
             return 0;
         }
 
@@ -85,20 +85,20 @@ byte_t mbc0_readb(uint16_t addr, gb_system_t *gb)
         return gb->interrupts.ie_reg;
 
     } else {
-        logger(LOG_ERROR, "mbc0_readb failed: address $%04X", addr);
+        logger(LOG_WARN, "mmu_readb failed: address $%04X", addr);
         return 0;
     }
 }
 
-bool mbc0_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
+bool mmu_internal_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
     if (addr <= ROM_BANK_N_UADDR) {
-        logger(LOG_ERROR, "mbc0_writeb failed: address $%04X is read-only", addr);
+        logger(LOG_ERROR, "mmu_writeb failed: address $%04X is read-only", addr);
         return false;
 
     } else if (ADDR_IN_RANGE(addr, VRAM_LADDR, VRAM_UADDR)) {
         if (mmu_vram_blocked(gb)) {
-            logger(LOG_ERROR, "mbc0_writeb failed: address $%04X: VRAM is not accessible", addr);
+            logger(LOG_ERROR, "mmu_writeb failed: address $%04X: VRAM is not accessible", addr);
             return false;
         }
 
@@ -116,7 +116,7 @@ bool mbc0_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 
     } else if (ADDR_IN_RANGE(addr, OAM_LADDR, OAM_UADDR)) {
         if (mmu_oam_blocked(gb)) {
-            logger(LOG_ERROR, "mbc0_writeb failed: address $%04X: OAM is not accessible", addr);
+            logger(LOG_ERROR, "mmu_writeb failed: address $%04X: OAM is not accessible", addr);
             return false;
         }
 
@@ -156,7 +156,7 @@ bool mbc0_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
         return true;
 
     } else {
-        logger(LOG_ERROR, "mbc0_writeb failed: value $%02X at address $%04X", value, addr);
+        logger(LOG_WARN, "mmu_writeb failed: value $%02X at address $%04X", value, addr);
         return false;
     }
 }

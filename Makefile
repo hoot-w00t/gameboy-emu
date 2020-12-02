@@ -40,7 +40,7 @@ SRC	=	logger.c				\
 		cpu/opcodes/alu/dec.c	\
 		mmu/banks.c				\
 		mmu/mmu.c				\
-		mmu/mbc0.c				\
+		mmu/mmu_internal.c		\
 		ppu/ppu.c				\
 		ppu/lcd_regs.c
 

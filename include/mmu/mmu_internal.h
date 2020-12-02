@@ -1,6 +1,6 @@
 /*
-mbc0.h
-Function prototypes for mmu/mbc0.c
+mmu_internal.h
+Function prototypes for mmu/mmu_internal.c
 
 Copyright (C) 2020 akrocynova
 
@@ -22,7 +22,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _MMU_MBC0_H
 #define _MMU_MBC0_H
 
-byte_t mbc0_readb(uint16_t addr, gb_system_t *gb);
-bool mbc0_writeb(uint16_t addr, byte_t value, gb_system_t *gb);
+byte_t mmu_internal_readb(uint16_t addr, gb_system_t *gb);
+bool mmu_internal_writeb(uint16_t addr, byte_t value, gb_system_t *gb);
 
 #endif
