@@ -24,6 +24,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "ppu/ppu.h"
 #include "mmu/mmu.h"
 #include "joypad.h"
+#include "serial.h"
 #include "moderndos8x16_ttf.h"
 #include <stdio.h>
 #include <SDL.h>
@@ -234,6 +235,7 @@ int gb_system_emulate_loop(SDL_Window *win,
                     break;
                 }
                 ppu_cycle(gb);
+                serial_cycle(gb);
             }
         }
 

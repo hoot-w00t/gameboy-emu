@@ -190,6 +190,11 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 // Tile definitions
 #define TILE_SIZE (16)
 
+// Serial definitions
+#define SERIAL_SB    (0xFF01)
+#define SERIAL_SC    (0xFF02)
+#define SERIAL_CLOCK (8192) // In Hz
+
 // Joypad definitions
 #define JOYPAD_REG (0xFF00)
 #define P10 (0) // Input Right or Button A
@@ -278,6 +283,20 @@ struct lcd_screen {
     uint32_t line_cycle;
 };
 
+struct serial_port {
+    byte_t sb;
+
+    // Serial Transfer Control Register (SC)
+    bool transfer_start_flag; // Bit 7
+    bool clock_speed;         // Bit 1 (unused on the DMG)
+    bool shift_clock;         // Bit 0
+                              // 0 == External Clock
+                              // 1 == Internal Clock
+
+    byte_t shifts;            // # of shifts left
+    uint32_t shift_cycles;    // # of cycles before shifting a bit
+};
+
 struct joypad {
     bool select_buttons;
     bool select_directions;
@@ -357,6 +376,7 @@ struct gb_system {
     struct interrupts interrupts;      // Interrupt registers
     struct builtin_timer timer;        // Built-in GameBoy timer
     struct joypad joypad;              // Joypad
+    struct serial_port serial;         // Serial Port
     byte_t registers[8];               // CPU Registers
     bool halt;                         // HALT (CPU halted until interrupt)
     bool stop;                         // STOP (CPU and LCD halted until button press)

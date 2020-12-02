@@ -13,6 +13,7 @@ SRC	=	logger.c				\
 		cartridge.c				\
 		timer.c					\
 		joypad.c				\
+		serial.c				\
 		cpu/registers.c			\
 		cpu/interrupts.c		\
 		cpu/cpu.c				\
