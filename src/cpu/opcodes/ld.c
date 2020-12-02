@@ -27,14 +27,14 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 // Push uint16 to stack
 void cpu_push_u16(uint16_t value, gb_system_t *gb)
 {
-    mmu_write_u16(gb->sp - 1, value, gb);
+    mmu_write_u16(gb->sp - 2, value, gb);
     gb->sp -= 2;
 }
 
 // Pop uint16 from stack
 uint16_t cpu_pop_u16(gb_system_t *gb)
 {
-    uint16_t value = mmu_read_u16(gb->sp + 1, gb);
+    uint16_t value = mmu_read_u16(gb->sp, gb);
 
     gb->sp += 2;
     return value;
