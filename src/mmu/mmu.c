@@ -18,8 +18,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "logger.h"
+#include "xalloc.h"
 #include "gameboy.h"
 #include "mmu/mmu_internal.h"
+#include "mmu/mbc1.h"
 #include <stdio.h>
 #include <ctype.h>
 
@@ -63,6 +65,9 @@ byte_t mmu_readb(uint16_t addr, gb_system_t *gb)
 {
     int16_t value;
 
+    if (!gb->memory.bootrom_reg && addr <= 0xFF)
+        return mmu_bootrom_readb(addr, gb);
+
     if (gb->memory.mbc_readb) {
         if ((value = (*gb->memory.mbc_readb)(addr, gb)) > 0) {
             logger(LOG_ALL, "mmu_readb: read $%02X from address $%04X", (byte_t) value, addr);
@@ -78,6 +83,9 @@ byte_t mmu_readb(uint16_t addr, gb_system_t *gb)
 byte_t mmu_readb_nolog(uint16_t addr, gb_system_t *gb)
 {
     int16_t value;
+
+    if (!gb->memory.bootrom_reg && addr <= 0xFF)
+        return mmu_bootrom_readb(addr, gb);
 
     if (gb->memory.mbc_readb) {
         if ((value = (*gb->memory.mbc_readb)(addr, gb)) > 0) {
@@ -131,6 +139,15 @@ bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb)
         case 0x00: // MBC0 (no MBC, ROM only)
             gb->memory.mbc_readb = NULL;
             gb->memory.mbc_writeb = NULL;
+            return true;
+
+        case 0x01: // MBC1
+        case 0x02: // MBC1 + RAM
+        case 0x03: // MBC1 + RAM + Battery
+            gb->memory.mbc_readb = &mbc1_readb;
+            gb->memory.mbc_writeb = &mbc1_writeb;
+            gb->memory.mbc_regs = xzalloc(sizeof(mbc1_regs_t));
+            // TODO: Add battery support
             return true;
 
         default: logger(LOG_ERROR, "Unsupported MBC type $%02X", mbc_type);

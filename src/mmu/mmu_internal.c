@@ -29,7 +29,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 byte_t mmu_internal_readb(uint16_t addr, gb_system_t *gb)
 {
     if (addr <= ROM_BANK_0_UADDR) {
-        if (!gb->memory.bootrom_reg && addr <= 0xFF) return mmu_bootrom_readb(addr, gb);
         return membank_readb_bank(addr, 0, &gb->memory.rom);
 
     } else if (ADDR_IN_RANGE(addr, ROM_BANK_N_LADDR, ROM_BANK_N_UADDR)) {

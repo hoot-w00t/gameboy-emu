@@ -225,6 +225,7 @@ void gb_system_destroy(gb_system_t *gb)
 {
     membank_free(&gb->memory.rom);
     membank_free(&gb->memory.ram);
+    free(gb->memory.mbc_regs);
     free(gb);
 }
 

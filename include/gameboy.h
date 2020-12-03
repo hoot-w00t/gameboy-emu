@@ -345,6 +345,7 @@ struct mmu {
     byte_t oam[OAM_SIZE];        // Object Attribute Memory
     byte_t ioregs[IO_REGS_SIZE]; // IO Registers
     byte_t hram[HRAM_SIZE];      // HRAM
+    void *mbc_regs;              // Pointer to MBC specific registers
     mbc_readb_t mbc_readb;       // mbc_readb function pointer
     mbc_writeb_t mbc_writeb;     // mbc_writeb function pointer
 };
