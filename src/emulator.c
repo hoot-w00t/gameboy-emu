@@ -223,9 +223,14 @@ int gb_system_emulate_loop(SDL_Window *win,
         timer_second += elapsed;
 
         if (!pause_emulation) {
-            // Calculate how many CPU cycles should be emulated
+            // Calculate how many clocks should be emulated
             // since last frame
             remaining_clocks = elapsed * clock_speed;
+
+            // Never exceed the clock speed
+            if (clocks_per_second <= clock_speed && clocks_per_second + remaining_clocks > clock_speed) {
+                remaining_clocks = clock_speed - clocks_per_second;
+            }
             clocks_per_second += remaining_clocks;
 
             for (; remaining_clocks > 0; --remaining_clocks) {
