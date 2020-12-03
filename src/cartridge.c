@@ -120,7 +120,7 @@ char *cartridge_mbc_type(cartridge_hdr_t *cr)
         case 0x00: return "Rom Only";
         case 0x01: return "MBC1";
         case 0x02: return "MBC1 (+RAM)";
-        case 0x03: return "MBC1 (+RAM +Battery";
+        case 0x03: return "MBC1 (+RAM +Battery)";
         case 0x05: return "MBC2";
         case 0x06: return "MBC2 (+Battery)";
         case 0x08: return "Rom (+RAM)";
@@ -129,7 +129,7 @@ char *cartridge_mbc_type(cartridge_hdr_t *cr)
         case 0x0C: return "MMM01 (+RAM)";
         case 0x0D: return "MMM01 (+RAM +Battery)";
         case 0x0F: return "MBC3 (+Timer +Battery)";
-        case 0x10: return "MBC3 (+Timer +RAM +Battery";
+        case 0x10: return "MBC3 (+Timer +RAM +Battery)";
         case 0x11: return "MBC3";
         case 0x12: return "MBC3 (+RAM)";
         case 0x13: return "MBC3 (+RAM +Battery)";
