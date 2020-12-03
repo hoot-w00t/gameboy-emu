@@ -345,6 +345,7 @@ struct mmu {
     byte_t oam[OAM_SIZE];        // Object Attribute Memory
     byte_t ioregs[IO_REGS_SIZE]; // IO Registers
     byte_t hram[HRAM_SIZE];      // HRAM
+    bool mbc_battery;            // Is there a battery on the cartridge
     void *mbc_regs;              // Pointer to MBC specific registers
     mbc_readb_t mbc_readb;       // mbc_readb function pointer
     mbc_writeb_t mbc_writeb;     // mbc_writeb function pointer
@@ -371,6 +372,8 @@ struct builtin_timer {
 };
 
 struct gb_system {
+    char *rom_file;                    // Path to the ROM loaded
+    char *sav_file;                    // Path to the battery file for the ROM
     struct lcd_screen screen;          // GameBoy Video Screen
     struct cartridge_hdr cartridge;    // Cartridge information
     struct mmu memory;                 // Memory areas

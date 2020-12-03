@@ -23,7 +23,18 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "mmu/mmu_internal.h"
 #include "mmu/mbc1.h"
 #include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <ctype.h>
+
+#ifdef WIN32
+#define OFLAG (O_BINARY)
+#else
+#define OFLAG (0)
+#endif
 
 // dmg_boot.bin from https://gbdev.gg8.se/files/roms/bootroms/
 // Converted to byte_t array using xxd -i
@@ -134,6 +145,73 @@ bool mmu_vram_blocked(gb_system_t *gb)
     return (gb->screen.enable && gb->screen.mode == LCDC_MODE_3);
 }
 
+// Save RAM banks to a battery file
+bool mmu_battery_save(gb_system_t *gb)
+{
+    int fd;
+    size_t offset;
+    ssize_t n;
+
+    if ((fd = open(gb->sav_file, OFLAG | O_WRONLY | O_CREAT,
+                                 S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH)) < 0) {
+        fprintf(stderr, "open(): %s: %s\n", gb->sav_file, strerror(errno));
+        return false;
+    }
+
+    for (uint16_t i = 1; i < gb->memory.ram.max_bank_nb; ++i) {
+        offset = 0;
+
+        while (offset < gb->memory.ram.bank_size) {
+            if ((n = write(fd, gb->memory.ram.banks[i] + offset,
+                               gb->memory.ram.bank_size - offset)) <= 0) {
+                fprintf(stderr, "write(): %s: %s\n", gb->sav_file, strerror(errno));
+                close(fd);
+                return false;
+            }
+
+            logger(LOG_DEBUG, "Saved chunk of %li bytes (RAM bank %u)", n, i);
+            offset += n;
+        }
+    }
+    logger(LOG_INFO, "Saved battery to %s", gb->sav_file);
+
+    close(fd);
+    return true;
+}
+
+// Load RAM banks from a battery file
+bool mmu_battery_load(gb_system_t *gb)
+{
+    int fd;
+    size_t offset;
+    ssize_t n;
+
+    if ((fd = open(gb->sav_file, OFLAG | O_RDONLY)) < 0) {
+        fprintf(stderr, "open(): %s: %s\n", gb->sav_file, strerror(errno));
+        return false;
+    }
+
+    for (uint16_t i = 1; i < gb->memory.ram.max_bank_nb; ++i) {
+        offset = 0;
+
+        while (offset < gb->memory.ram.bank_size) {
+            if ((n = read(fd, gb->memory.ram.banks[i] + offset,
+                               gb->memory.ram.bank_size - offset)) <= 0) {
+                fprintf(stderr, "read(): %s: %s\n", gb->sav_file, strerror(errno));
+                close(fd);
+                return false;
+            }
+
+            logger(LOG_DEBUG, "Loaded chunk of %li bytes (RAM bank %u)", n, i);
+            offset += n;
+        }
+    }
+    logger(LOG_INFO, "Loaded battery from %s", gb->sav_file);
+
+    close(fd);
+    return true;
+}
+
 // Set MBC type and initialize MBC-related functions and variables
 bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb)
 {
@@ -149,7 +227,7 @@ bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb)
             gb->memory.mbc_readb = &mbc1_readb;
             gb->memory.mbc_writeb = &mbc1_writeb;
             gb->memory.mbc_regs = xzalloc(sizeof(mbc1_regs_t));
-            // TODO: Add battery support
+            gb->memory.mbc_battery = mbc_type == 0x03;
             return true;
 
         default: logger(LOG_ERROR, "Unsupported MBC type $%02X", mbc_type);

@@ -19,6 +19,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
 // Allocate SIZE bytes of memory.
 void *xalloc(size_t size)
@@ -44,4 +46,17 @@ void *xzalloc(size_t size)
     }
 
     return ptr;
+}
+
+// Duplicate *s
+char *xstrdup(const char *s)
+{
+    char *dup;
+
+    if (!(dup = strdup(s))) {
+        fprintf(stderr, "strdup(): %s (%lu bytes)\n", strerror(errno), strlen(s));
+        abort();
+    }
+
+    return dup;
 }

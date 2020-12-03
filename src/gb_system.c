@@ -34,6 +34,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <libgen.h>
 
 #ifdef WIN32
 #define OFLAG (O_RDONLY | O_BINARY)
@@ -145,15 +146,40 @@ int load_rom_from_file(const char *filename, gb_system_t *gb)
         return -1;
 
     if (size < ROM_BANK_SIZE) {
-        logger(LOG_ERROR,
-               "%s: not a valid ROM file",
-               filename);
+        logger(LOG_ERROR, "%s: not a valid ROM file", filename);
         free(rom);
         return -1;
     }
 
     ret = load_rom(rom, size, gb);
     free(rom);
+    if (ret < 0) {
+        return ret;
+    } else {
+        char *tmp_filename = xstrdup(filename);
+        char *rom_basename = basename(tmp_filename);
+        size_t ext_len = 0;
+        size_t filename_len = strlen(filename);
+        size_t filename_wo_ext_len;
+
+        for (size_t i = 0; rom_basename[i]; ++i) {
+            if (rom_basename[i] == '.') {
+                ext_len = strlen(rom_basename + i + 1);
+                break;
+            }
+        }
+        filename_wo_ext_len = filename_len - ext_len;
+
+        gb->sav_file = xalloc(sizeof(char) * (filename_wo_ext_len + 5));
+        strncpy(gb->sav_file, filename, filename_wo_ext_len);
+        if (gb->sav_file[filename_wo_ext_len - 1] != '.')
+            strcat(gb->sav_file, ".");
+        strcat(gb->sav_file, "sav");
+        gb->rom_file = xstrdup(filename);
+
+        free(tmp_filename);
+        return size;
+    }
     return ret < 0 ? ret : size;
 }
 
@@ -226,6 +252,8 @@ void gb_system_destroy(gb_system_t *gb)
     membank_free(&gb->memory.rom);
     membank_free(&gb->memory.ram);
     free(gb->memory.mbc_regs);
+    free(gb->rom_file);
+    free(gb->sav_file);
     free(gb);
 }
 

@@ -1,6 +1,6 @@
 /*
 xalloc.h
-Memory allocation function that handle failure
+Memory allocation functions that handle failure
 
 Copyright (C) 2020 akrocynova
 
@@ -24,5 +24,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 void *xalloc(size_t size);
 void *xzalloc(size_t size);
+char *xstrdup(const char *s);
 
 #endif

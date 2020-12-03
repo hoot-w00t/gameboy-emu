@@ -354,9 +354,15 @@ int gb_system_emulate(gb_system_t *gb, const bool debug)
     SDL_RenderClear(ren);
     SDL_RenderPresent(ren);
 
+    if (gb->memory.mbc_battery)
+        mmu_battery_load(gb);
+
     printf("Emulating: %s\n", gb->cartridge.title);
     gb_system_emulate_loop(win, ren, gb);
     printf("Emulation stopped\n");
+
+    if (gb->memory.mbc_battery)
+        mmu_battery_save(gb);
 
     TTF_CloseFont(font);
     TTF_Quit();

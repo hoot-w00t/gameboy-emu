@@ -30,6 +30,8 @@ uint16_t mmu_read_u16(uint16_t addr, gb_system_t *gb);
 bool mmu_write_u16(uint16_t addr, uint16_t value, gb_system_t *gb);
 bool mmu_oam_blocked(gb_system_t *gb);
 bool mmu_vram_blocked(gb_system_t *gb);
+bool mmu_battery_save(gb_system_t *gb);
+bool mmu_battery_load(gb_system_t *gb);
 bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb);
 void mmu_dump(uint16_t addr, uint16_t n, gb_system_t *gb);
 
