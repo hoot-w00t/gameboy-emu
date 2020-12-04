@@ -109,9 +109,8 @@ void ppu_draw_background(const byte_t scanline, gb_system_t *gb)
 
     uint16_t tile_row = (y / 8) * 32;
     for (byte_t pixel = 0; pixel < SCREEN_WIDTH; ++pixel) {
-        x = pixel + scx;
+        x = use_window ? pixel - wx : pixel + scx;
 
-        if (use_window && pixel >= wx) x = pixel - wx;
         uint16_t tile_col = x / 8;
         uint16_t tile_map_addr = base_tile_map_addr + tile_row + tile_col;
         uint16_t tile_data_addr = base_tile_data_addr;
