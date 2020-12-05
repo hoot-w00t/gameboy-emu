@@ -181,13 +181,15 @@ int ppu_cycle(gb_system_t *gb)
         if (gb->screen.ly < 144) {
             // Draw the scanline
             ppu_draw_scanline(gb->screen.ly, gb);
-            gb->screen.framebuffer_updated = true;
 
             gb->screen.mode = LCDC_MODE_SEARCH;
             if (gb->screen.oam_int) lcd_stat_int = true;
 
         } else if (gb->screen.ly == 144) {
             // VBlank period
+            if (gb->screen.vblank_callback)
+                (*(gb->screen.vblank_callback))(gb);
+
             cpu_int_flag_set(INT_VBLANK_BIT, gb);
             gb->screen.mode = LCDC_MODE_VBLANK;
             if (gb->screen.vblank_int) lcd_stat_int = true;

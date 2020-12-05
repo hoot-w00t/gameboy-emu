@@ -225,6 +225,7 @@ typedef struct cartridge_hdr cartridge_hdr_t;
 typedef struct membank membank_t;
 typedef struct mmu mmu_t;
 typedef struct gb_system gb_system_t;
+typedef void (*lcd_callback_t)(gb_system_t *);
 typedef int16_t (*mbc_readb_t)(uint16_t, gb_system_t *);
 typedef bool (*mbc_writeb_t)(uint16_t, byte_t, gb_system_t *);
 typedef struct opcode opcode_t;
@@ -277,7 +278,11 @@ struct lcd_screen {
 
     // Screen framebuffer to hold the pixels
     pixel_t framebuffer[SCREEN_HEIGHT][SCREEN_WIDTH];
-    bool framebuffer_updated; // Set to true when framebuffer was updated
+
+    // Callback function called when the PPU enters the V-Blank period
+    // (after a full frame is drawn)
+    lcd_callback_t vblank_callback;
+
 
     // LCD State
     uint32_t line_cycle;
