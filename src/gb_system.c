@@ -135,6 +135,19 @@ int load_rom(byte_t *rom, int size, gb_system_t *gb)
     return 0;
 }
 
+// Returns a pointer to the start of the extension (excluding the dot)
+// Returns NULL if there is no extension
+char *filename_ext(char *filename)
+{
+    size_t i = strlen(filename);
+
+    for (; i > 0; --i) {
+        if (filename[i - 1] == '.')
+            return &filename[i];
+    }
+    return NULL;
+}
+
 // Load a ROM to gb_system_t
 // Returns the amount of bytes read or -1 if it failed
 int load_rom_from_file(const char *filename, gb_system_t *gb)
@@ -157,24 +170,18 @@ int load_rom_from_file(const char *filename, gb_system_t *gb)
         return ret;
     } else {
         char *tmp_filename = xstrdup(filename);
-        char *rom_basename = basename(tmp_filename);
-        size_t ext_len = 0;
-        size_t filename_len = strlen(filename);
-        size_t filename_wo_ext_len;
+        char *tmp_basename = basename(tmp_filename);
+        char *tmp_ext = filename_ext(tmp_basename);
+        size_t ext_len = tmp_ext ? strlen(tmp_ext) : 0;
+        size_t filename_wo_ext_len = strlen(filename) - ext_len;
 
-        for (size_t i = 0; rom_basename[i]; ++i) {
-            if (rom_basename[i] == '.') {
-                ext_len = strlen(rom_basename + i + 1);
-                break;
-            }
-        }
-        filename_wo_ext_len = filename_len - ext_len;
-
-        gb->sav_file = xalloc(sizeof(char) * (filename_wo_ext_len + 5));
+        gb->sav_file = xzalloc(sizeof(char) * (filename_wo_ext_len + 5));
         strncpy(gb->sav_file, filename, filename_wo_ext_len);
-        if (gb->sav_file[filename_wo_ext_len - 1] != '.')
-            strcat(gb->sav_file, ".");
-        strcat(gb->sav_file, "sav");
+        if (gb->sav_file[filename_wo_ext_len - 1] != '.') {
+            strcat(gb->sav_file, ".sav");
+        } else {
+            strcat(gb->sav_file, "sav");
+        }
         gb->rom_file = xstrdup(filename);
 
         free(tmp_filename);
