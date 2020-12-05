@@ -30,18 +30,55 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <SDL.h>
 #include <SDL_ttf.h>
 
-// TODO: Use a proper pixel size variable
 // TODO: Add customizable key mappings
 
-#define SDL_PIXEL_SIZE (4)
+static struct keymap {
+    SDL_Scancode gb_left;
+    SDL_Scancode gb_right;
+    SDL_Scancode gb_up;
+    SDL_Scancode gb_down;
+    SDL_Scancode gb_a;
+    SDL_Scancode gb_b;
+    SDL_Scancode gb_select;
+    SDL_Scancode gb_start;
+    SDL_Scancode emu_pause;
+    SDL_Scancode emu_speed;
+    SDL_Scancode emu_slow;
+    SDL_Scancode emu_debug;
+    SDL_Scancode emu_exit;
+    SDL_Scancode emu_zoom_in;
+    SDL_Scancode emu_zoom_out;
+} keymap = {
+    .gb_left       = SDL_SCANCODE_A,
+    .gb_right      = SDL_SCANCODE_D,
+    .gb_up         = SDL_SCANCODE_Z,
+    .gb_down       = SDL_SCANCODE_S,
+    .gb_a          = SDL_SCANCODE_L,
+    .gb_b          = SDL_SCANCODE_K,
+    .gb_select     = SDL_SCANCODE_RSHIFT,
+    .gb_start      = SDL_SCANCODE_RETURN,
+    .emu_pause     = SDL_SCANCODE_SPACE,
+    .emu_speed     = SDL_SCANCODE_N,
+    .emu_slow      = SDL_SCANCODE_H,
+    .emu_debug     = SDL_SCANCODE_B,
+    .emu_exit      = SDL_SCANCODE_ESCAPE,
+    .emu_zoom_in   = SDL_SCANCODE_9,
+    .emu_zoom_out  = SDL_SCANCODE_8
+};
+
 static TTF_Font *font = NULL;
 
-#define debug_toggle() (debug_enabled ? debug_disable(gb) : debug_enable(gb))
-static SDL_Rect debug_rect;
-static bool debug_enabled = false;
+static const int debug_win_width = 500;
+static const int debug_win_height = 500;
+static SDL_Window *debug_win = NULL;
+static uint32_t debug_win_id = 0;
+static SDL_Renderer *debug_ren = NULL;
 
-static SDL_Window *win = NULL;
-static SDL_Renderer *ren = NULL;
+static SDL_Window *lcd_win = NULL;
+static uint32_t lcd_win_id = 0;
+static SDL_Surface *lcd_surface = NULL;
+static uint32_t lcd_pixel_size = 4;
+static uint32_t *lcd_pixels = NULL;
 
 static bool stop_emulation = false;
 static bool pause_emulation = false;
@@ -51,7 +88,7 @@ static uint32_t clock_speed = CPU_CLOCK_SPEED; // 4.194304 MHz
 static uint32_t frameskip = 0;
 
 // Update window title
-void update_window_title(const char *format, ...)
+void update_window_title(SDL_Window *win, const char *format, ...)
 {
     char title[256];
     va_list ap;
@@ -62,8 +99,26 @@ void update_window_title(const char *format, ...)
     SDL_SetWindowTitle(win, title);
 }
 
+// Update pixel size, resize window and update surface
+void update_pixel_size(uint32_t size)
+{
+    if (size > 0 && size < 8) {
+        lcd_pixel_size = size;
+        SDL_SetWindowSize(lcd_win,
+            SCREEN_WIDTH * size,
+            SCREEN_HEIGHT * size);
+
+        if (!(lcd_surface = SDL_GetWindowSurface(lcd_win))) {
+            fprintf(stderr, "SDL_GetWindowSurface: %s\n", SDL_GetError());
+            stop_emulation = true;
+            return;
+        }
+        lcd_pixels = (uint32_t *) lcd_surface->pixels;
+    }
+}
+
 // Draw text using *font
-void draw_text(int x, int y, const char *format, ...)
+void draw_text(SDL_Renderer *ren, int x, int y, const char *format, ...)
 {
     SDL_Surface *surface;
     SDL_Texture *texture;
@@ -87,10 +142,10 @@ void draw_text(int x, int y, const char *format, ...)
 // Render the debug panel
 void render_debug(gb_system_t *gb)
 {
-    int coll = debug_rect.x + 5;
-    int colr = coll + ((debug_rect.w - 5) / 2);
-    int w4 = (debug_rect.w - 5) / 4;
-    int w3 = (debug_rect.w - 5) / 3;
+    int coll = 5;
+    int colr = coll + ((debug_win_width - 5) / 2);
+    int w4 = (debug_win_width - 5) / 4;
+    int w3 = (debug_win_width - 5) / 3;
     int line_height = TTF_FontHeight(font);
     const opcode_t *opcode;
     byte_t pc_byte;
@@ -101,71 +156,72 @@ void render_debug(gb_system_t *gb)
         opcode = opcode_identify(pc_byte);
     }
 
-    SDL_SetRenderDrawColor(ren, 255, 204, 153, 255);
-    SDL_RenderFillRect(ren, &debug_rect);
-    draw_text(coll, line_height * 0, "Cycle #%lu", gb->cycle_nb);
-    draw_text(coll, line_height * 1, "PC: $%04X", gb->pc);
-    draw_text(colr, line_height * 1, "SP: $%04X", gb->sp);
-    draw_text(coll, line_height * 2, "A: $%02X", reg_readb(REG_A, gb));
-    draw_text(colr, line_height * 2, "F: $%02X", reg_readb(REG_F, gb));
-    draw_text(coll, line_height * 3, "B: $%02X", reg_readb(REG_B, gb));
-    draw_text(colr, line_height * 3, "C: $%02X", reg_readb(REG_C, gb));
-    draw_text(coll, line_height * 4, "D: $%02X", reg_readb(REG_D, gb));
-    draw_text(colr, line_height * 4, "E: $%02X", reg_readb(REG_E, gb));
-    draw_text(coll, line_height * 5, "H: $%02X", reg_readb(REG_H, gb));
-    draw_text(colr, line_height * 5, "L: $%02X", reg_readb(REG_L, gb));
-    draw_text(coll,          line_height * 6, "Z: %i", reg_flag(FLAG_Z, gb));
-    draw_text(coll + w4,     line_height * 6, "H: %i", reg_flag(FLAG_H, gb));
-    draw_text(coll + w4 * 2, line_height * 6, "N: %i", reg_flag(FLAG_N, gb));
-    draw_text(coll + w4 * 3, line_height * 6, "C: %i", reg_flag(FLAG_C, gb));
-    draw_text(coll,          line_height * 7, "IME: %u", gb->interrupts.ime);
-    draw_text(coll + w3,     line_height * 7, "IE: $%02X", gb->interrupts.ie_reg);
-    draw_text(coll + w3 * 2, line_height * 7, "IF: $%02X", gb->interrupts.if_reg);
-    if (gb->halt) draw_text(coll, line_height * 8, "Halted");
-    if (gb->stop) draw_text(colr, line_height * 8, "Stopped");
-    draw_text(coll, line_height * 10, "Next instruction:");
+    SDL_SetRenderDrawColor(debug_ren, 255, 204, 153, 255);
+    SDL_RenderClear(debug_ren);
+    draw_text(debug_ren, coll, line_height * 0, "Cycle #%lu", gb->cycle_nb);
+    draw_text(debug_ren, coll, line_height * 1, "PC: $%04X", gb->pc);
+    draw_text(debug_ren, colr, line_height * 1, "SP: $%04X", gb->sp);
+    draw_text(debug_ren, coll, line_height * 2, "A: $%02X", reg_readb(REG_A, gb));
+    draw_text(debug_ren, colr, line_height * 2, "F: $%02X", reg_readb(REG_F, gb));
+    draw_text(debug_ren, coll, line_height * 3, "B: $%02X", reg_readb(REG_B, gb));
+    draw_text(debug_ren, colr, line_height * 3, "C: $%02X", reg_readb(REG_C, gb));
+    draw_text(debug_ren, coll, line_height * 4, "D: $%02X", reg_readb(REG_D, gb));
+    draw_text(debug_ren, colr, line_height * 4, "E: $%02X", reg_readb(REG_E, gb));
+    draw_text(debug_ren, coll, line_height * 5, "H: $%02X", reg_readb(REG_H, gb));
+    draw_text(debug_ren, colr, line_height * 5, "L: $%02X", reg_readb(REG_L, gb));
+    draw_text(debug_ren, coll,          line_height * 6, "Z: %i", reg_flag(FLAG_Z, gb));
+    draw_text(debug_ren, coll + w4,     line_height * 6, "H: %i", reg_flag(FLAG_H, gb));
+    draw_text(debug_ren, coll + w4 * 2, line_height * 6, "N: %i", reg_flag(FLAG_N, gb));
+    draw_text(debug_ren, coll + w4 * 3, line_height * 6, "C: %i", reg_flag(FLAG_C, gb));
+    draw_text(debug_ren, coll,          line_height * 7, "IME: %u", gb->interrupts.ime);
+    draw_text(debug_ren, coll + w3,     line_height * 7, "IE: $%02X", gb->interrupts.ie_reg);
+    draw_text(debug_ren, coll + w3 * 2, line_height * 7, "IF: $%02X", gb->interrupts.if_reg);
+    if (gb->halt) draw_text(debug_ren, coll, line_height * 8, "Halted");
+    if (gb->stop) draw_text(debug_ren, colr, line_height * 8, "Stopped");
+    draw_text(debug_ren, coll, line_height * 10, "Next instruction:");
     if (opcode) {
-        draw_text(coll, line_height * 11, opcode->mnemonic);
-        draw_text(coll, line_height * 12, opcode->comment);
+        draw_text(debug_ren, coll, line_height * 11, opcode->mnemonic);
+        draw_text(debug_ren, coll, line_height * 12, opcode->comment);
     } else {
-        draw_text(coll, line_height * 11, "Illegal ($%02X)", pc_byte);
+        draw_text(debug_ren, coll, line_height * 11, "Illegal ($%02X)", pc_byte);
     }
+    SDL_RenderPresent(debug_ren);
 }
 
-// Draw a scaled pixel
-static inline void draw_pixel(int y, int x, int size, struct pixel *pixel)
-{
-    SDL_Rect rect;
-
-    rect.h = rect.w = size;
-    rect.x = x * size;
-    rect.y = y * size;
-
-    SDL_SetRenderDrawColor(ren, pixel->r, pixel->g, pixel->b, 255);
-    SDL_RenderFillRect(ren, &rect);
-}
-
+// Render the GameBoy framebuffer to the lcd_win framebuffer
 void render_framebuffer(gb_system_t *gb)
 {
     static uint32_t frameskip_counter = 0;
+    uint32_t line_width = SCREEN_WIDTH * lcd_pixel_size;
+    uint32_t line_height = line_width * lcd_pixel_size;
+    uint32_t offset;
 
-    if (frameskip_counter == 0 || debug_enabled) {
-        for (uint16_t y = 0; y < SCREEN_HEIGHT; ++y) {
-            for (uint16_t x = 0; x < SCREEN_WIDTH; ++x) {
-                draw_pixel(y, x, SDL_PIXEL_SIZE, &gb->screen.framebuffer[y][x]);
+    if (frameskip_counter == 0) {
+        for (byte_t y = 0; y < SCREEN_HEIGHT; ++y) {
+            for (byte_t x = 0; x < SCREEN_WIDTH; ++x) {
+                offset = (x * lcd_pixel_size) + (y * line_height);
+
+                for (byte_t sy = 0; sy < lcd_pixel_size; ++sy) {
+                    for (byte_t sx = 0; sx < lcd_pixel_size; ++sx) {
+                        lcd_pixels[offset + sx + (sy * line_width)] = 0xff000000 |
+                            (gb->screen.framebuffer[y][x].r << 16) |
+                            (gb->screen.framebuffer[y][x].g << 8) |
+                            gb->screen.framebuffer[y][x].b;
+                    }
+                }
             }
         }
         frames_per_second += 1;
-        SDL_RenderPresent(ren);
+        SDL_UpdateWindowSurface(lcd_win);
     }
     if ((++frameskip_counter) >= frameskip)
         frameskip_counter = 0;
 }
 
+// Change the emulated clock speed
 void set_clock_speed(uint32_t speed)
 {
     clock_speed = speed;
-
     if (clock_speed >= CPU_CLOCK_SPEED) {
         frameskip = (clock_speed / CPU_CLOCK_SPEED) - 1;
     } else {
@@ -173,47 +229,58 @@ void set_clock_speed(uint32_t speed)
     }
 }
 
+// Handle SDL input for the joypad
 void handle_joypad_input(SDL_Event *e, const bool pressed, gb_system_t *gb)
 {
-    if (e->key.keysym.scancode == SDL_SCANCODE_Z) {
+    if (e->key.keysym.scancode == keymap.gb_up) {
         joypad_button(BTN_UP, pressed, gb);
-    } else if (e->key.keysym.scancode == SDL_SCANCODE_S) {
+    } else if (e->key.keysym.scancode == keymap.gb_down) {
         joypad_button(BTN_DOWN, pressed, gb);
-    } else if (e->key.keysym.scancode == SDL_SCANCODE_D) {
+    } else if (e->key.keysym.scancode == keymap.gb_right) {
         joypad_button(BTN_RIGHT, pressed, gb);
-    } else if (e->key.keysym.scancode == SDL_SCANCODE_A) {
+    } else if (e->key.keysym.scancode == keymap.gb_left) {
         joypad_button(BTN_LEFT, pressed, gb);
-    } else if (e->key.keysym.scancode == SDL_SCANCODE_K) {
+    } else if (e->key.keysym.scancode == keymap.gb_a) {
         joypad_button(BTN_A, pressed, gb);
-    } else if (e->key.keysym.scancode == SDL_SCANCODE_L) {
+    } else if (e->key.keysym.scancode == keymap.gb_b) {
         joypad_button(BTN_B, pressed, gb);
-    } else if (e->key.keysym.scancode == SDL_SCANCODE_O) {
+    } else if (e->key.keysym.scancode == keymap.gb_select) {
         joypad_button(BTN_SELECT, pressed, gb);
-    } else if (e->key.keysym.scancode == SDL_SCANCODE_P) {
+    } else if (e->key.keysym.scancode == keymap.gb_start) {
         joypad_button(BTN_START, pressed, gb);
     }
 }
 
-void debug_enable(gb_system_t *gb)
+// Open debug window
+void debug_open(void)
 {
-    gb->screen.vblank_callback = NULL;
-    debug_enabled = true;
-    debug_rect.w = 300;
-    SDL_SetWindowSize(win,
-        SCREEN_WIDTH * SDL_PIXEL_SIZE + debug_rect.w,
-        SCREEN_HEIGHT * SDL_PIXEL_SIZE);
+    if (!debug_win && !debug_ren) {
+        SDL_CreateWindowAndRenderer(debug_win_width, debug_win_height, 0, &debug_win, &debug_ren);
+        if (!debug_win || !debug_ren) {
+            fprintf(stderr, "SDL_CreateWindowAndRenderer: %s\n", SDL_GetError());
+            if (debug_ren) SDL_DestroyRenderer(debug_ren);
+            if (debug_win) SDL_DestroyWindow(debug_win);
+            debug_ren = NULL;
+            debug_win = NULL;
+            return;
+        }
+        debug_win_id = SDL_GetWindowID(debug_win);
+        update_window_title(debug_win, "Debug");
+    }
 }
 
-void debug_disable(gb_system_t *gb)
+// Close debug window
+void debug_close(void)
 {
-    gb->screen.vblank_callback = &render_framebuffer;
-    debug_enabled = false;
-    debug_rect.w = 0;
-    SDL_SetWindowSize(win,
-        SCREEN_WIDTH * SDL_PIXEL_SIZE + debug_rect.w,
-        SCREEN_HEIGHT * SDL_PIXEL_SIZE);
+    if (debug_win) {
+        SDL_DestroyRenderer(debug_ren);
+        SDL_DestroyWindow(debug_win);
+        debug_ren = NULL;
+        debug_win = NULL;
+    }
 }
 
+// Main emulator loop
 int gb_system_emulate_loop(gb_system_t *gb)
 {
     const int target_framerate = 60;
@@ -256,45 +323,64 @@ int gb_system_emulate_loop(gb_system_t *gb)
         }
 
         while (SDL_PollEvent(&e)) {
-            switch (e.type) {
-                case SDL_QUIT:
-                    stop_emulation = true;
-                    break;
+            if (e.window.windowID == lcd_win_id) {
+                switch (e.type) {
+                    case SDL_WINDOWEVENT:
+                        if (e.window.event == SDL_WINDOWEVENT_CLOSE)
+                            stop_emulation = true;
+                        break;
 
-                case SDL_KEYDOWN:
-                    if (e.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+                    case SDL_QUIT:
                         stop_emulation = true;
-                    } else if (e.key.keysym.scancode == SDL_SCANCODE_SPACE) {
-                        pause_emulation = !pause_emulation;
-                    } else if (e.key.keysym.scancode == SDL_SCANCODE_R) {
-                        set_clock_speed(CPU_CLOCK_SPEED * 4);
-                    } else if (e.key.keysym.scancode == SDL_SCANCODE_F) {
-                        debug_toggle();
-                    } else {
-                        handle_joypad_input(&e, true, gb);
-                    }
-                    break;
+                        break;
 
-                case SDL_KEYUP:
-                    if (e.key.keysym.scancode == SDL_SCANCODE_R) {
-                        set_clock_speed(CPU_CLOCK_SPEED);
-                    } else {
-                        handle_joypad_input(&e, false, gb);
-                    }
-                    break;
+                    case SDL_KEYDOWN:
+                        if (e.key.keysym.scancode == keymap.emu_exit) {
+                            stop_emulation = true;
+                        } else if (e.key.keysym.scancode == keymap.emu_pause) {
+                            pause_emulation = !pause_emulation;
+                        } else if (e.key.keysym.scancode == keymap.emu_speed) {
+                            set_clock_speed(CPU_CLOCK_SPEED * 4);
+                        } else if (e.key.keysym.scancode == keymap.emu_slow) {
+                            set_clock_speed(CPU_CLOCK_SPEED / 2);
+                        } else if (e.key.keysym.scancode == keymap.emu_debug) {
+                            debug_win ? debug_close() : debug_open();
+                        } else if (e.key.keysym.scancode == keymap.emu_zoom_in) {
+                            update_pixel_size(lcd_pixel_size + 1);
+                        } else if (e.key.keysym.scancode == keymap.emu_zoom_out) {
+                            update_pixel_size(lcd_pixel_size - 1);
+                        } else {
+                            handle_joypad_input(&e, true, gb);
+                        }
+                        break;
 
-                default: break;
+                    case SDL_KEYUP:
+                        if (e.key.keysym.scancode == keymap.emu_speed || e.key.keysym.scancode == keymap.emu_slow) {
+                            set_clock_speed(CPU_CLOCK_SPEED);
+                        } else {
+                            handle_joypad_input(&e, false, gb);
+                        }
+                        break;
+
+                    default: break;
+                }
+            } else if (e.window.windowID == debug_win_id) {
+                switch (e.type) {
+                    case SDL_WINDOWEVENT:
+                        if (e.window.event == SDL_WINDOWEVENT_CLOSE)
+                            debug_close();
+                        break;
+
+                    default: break;
+                }
             }
         }
 
         if (timer_second >= 1.0) {
             if (pause_emulation) {
-                update_window_title("GameBoy (paused, %u fps)",
-                    (double) clocks_per_second / 1000000.0,
-                    (double) clocks_per_second / (double) clock_speed * 100.0,
-                    frames_per_second);
+                update_window_title(lcd_win, "GameBoy (paused)");
             } else {
-                update_window_title("GameBoy (%.06f MHz: %.02f%%, %u fps)",
+                update_window_title(lcd_win, "GameBoy (%.06f MHz: %.02f%%, %u fps)",
                     (double) clocks_per_second / 1000000.0,
                     (double) clocks_per_second / (double) CPU_CLOCK_SPEED * 100.0,
                     frames_per_second);
@@ -305,10 +391,8 @@ int gb_system_emulate_loop(gb_system_t *gb)
             frames_per_second = 0;
         }
 
-        if (debug_enabled) {
+        if (debug_win)
             render_debug(gb);
-            render_framebuffer(gb);
-        }
 
         // Calculate delay before next frame to reach the targeted framerate
         elapsed_ms = SDL_GetTicks() - ticks;
@@ -323,14 +407,10 @@ int gb_system_emulate_loop(gb_system_t *gb)
 // Returns < 0 on initialization error
 // Returns 0 on success
 // Returns > 0 on error during emulation
-int gb_system_emulate(gb_system_t *gb, const bool debug)
+int gb_system_emulate(gb_system_t *gb)
 {
     SDL_RWops *fontrwo;
 
-    debug_rect.x = SCREEN_WIDTH * SDL_PIXEL_SIZE;
-    debug_rect.y = 0;
-    debug_rect.w = 0;
-    debug_rect.h = SCREEN_HEIGHT * SDL_PIXEL_SIZE;
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
         fprintf(stderr, "SDL initialization failed: %s\n", SDL_GetError());
         return -1;
@@ -351,20 +431,24 @@ int gb_system_emulate(gb_system_t *gb, const bool debug)
         return -1;
     }
 
-    SDL_CreateWindowAndRenderer(
-        SCREEN_WIDTH * SDL_PIXEL_SIZE + debug_rect.w,
-        SCREEN_HEIGHT * SDL_PIXEL_SIZE,
-        0, &win, &ren);
-
-    if (!win || !ren) {
-        fprintf(stderr, "Unable to create SDL window: %s\n", SDL_GetError());
+    if (!(lcd_win = SDL_CreateWindow("GameBoy",
+            SDL_WINDOWPOS_UNDEFINED,
+            SDL_WINDOWPOS_UNDEFINED,
+            SCREEN_WIDTH * lcd_pixel_size,
+            SCREEN_HEIGHT * lcd_pixel_size,
+            0))) {
+        fprintf(stderr, "SDL_CreateWindow: %s\n", SDL_GetError());
         return -1;
     }
+    lcd_win_id = SDL_GetWindowID(lcd_win);
 
-    debug ? debug_enable(gb) : debug_disable(gb);
-
-    SDL_RenderClear(ren);
-    SDL_RenderPresent(ren);
+    if (!(lcd_surface = SDL_GetWindowSurface(lcd_win))) {
+        fprintf(stderr, "SDL_GetWindowSurface: %s\n", SDL_GetError());
+        return -1;
+    }
+    lcd_pixels = (uint32_t *) lcd_surface->pixels;
+    SDL_UpdateWindowSurface(lcd_win);
+    gb->screen.vblank_callback = &render_framebuffer;
 
     if (gb->memory.mbc_battery)
         mmu_battery_load(gb);
@@ -376,10 +460,10 @@ int gb_system_emulate(gb_system_t *gb, const bool debug)
     if (gb->memory.mbc_battery)
         mmu_battery_save(gb);
 
+    debug_close();
+    SDL_DestroyWindow(lcd_win);
     TTF_CloseFont(font);
     TTF_Quit();
-    SDL_DestroyRenderer(ren);
-    SDL_DestroyWindow(win);
     SDL_Quit();
     return 0;
 }
