@@ -222,13 +222,14 @@ bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb)
             gb->memory.mbc_writeb = NULL;
             return true;
 
+        case 0x03: // MBC1 + RAM + Battery
+            gb->memory.mbc_battery = true;
+            __attribute__((fallthrough));
         case 0x01: // MBC1
         case 0x02: // MBC1 + RAM
-        case 0x03: // MBC1 + RAM + Battery
             gb->memory.mbc_readb = &mbc1_readb;
             gb->memory.mbc_writeb = &mbc1_writeb;
             gb->memory.mbc_regs = xzalloc(sizeof(mbc1_regs_t));
-            gb->memory.mbc_battery = mbc_type == 0x03;
             ((mbc1_regs_t *) gb->memory.mbc_regs)->large_ram_cart = (gb->memory.ram.bank_size * gb->memory.ram.max_bank_nb) > 8192;
             return true;
 
