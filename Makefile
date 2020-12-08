@@ -42,6 +42,7 @@ SRC	=	logger.c				\
 		mmu/mmu.c				\
 		mmu/mmu_internal.c		\
 		mmu/mbc1.c				\
+		mmu/mbc3.c				\
 		ppu/ppu.c				\
 		ppu/lcd_regs.c
 

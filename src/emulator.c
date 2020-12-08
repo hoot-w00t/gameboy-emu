@@ -322,6 +322,9 @@ int gb_system_emulate_loop(gb_system_t *gb)
                 }
                 ppu_cycle(gb);
                 serial_cycle(gb);
+
+                if (gb->memory.mbc_clock)
+                    (*(gb->memory.mbc_clock))(gb);
             }
         }
 

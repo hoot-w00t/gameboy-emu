@@ -22,6 +22,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "gameboy.h"
 #include "mmu/mmu_internal.h"
 #include "mmu/mbc1.h"
+#include "mmu/mbc3.h"
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -229,6 +230,19 @@ bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb)
             gb->memory.mbc_regs = xzalloc(sizeof(mbc1_regs_t));
             gb->memory.mbc_battery = mbc_type == 0x03;
             ((mbc1_regs_t *) gb->memory.mbc_regs)->large_ram_cart = (gb->memory.ram.bank_size * gb->memory.ram.max_bank_nb) > 8192;
+            return true;
+
+        case 0x0F: // MBC3 + Timer + Battery
+        case 0x10: // MBC3 + Timer + RAM + Battery
+        case 0x13: // MBC3 + RAM + Battery
+            gb->memory.mbc_battery = true;
+            __attribute__((fallthrough));
+        case 0x12: // MBC3 + RAM
+        case 0x11: // MBC3
+            gb->memory.mbc_readb = &mbc3_readb;
+            gb->memory.mbc_writeb = &mbc3_writeb;
+            gb->memory.mbc_clock = &mbc3_clock;
+            gb->memory.mbc_regs = xzalloc(sizeof(mbc3_regs_t));
             return true;
 
         default: logger(LOG_ERROR, "Unsupported MBC type $%02X", mbc_type);

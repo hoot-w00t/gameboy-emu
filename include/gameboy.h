@@ -226,6 +226,7 @@ typedef struct membank membank_t;
 typedef struct mmu mmu_t;
 typedef struct gb_system gb_system_t;
 typedef void (*lcd_callback_t)(gb_system_t *);
+typedef void (*mbc_clock_t)(gb_system_t *);
 typedef int16_t (*mbc_readb_t)(uint16_t, gb_system_t *);
 typedef bool (*mbc_writeb_t)(uint16_t, byte_t, gb_system_t *);
 typedef struct opcode opcode_t;
@@ -354,6 +355,7 @@ struct mmu {
     void *mbc_regs;              // Pointer to MBC specific registers
     mbc_readb_t mbc_readb;       // mbc_readb function pointer
     mbc_writeb_t mbc_writeb;     // mbc_writeb function pointer
+    mbc_clock_t mbc_clock;       // mbc_clock function pointer
 };
 
 struct interrupts {
