@@ -84,6 +84,7 @@ static bool stop_emulation = false;
 static bool pause_emulation = false;
 static uint32_t frames_per_second = 0;
 
+static size_t clocks_per_second = 0;
 static uint32_t clock_speed = CPU_CLOCK_SPEED; // 4.194304 MHz
 static uint32_t frameskip = 0;
 
@@ -221,11 +222,14 @@ void render_framebuffer(gb_system_t *gb)
 // Change the emulated clock speed
 void set_clock_speed(uint32_t speed)
 {
-    clock_speed = speed;
-    if (clock_speed >= CPU_CLOCK_SPEED) {
-        frameskip = (clock_speed / CPU_CLOCK_SPEED) - 1;
-    } else {
-        frameskip = 0;
+    if (clock_speed != speed) {
+        clocks_per_second = 0;
+        clock_speed = speed;
+        if (clock_speed >= CPU_CLOCK_SPEED) {
+            frameskip = (clock_speed / CPU_CLOCK_SPEED) - 1;
+        } else {
+            frameskip = 0;
+        }
     }
 }
 
@@ -290,7 +294,6 @@ int gb_system_emulate_loop(gb_system_t *gb)
     double elapsed_ms; // Elapsed time in milliseconds
     double timer_second = 0; // One second timer
     size_t remaining_clocks;
-    size_t clocks_per_second = 0;
     SDL_Event e;
 
     while (!stop_emulation) {
