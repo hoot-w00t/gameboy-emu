@@ -25,8 +25,11 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 typedef struct mbc1_regs mbc1_regs_t;
 
 struct mbc1_regs {
-    bool ram_mode;
+    bool ram_select;
+    bool ram_write_enabled;
     byte_t bank_upper_bits;
+    bool large_ram_cart;
+    byte_t large_rom_bank;
 };
 
 int16_t mbc1_readb(uint16_t addr, gb_system_t *gb);
