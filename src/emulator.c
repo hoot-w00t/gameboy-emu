@@ -312,7 +312,7 @@ int gb_system_emulate_loop(gb_system_t *gb)
             clocks_per_second += remaining_clocks;
 
             for (; remaining_clocks > 0; --remaining_clocks) {
-                if (cpu_cycle(true, gb) < 0) {
+                if (cpu_cycle(gb) < 0) {
                     // Emulation should be stopped
                     stop_emulation = true;
                     break;

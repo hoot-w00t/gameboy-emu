@@ -24,7 +24,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 byte_t cpu_fetchb(gb_system_t *gb);
 uint16_t cpu_fetch_u16(gb_system_t *gb);
-int cpu_cycle(const bool emulate_cycles, gb_system_t *gb);
+int cpu_cycle(gb_system_t *gb);
 void cpu_dump(gb_system_t *gb);
 
 #endif

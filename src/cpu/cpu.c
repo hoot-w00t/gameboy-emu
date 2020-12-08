@@ -45,13 +45,12 @@ uint16_t cpu_fetch_u16(gb_system_t *gb)
 }
 
 // Emulate a GameBoy CPU cycle
-// If emulate_cycles is false, one cycle == one instruction
 // On normal operation, returns the number of CPU cycles
 // an instruction will take (or 0 if idling)
 // Returns < 0 if opcode didn't execute as normal
 //      OPCODE_ILLEGAL: illegal opcode
 //      OPCODE_EXIT   : break the emulation loop
-int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
+int cpu_cycle(gb_system_t *gb)
 {
     bool CB;
     byte_t opcode_value;
@@ -62,15 +61,10 @@ int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
     timer_cycle(gb);
 
     // Emulate real CPU cycles
-    if (gb->idle_cycles > 0 && emulate_cycles) {
+    if (gb->idle_cycles > 0) {
         gb->idle_cycles -= 1;
         gb->cycle_nb += 1;
         return 0;
-
-    } else if (gb->idle_cycles > 0 && !emulate_cycles) {
-        // Reset idle cycles if emulate_cycles is false
-        gb->idle_cycles = 0;
-
     }
 
     // Execute ISR if an enabled interrupt is requested
@@ -131,15 +125,11 @@ int cpu_cycle(const bool emulate_cycles, gb_system_t *gb)
         return handler_ret;
     }
 
-    if (emulate_cycles) {
-        // Exclude the current cycle from the remaining
-        if (handler_ret > 0) handler_ret -= 1;
+    // Exclude the current cycle from the remaining
+    if (handler_ret > 0) handler_ret -= 1;
 
-        gb->cycle_nb += 1;
-        gb->idle_cycles += handler_ret;
-    } else {
-        gb->cycle_nb += handler_ret;
-    }
+    gb->cycle_nb += 1;
+    gb->idle_cycles += handler_ret;
     return handler_ret;
 }
 
