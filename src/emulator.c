@@ -28,7 +28,12 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "moderndos8x16_ttf.h"
 #include <stdio.h>
 #include <SDL.h>
+#include <SDL_audio.h>
 #include <SDL_ttf.h>
+
+#define audio_sample_rate (48000)
+#define audio_buffer_size (512)
+#define audio_sample_time ((double) (((double) 1.0 / (double) ((double) audio_sample_rate / (double) audio_buffer_size)) / (double) audio_buffer_size))
 
 // TODO: Add customizable key mappings
 
@@ -87,6 +92,9 @@ static uint32_t frames_per_second = 0;
 static size_t clocks_per_second = 0;
 static uint32_t clock_speed = CPU_CLOCK_SPEED; // 4.194304 MHz
 static uint32_t frameskip = 0;
+
+static double audio_time = 0;
+static int audio_pos = 0;
 
 // Update window title
 void update_window_title(SDL_Window *win, const char *format, ...)
@@ -284,140 +292,218 @@ void debug_close(void)
     }
 }
 
-// Main emulator loop
-int gb_system_emulate_loop(gb_system_t *gb)
+// Emulate clocks
+void emulate_clocks(gb_system_t *gb, Sint16 *audio_buffer)
 {
-    const int target_framerate = 60;
-    const double target_framerate_delay = (double) 1000.0 / (double) target_framerate;
-    Uint32 ticks = 0, last_ticks;
-    double elapsed; // Elasped time in seconds
-    double elapsed_ms; // Elapsed time in milliseconds
-    double timer_second = 0; // One second timer
+    static Uint32 last_ticks = 0;
+    Uint32 ticks = SDL_GetTicks();
+    size_t audio_remaining_clocks;
+    size_t audio_clock_delay;
     size_t remaining_clocks;
+    double elapsed;
+
+    if (!pause_emulation) {
+        // Calculate elapsed time since last call to emulate_clocks()
+        elapsed = (double) (ticks - last_ticks) / (double) 1000.0;
+
+        // Calculate how many clocks should be emulated
+        // since last frame
+        remaining_clocks = elapsed * clock_speed;
+
+        // Never exceed the clock speed
+        if (clocks_per_second <= clock_speed && clocks_per_second + remaining_clocks > clock_speed)
+            remaining_clocks = clock_speed - clocks_per_second;
+
+        // Calculate when to generate an audio sample
+        audio_clock_delay = remaining_clocks / audio_buffer_size;
+        audio_remaining_clocks = 0;
+
+        // Count the clocks we are about to emulate
+        clocks_per_second += remaining_clocks;
+
+        // Emulate the clocks
+        for (; remaining_clocks > 0; --remaining_clocks) {
+            if (cpu_cycle(gb) < 0) {
+                // Emulation should be stopped
+                stop_emulation = true;
+                break;
+            }
+            ppu_cycle(gb);
+            serial_cycle(gb);
+
+            if (gb->memory.mbc_clock)
+                (*(gb->memory.mbc_clock))(gb);
+
+            if (audio_buffer) {
+                // Only generate audio samples if an audio_buffer is given
+                if (audio_remaining_clocks > 0) {
+                    audio_remaining_clocks -= 1;
+                } else if (audio_pos < audio_buffer_size) {
+                    audio_remaining_clocks = audio_clock_delay;
+                    audio_buffer[audio_pos++] = 0; // TODO: Use generate_sample() here
+                    audio_time += audio_sample_time;
+                }
+            }
+        }
+    }
+
+    last_ticks = ticks;
+}
+
+// Handle SDL events
+void handle_events(gb_system_t *gb)
+{
     SDL_Event e;
 
-    while (!stop_emulation) {
-        last_ticks = ticks;
-        ticks = SDL_GetTicks();
-        elapsed_ms = ticks - last_ticks;
-        elapsed = elapsed_ms / 1000.0;
-        timer_second += elapsed;
+    while (SDL_PollEvent(&e)) {
+        if (e.window.windowID == lcd_win_id) {
+            switch (e.type) {
+                case SDL_WINDOWEVENT:
+                    if (e.window.event == SDL_WINDOWEVENT_CLOSE)
+                        stop_emulation = true;
+                    break;
 
-        if (!pause_emulation) {
-            // Calculate how many clocks should be emulated
-            // since last frame
-            remaining_clocks = elapsed * clock_speed;
-
-            // Never exceed the clock speed
-            if (clocks_per_second <= clock_speed && clocks_per_second + remaining_clocks > clock_speed) {
-                remaining_clocks = clock_speed - clocks_per_second;
-            }
-            clocks_per_second += remaining_clocks;
-
-            for (; remaining_clocks > 0; --remaining_clocks) {
-                if (cpu_cycle(gb) < 0) {
-                    // Emulation should be stopped
+                case SDL_QUIT:
                     stop_emulation = true;
                     break;
-                }
-                ppu_cycle(gb);
-                serial_cycle(gb);
 
-                if (gb->memory.mbc_clock)
-                    (*(gb->memory.mbc_clock))(gb);
-            }
-        }
-
-        while (SDL_PollEvent(&e)) {
-            if (e.window.windowID == lcd_win_id) {
-                switch (e.type) {
-                    case SDL_WINDOWEVENT:
-                        if (e.window.event == SDL_WINDOWEVENT_CLOSE)
-                            stop_emulation = true;
-                        break;
-
-                    case SDL_QUIT:
+                case SDL_KEYDOWN:
+                    if (e.key.keysym.scancode == keymap.emu_exit) {
                         stop_emulation = true;
-                        break;
+                    } else if (e.key.keysym.scancode == keymap.emu_pause) {
+                        pause_emulation = !pause_emulation;
+                    } else if (e.key.keysym.scancode == keymap.emu_speed) {
+                        set_clock_speed(CPU_CLOCK_SPEED * 4);
+                    } else if (e.key.keysym.scancode == keymap.emu_slow) {
+                        set_clock_speed(CPU_CLOCK_SPEED / 4);
+                    } else if (e.key.keysym.scancode == keymap.emu_debug) {
+                        debug_win ? debug_close() : debug_open();
+                    } else if (e.key.keysym.scancode == keymap.emu_zoom_in) {
+                        update_pixel_size(lcd_pixel_size + 1);
+                    } else if (e.key.keysym.scancode == keymap.emu_zoom_out) {
+                        update_pixel_size(lcd_pixel_size - 1);
+                    } else {
+                        handle_joypad_input(&e, true, gb);
+                    }
+                    break;
 
-                    case SDL_KEYDOWN:
-                        if (e.key.keysym.scancode == keymap.emu_exit) {
-                            stop_emulation = true;
-                        } else if (e.key.keysym.scancode == keymap.emu_pause) {
-                            pause_emulation = !pause_emulation;
-                        } else if (e.key.keysym.scancode == keymap.emu_speed) {
-                            set_clock_speed(CPU_CLOCK_SPEED * 4);
-                        } else if (e.key.keysym.scancode == keymap.emu_slow) {
-                            set_clock_speed(CPU_CLOCK_SPEED / 2);
-                        } else if (e.key.keysym.scancode == keymap.emu_debug) {
-                            debug_win ? debug_close() : debug_open();
-                        } else if (e.key.keysym.scancode == keymap.emu_zoom_in) {
-                            update_pixel_size(lcd_pixel_size + 1);
-                        } else if (e.key.keysym.scancode == keymap.emu_zoom_out) {
-                            update_pixel_size(lcd_pixel_size - 1);
-                        } else {
-                            handle_joypad_input(&e, true, gb);
-                        }
-                        break;
+                case SDL_KEYUP:
+                    if (e.key.keysym.scancode == keymap.emu_speed || e.key.keysym.scancode == keymap.emu_slow) {
+                        set_clock_speed(CPU_CLOCK_SPEED);
+                    } else {
+                        handle_joypad_input(&e, false, gb);
+                    }
+                    break;
 
-                    case SDL_KEYUP:
-                        if (e.key.keysym.scancode == keymap.emu_speed || e.key.keysym.scancode == keymap.emu_slow) {
-                            set_clock_speed(CPU_CLOCK_SPEED);
-                        } else {
-                            handle_joypad_input(&e, false, gb);
-                        }
-                        break;
+                default: break;
+            }
+        } else if (e.window.windowID == debug_win_id) {
+            switch (e.type) {
+                case SDL_WINDOWEVENT:
+                    if (e.window.event == SDL_WINDOWEVENT_CLOSE)
+                        debug_close();
+                    break;
 
-                    default: break;
-                }
-            } else if (e.window.windowID == debug_win_id) {
-                switch (e.type) {
-                    case SDL_WINDOWEVENT:
-                        if (e.window.event == SDL_WINDOWEVENT_CLOSE)
-                            debug_close();
-                        break;
-
-                    default: break;
-                }
+                default: break;
             }
         }
+    }
+}
 
-        if (timer_second >= 1.0) {
-            if (pause_emulation) {
-                update_window_title(lcd_win, "GameBoy (paused)");
-            } else {
-                update_window_title(lcd_win, "GameBoy (%.06f MHz: %.02f%%, %u fps)",
-                    (double) clocks_per_second / 1000000.0,
-                    (double) clocks_per_second / (double) CPU_CLOCK_SPEED * 100.0,
-                    frames_per_second);
-            }
+void update_windows(gb_system_t *gb)
+{
+    static Uint32 one_second_ticks = 0;
+    Uint32 ticks = SDL_GetTicks();
 
-            timer_second = 0.0;
-            clocks_per_second = 0;
-            frames_per_second = 0;
+    // Refresh every second
+    if (ticks - one_second_ticks >= 1000) {
+        one_second_ticks = ticks;
+        if (pause_emulation) {
+            update_window_title(lcd_win, "GameBoy (paused)");
+        } else {
+            update_window_title(lcd_win, "GameBoy (%.06f MHz: %.02f%%, %u fps)",
+                (double) clocks_per_second / (double) 1000000.0,
+                (double) clocks_per_second / (double) CPU_CLOCK_SPEED * 100.0,
+                frames_per_second);
         }
 
-        if (debug_win)
-            render_debug(gb);
+        clocks_per_second = 0;
+        frames_per_second = 0;
+    }
 
-        // Calculate delay before next frame to reach the targeted framerate
-        elapsed_ms = SDL_GetTicks() - ticks;
-        if (!stop_emulation && elapsed_ms < target_framerate_delay)
-            SDL_Delay(target_framerate_delay - elapsed_ms);
+    if (debug_win)
+        render_debug(gb);
+}
+
+// Main emulator loop (timed using framerate)
+int emulator_loop(gb_system_t *gb)
+{
+    Uint32 target_framerate = 60;
+    Uint32 frame_ms = 1000 / target_framerate;
+    Uint32 frame_start;
+    Uint32 frame_time;
+
+    while (!stop_emulation) {
+        frame_start = SDL_GetTicks();
+
+        emulate_clocks(gb, NULL);
+        handle_events(gb);
+        update_windows(gb);
+
+        // Calculate elapsed time in ms for a single frame
+        frame_time = SDL_GetTicks() - frame_start;
+
+        // If a single frame takes less time than frame_ms, add a delay
+        // to reach the target_framerate
+        if (!stop_emulation && frame_time < frame_ms)
+            SDL_Delay(frame_ms - frame_time);
     }
 
     return 0;
 }
 
-// GameBoy emulation loop
+// Main emulator loop (timed using SDL audio callbacks)
+void emulator_audio_loop(void *userdata,
+                         Uint8 *stream,
+                         __attribute__((unused)) int len)
+{
+    gb_system_t *gb = (gb_system_t *) userdata;
+    Sint16 *audio_buffer = (Sint16 *) stream;
+
+    if (stop_emulation)
+        return;
+
+    audio_pos = 0;
+    emulate_clocks(gb, audio_buffer);
+    handle_events(gb);
+    update_windows(gb);
+
+    if (pause_emulation) {
+        // Mute the audio when paused
+        for (int i = 0; i < audio_buffer_size; ++i)
+            audio_buffer[i] = 0;
+    } else {
+        // Fill any remaining samples
+        for (; audio_pos < audio_buffer_size; ++audio_pos, audio_time += audio_sample_time)
+            audio_buffer[audio_pos] = 0; // TODO: Use generate_sample() here
+    }
+}
+
+// Emulate GameBoy system loaded in *gb
+// Takes care of all the SDL initialization and cleanup
 // Returns < 0 on initialization error
 // Returns 0 on success
 // Returns > 0 on error during emulation
-int gb_system_emulate(gb_system_t *gb)
+int emulate_gameboy(gb_system_t *gb, const bool enable_audio)
 {
+    SDL_AudioSpec audiospec;
     SDL_RWops *fontrwo;
+    Uint32 sdl_init_flags = SDL_INIT_VIDEO | SDL_INIT_EVENTS;
 
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
+    if (enable_audio)
+        sdl_init_flags |= SDL_INIT_AUDIO;
+
+    if (SDL_Init(sdl_init_flags) < 0) {
         fprintf(stderr, "SDL initialization failed: %s\n", SDL_GetError());
         return -1;
     }
@@ -426,6 +512,22 @@ int gb_system_emulate(gb_system_t *gb)
         fprintf(stderr, "SDL_ttf initialization failed: %s\n", TTF_GetError());
         return -1;
     }
+
+    if (enable_audio) {
+        audiospec.freq = audio_sample_rate;
+        audiospec.format = AUDIO_S16SYS;
+        audiospec.channels = 1;
+        audiospec.samples = audio_buffer_size;
+        audiospec.callback = &emulator_audio_loop;
+        audiospec.userdata = gb;
+
+        if (SDL_OpenAudio(&audiospec, NULL) < 0) {
+            fprintf(stderr, "SDL_OpenAudio: %s\n", SDL_GetError());
+            return -1;
+        }
+        SDL_PauseAudio(1);
+    }
+
     if (!(fontrwo = SDL_RWFromConstMem(ModernDOS8x16_ttf,
                                        ModernDOS8x16_ttf_len))) {
         fprintf(stderr, "SDL_RWFromConstMem: %s\n", SDL_GetError());
@@ -460,7 +562,15 @@ int gb_system_emulate(gb_system_t *gb)
         mmu_battery_load(gb);
 
     printf("Emulating: %s\n", gb->cartridge.title);
-    gb_system_emulate_loop(gb);
+    if (enable_audio) {
+        SDL_PauseAudio(0);
+        while (!stop_emulation)
+            SDL_Delay(200);
+        SDL_PauseAudio(1);
+    } else {
+        emulator_loop(gb);
+    }
+
     printf("Emulation stopped\n");
 
     if (gb->memory.mbc_battery)

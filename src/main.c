@@ -28,6 +28,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 static struct args {
     bool debug;
+    bool no_audio;
     char *filename;
     bool enable_bootrom;
 } args;
@@ -47,15 +48,17 @@ void print_help(const char *cmd)
     printf("                    Options: crit, error, warn, info, debug, all\n");
     printf("    -b              Enable DMG bootrom\n");
     printf("    -d              Run in debugging mode\n");
+    printf("    -n              Disable audio\n");
 }
 
 void parse_args(int ac, char **av)
 {
-    const char shortopts[] = "hl:bd";
+    const char shortopts[] = "hl:bdn";
     int opt;
 
     // Default values
     args.debug = false;
+    args.no_audio = false;
     args.filename = NULL;
     args.enable_bootrom = false;
 
@@ -79,6 +82,10 @@ void parse_args(int ac, char **av)
 
             case 'd':
                 args.debug = true;
+                break;
+
+            case 'n':
+                args.no_audio = true;
                 break;
 
             default: exit(EXIT_FAILURE);
@@ -106,7 +113,7 @@ int main(int ac, char **av)
         cartridge_dump(&gb->cartridge);
     }
 
-    emulation_ret = gb_system_emulate(gb);
+    emulation_ret = emulate_gameboy(gb, !args.no_audio);
     gb_system_destroy(gb);
 
     if (emulation_ret < 0) {
