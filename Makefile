@@ -44,7 +44,8 @@ SRC	=	logger.c				\
 		mmu/mbc1.c				\
 		mmu/mbc3.c				\
 		ppu/ppu.c				\
-		ppu/lcd_regs.c
+		ppu/lcd_regs.c			\
+		apu/sound_regs.c
 
 OBJ	=	$(SRC:%.c=obj/%.o)
 DEP	=	$(OBJ:.o=.d)

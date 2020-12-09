@@ -190,6 +190,37 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 // Tile definitions
 #define TILE_SIZE (16)
 
+// Sound Controller definitions
+#define SOUND_NR10 (0xFF10) // Channel 1 Sweep
+#define SOUND_NR11 (0xFF11) // Channel 1 Sound length/Wave pattern duty
+#define SOUND_NR12 (0xFF12) // Channel 1 Volume Envelope
+#define SOUND_NR13 (0xFF13) // Channel 1 Frequency (lo)
+#define SOUND_NR14 (0xFF14) // Channel 1 Frequency (hi)
+
+#define SOUND_NR21 (0xFF16) // Channel 2 Sound Length/Wave Pattern Duty
+#define SOUND_NR22 (0xFF17) // Channel 2 Volume Envelope
+#define SOUND_NR23 (0xFF18) // Channel 2 Frequency (lo)
+#define SOUND_NR24 (0xFF19) // Channel 2 Frequency (hi)
+
+#define SOUND_NR30 (0xFF1A) // Channel 3 Sound on/off
+#define SOUND_NR31 (0xFF1B) // Channel 3 Sound Length
+#define SOUND_NR32 (0xFF1C) // Channel 3 Select output level
+#define SOUND_NR33 (0xFF1D) // Channel 3 Frequency (lo)
+#define SOUND_NR34 (0xFF1E) // Channel 3 Frequency (hi)
+
+#define SOUND_NR41 (0xFF20) // Channel 4 Sound Length
+#define SOUND_NR42 (0xFF21) // Channel 4 Volume Envelope
+#define SOUND_NR43 (0xFF22) // Channel 4 Polynomial Counter
+#define SOUND_NR44 (0xFF23) // Channel 4 Counter / Consecutive / Initial
+
+#define SOUND_NR50 (0xFF24) // Channel control / on/off / Volume
+#define SOUND_NR51 (0xFF25) // Selection of Sound output terminal
+#define SOUND_NR52 (0xFF26) // Sound on/off
+
+// Wave Pattern RAM (Channel 3)
+#define SOUND_WAVE_PATTERN_LADDR (0xFF30)
+#define SOUND_WAVE_PATTERN_UADDR (0xFF3F)
+
 // Serial definitions
 #define SERIAL_SB    (0xFF01)
 #define SERIAL_SC    (0xFF02)
@@ -289,6 +320,137 @@ struct lcd_screen {
     uint32_t line_cycle;
 };
 
+struct __attribute__((packed)) sound_nr10 {
+    byte_t _padding       : 1;
+    byte_t sweep_time     : 3;
+    byte_t sweep_decrease : 1;
+    byte_t sweep_shift    : 3;
+};
+
+struct __attribute__((packed)) sound_nr11 {
+    byte_t wave_duty    : 2;
+    byte_t sound_length : 6;
+};
+
+struct __attribute__((packed)) sound_volume_envelope {
+    byte_t initial_envelope_volume : 4;
+    byte_t envelope_increase       : 1;
+    byte_t envelope_sweep          : 3;
+};
+
+struct __attribute__((packed)) sound_freq_lo {
+    byte_t freq_lo : 8;
+};
+
+struct __attribute__((packed)) sound_freq_hi {
+    byte_t initial        : 1;
+    byte_t counter_select : 1;
+    byte_t _padding       : 3;
+    byte_t freq_hi        : 3;
+};
+
+struct __attribute__((packed)) sound_nr21 {
+    byte_t wave_duty    : 2;
+    byte_t sound_length : 6;
+};
+
+struct __attribute__((packed)) sound_nr30 {
+    byte_t active   : 1;
+    byte_t _padding : 7;
+};
+
+struct __attribute__((packed)) sound_nr31 {
+    byte_t sound_length : 8;
+};
+
+struct __attribute__((packed)) sound_nr32 {
+    byte_t _padding     : 1;
+    byte_t output_level : 2;
+    byte_t _padding2    : 5;
+};
+
+struct __attribute__((packed)) sound_wave_pattern {
+    byte_t hi : 4; // First 4-bit sample
+    byte_t lo : 4; // Second 8-bit sample
+};
+
+struct __attribute__((packed)) sound_nr41 {
+    byte_t _padding     : 2;
+    byte_t sound_length : 6;
+};
+
+struct __attribute__((packed)) sound_nr43 {
+    byte_t shift_clock_freq : 4;
+    byte_t counter_width    : 1;
+    byte_t dividing_ratio   : 3;
+};
+
+struct __attribute__((packed)) sound_nr44 {
+    byte_t initial        : 1;
+    byte_t counter_select : 1;
+    byte_t _padding       : 6;
+};
+
+struct __attribute__((packed)) sound_nr50 {
+    byte_t vin_to_so2 : 1;
+    byte_t so2_volume : 3;
+    byte_t vin_to_so1 : 1;
+    byte_t so1_volume : 3;
+};
+
+struct __attribute__((packed)) sound_nr51 {
+    byte_t channel_4_to_so2 : 1;
+    byte_t channel_3_to_so2 : 1;
+    byte_t channel_2_to_so2 : 1;
+    byte_t channel_1_to_so2 : 1;
+    byte_t channel_4_to_so1 : 1;
+    byte_t channel_3_to_so1 : 1;
+    byte_t channel_2_to_so1 : 1;
+    byte_t channel_1_to_so1 : 1;
+};
+
+struct __attribute__((packed)) sound_nr52 {
+    byte_t sound_on     : 1;
+    byte_t _padding     : 3;
+    byte_t channel_4_on : 1;
+    byte_t channel_3_on : 1;
+    byte_t channel_2_on : 1;
+    byte_t channel_1_on : 1;
+};
+
+struct sound_regs {
+    struct sound_nr10 nr10;
+    struct sound_nr11 nr11;
+    struct sound_volume_envelope nr12;
+    struct sound_freq_lo nr13;
+    struct sound_freq_hi nr14;
+
+    struct sound_nr21 nr21;
+    struct sound_volume_envelope nr22;
+    struct sound_freq_lo nr23;
+    struct sound_freq_hi nr24;
+
+    struct sound_nr30 nr30;
+    struct sound_nr31 nr31;
+    struct sound_nr32 nr32;
+    struct sound_freq_lo nr33;
+    struct sound_freq_hi nr34;
+    struct sound_wave_pattern wave_pattern_ram[16];
+
+    struct sound_nr41 nr41;
+    struct sound_volume_envelope nr42;
+    struct sound_nr43 nr43;
+    struct sound_nr44 nr44;
+
+    struct sound_nr50 nr50;
+    struct sound_nr51 nr51;
+    struct sound_nr52 nr52;
+};
+
+struct apu {
+    struct sound_regs regs;
+};
+
 struct serial_port {
     byte_t sb;
 
@@ -384,6 +546,7 @@ struct gb_system {
     struct lcd_screen screen;          // GameBoy Video Screen
     struct cartridge_hdr cartridge;    // Cartridge information
     struct mmu memory;                 // Memory areas
+    struct apu apu;                    // Audio Processing Unit
     struct interrupts interrupts;      // Interrupt registers
     struct builtin_timer timer;        // Built-in GameBoy timer
     struct joypad joypad;              // Joypad

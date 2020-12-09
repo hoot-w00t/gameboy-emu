@@ -23,6 +23,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "mmu/banks.h"
 #include "timer.h"
 #include "ppu/lcd_regs.h"
+#include "apu/sound_regs.h"
 #include "joypad.h"
 #include "serial.h"
 
@@ -67,6 +68,15 @@ byte_t mmu_internal_readb(uint16_t addr, gb_system_t *gb)
 
     } else if (ADDR_IN_RANGE(addr, LCDC, LCDC_WX)) {
         return lcd_reg_readb(addr, gb);
+
+    } else if (   ADDR_IN_RANGE(addr, SOUND_NR10, SOUND_NR14)
+               || ADDR_IN_RANGE(addr, SOUND_NR21, SOUND_NR24)
+               || ADDR_IN_RANGE(addr, SOUND_NR30, SOUND_NR34)
+               || ADDR_IN_RANGE(addr, SOUND_NR41, SOUND_NR44)
+               || ADDR_IN_RANGE(addr, SOUND_NR50, SOUND_NR52)
+               || ADDR_IN_RANGE(addr, SOUND_WAVE_PATTERN_LADDR,
+                      SOUND_WAVE_PATTERN_UADDR)) {
+        return sound_reg_readb(addr, gb);
 
     } else if (addr == JOYPAD_REG) {
         return joypad_reg_readb(gb);
@@ -131,6 +141,15 @@ bool mmu_internal_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 
     } else if (ADDR_IN_RANGE(addr, LCDC, LCDC_WX)) {
         return lcd_reg_writeb(addr, value, gb);
+
+    } else if (   ADDR_IN_RANGE(addr, SOUND_NR10, SOUND_NR14)
+               || ADDR_IN_RANGE(addr, SOUND_NR21, SOUND_NR24)
+               || ADDR_IN_RANGE(addr, SOUND_NR30, SOUND_NR34)
+               || ADDR_IN_RANGE(addr, SOUND_NR41, SOUND_NR44)
+               || ADDR_IN_RANGE(addr, SOUND_NR50, SOUND_NR52)
+               || ADDR_IN_RANGE(addr, SOUND_WAVE_PATTERN_LADDR,
+                      SOUND_WAVE_PATTERN_UADDR)) {
+        return sound_reg_writeb(addr, value, gb);
 
     } else if (addr == JOYPAD_REG) {
         return joypad_reg_writeb(value, gb);
