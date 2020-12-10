@@ -22,6 +22,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/registers.h"
 #include "cpu/opcodes.h"
 #include "ppu/ppu.h"
+#include "apu/apu.h"
 #include "mmu/mmu.h"
 #include "joypad.h"
 #include "serial.h"
@@ -32,8 +33,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <SDL_ttf.h>
 
 #define audio_sample_rate (48000)
-#define audio_buffer_size (512)
-#define audio_sample_time ((double) (((double) 1.0 / (double) ((double) audio_sample_rate / (double) audio_buffer_size)) / (double) audio_buffer_size))
+#define audio_buffer_size (1024)
+#define audio_sample_time (1.0 / (double) audio_sample_rate)
 
 // TODO: Add customizable key mappings
 
@@ -53,6 +54,8 @@ static struct keymap {
     SDL_Scancode emu_exit;
     SDL_Scancode emu_zoom_in;
     SDL_Scancode emu_zoom_out;
+    SDL_Scancode emu_vol_up;
+    SDL_Scancode emu_vol_down;
 } keymap = {
     .gb_left       = SDL_SCANCODE_A,
     .gb_right      = SDL_SCANCODE_D,
@@ -68,7 +71,9 @@ static struct keymap {
     .emu_debug     = SDL_SCANCODE_B,
     .emu_exit      = SDL_SCANCODE_ESCAPE,
     .emu_zoom_in   = SDL_SCANCODE_9,
-    .emu_zoom_out  = SDL_SCANCODE_8
+    .emu_zoom_out  = SDL_SCANCODE_8,
+    .emu_vol_up    = SDL_SCANCODE_7,
+    .emu_vol_down  = SDL_SCANCODE_6
 };
 
 static TTF_Font *font = NULL;
@@ -84,6 +89,9 @@ static uint32_t lcd_win_id = 0;
 static SDL_Surface *lcd_surface = NULL;
 static uint32_t lcd_pixel_size = 4;
 static uint32_t *lcd_pixels = NULL;
+static double lcd_win_clock_freq = 0.0;
+static double lcd_win_clock_speed = 0.0;
+static uint32_t lcd_win_framerate = 0;
 
 static bool stop_emulation = false;
 static bool pause_emulation = false;
@@ -93,8 +101,16 @@ static size_t clocks_per_second = 0;
 static uint32_t clock_speed = CPU_CLOCK_SPEED; // 4.194304 MHz
 static uint32_t frameskip = 0;
 
-static double audio_time = 0;
 static int audio_pos = 0;
+static double audio_volume = 0.5;
+static const double audio_volume_step = 0.05;
+#define audio_amp (audio_volume * 0.5)
+
+static double audio_time(void)
+{
+    static double atime = 0.0;
+    return (atime += audio_sample_time);
+}
 
 // Update window title
 void update_window_title(SDL_Window *win, const char *format, ...)
@@ -293,19 +309,32 @@ void debug_close(void)
 }
 
 // Emulate clocks
-void emulate_clocks(gb_system_t *gb, Sint16 *audio_buffer)
+void emulate_clocks(gb_system_t *gb, float *audio_buffer)
 {
     static Uint32 last_ticks = 0;
+    static double second_elapsed = 0.0;
     Uint32 ticks = SDL_GetTicks();
     size_t audio_remaining_clocks;
     size_t audio_clock_delay;
     size_t remaining_clocks;
     double elapsed;
 
-    if (!pause_emulation) {
-        // Calculate elapsed time since last call to emulate_clocks()
-        elapsed = (double) (ticks - last_ticks) / (double) 1000.0;
+    // Calculate elapsed time since last call to emulate_clocks()
+    elapsed = (double) (ticks - last_ticks) / 1000.0;
 
+    // Refresh counters every second
+    if ((second_elapsed += elapsed) >= 1.0) {
+        second_elapsed = 0.0;
+
+        lcd_win_clock_freq = (double) clocks_per_second / (double) 1000000.0;
+        lcd_win_clock_speed = (double) clocks_per_second / (double) CPU_CLOCK_SPEED * 100.0;
+        lcd_win_framerate = frames_per_second;
+
+        clocks_per_second = 0;
+        frames_per_second = 0;
+    }
+
+    if (!pause_emulation) {
         // Calculate how many clocks should be emulated
         // since last frame
         remaining_clocks = elapsed * clock_speed;
@@ -340,14 +369,29 @@ void emulate_clocks(gb_system_t *gb, Sint16 *audio_buffer)
                     audio_remaining_clocks -= 1;
                 } else if (audio_pos < audio_buffer_size) {
                     audio_remaining_clocks = audio_clock_delay;
-                    audio_buffer[audio_pos++] = 0; // TODO: Use generate_sample() here
-                    audio_time += audio_sample_time;
+                    audio_buffer[audio_pos++] = (float) apu_generate_sample(audio_time(), audio_amp, gb);
                 }
             }
         }
     }
 
     last_ticks = ticks;
+}
+
+void update_windows(gb_system_t *gb)
+{
+    if (pause_emulation) {
+        update_window_title(lcd_win, "GameBoy (paused)");
+    } else {
+        update_window_title(lcd_win, "GameBoy (%.06f MHz: %.02f%%, %u fps, volume: %.f%%)",
+            lcd_win_clock_freq,
+            lcd_win_clock_speed,
+            lcd_win_framerate,
+            (float) (audio_volume * 100.0));
+    }
+
+    if (debug_win)
+        render_debug(gb);
 }
 
 // Handle SDL events
@@ -372,6 +416,7 @@ void handle_events(gb_system_t *gb)
                         stop_emulation = true;
                     } else if (e.key.keysym.scancode == keymap.emu_pause) {
                         pause_emulation = !pause_emulation;
+                        update_windows(gb);
                     } else if (e.key.keysym.scancode == keymap.emu_speed) {
                         set_clock_speed(CPU_CLOCK_SPEED * 4);
                     } else if (e.key.keysym.scancode == keymap.emu_slow) {
@@ -382,6 +427,17 @@ void handle_events(gb_system_t *gb)
                         update_pixel_size(lcd_pixel_size + 1);
                     } else if (e.key.keysym.scancode == keymap.emu_zoom_out) {
                         update_pixel_size(lcd_pixel_size - 1);
+                    } else if (e.key.keysym.scancode == keymap.emu_vol_up) {
+                        if ((audio_volume += audio_volume_step) > 1.0)
+                            audio_volume = 1.0;
+                        update_windows(gb);
+                    } else if (e.key.keysym.scancode == keymap.emu_vol_down) {
+                        if (audio_volume <= audio_volume_step) {
+                            audio_volume = 0.0;
+                        } else {
+                            audio_volume -= audio_volume_step;
+                        }
+                        update_windows(gb);
                     } else {
                         handle_joypad_input(&e, true, gb);
                     }
@@ -408,31 +464,6 @@ void handle_events(gb_system_t *gb)
             }
         }
     }
-}
-
-void update_windows(gb_system_t *gb)
-{
-    static Uint32 one_second_ticks = 0;
-    Uint32 ticks = SDL_GetTicks();
-
-    // Refresh every second
-    if (ticks - one_second_ticks >= 1000) {
-        one_second_ticks = ticks;
-        if (pause_emulation) {
-            update_window_title(lcd_win, "GameBoy (paused)");
-        } else {
-            update_window_title(lcd_win, "GameBoy (%.06f MHz: %.02f%%, %u fps)",
-                (double) clocks_per_second / (double) 1000000.0,
-                (double) clocks_per_second / (double) CPU_CLOCK_SPEED * 100.0,
-                frames_per_second);
-        }
-
-        clocks_per_second = 0;
-        frames_per_second = 0;
-    }
-
-    if (debug_win)
-        render_debug(gb);
 }
 
 // Main emulator loop (timed using framerate)
@@ -468,7 +499,7 @@ void emulator_audio_loop(void *userdata,
                          __attribute__((unused)) int len)
 {
     gb_system_t *gb = (gb_system_t *) userdata;
-    Sint16 *audio_buffer = (Sint16 *) stream;
+    float *audio_buffer = (float *) stream;
 
     if (stop_emulation)
         return;
@@ -484,8 +515,8 @@ void emulator_audio_loop(void *userdata,
             audio_buffer[i] = 0;
     } else {
         // Fill any remaining samples
-        for (; audio_pos < audio_buffer_size; ++audio_pos, audio_time += audio_sample_time)
-            audio_buffer[audio_pos] = 0; // TODO: Use generate_sample() here
+        while (audio_pos < audio_buffer_size)
+            audio_buffer[audio_pos++] = (float) apu_generate_sample(audio_time(), audio_amp, gb);
     }
 }
 
@@ -515,7 +546,7 @@ int emulate_gameboy(gb_system_t *gb, const bool enable_audio)
 
     if (enable_audio) {
         audiospec.freq = audio_sample_rate;
-        audiospec.format = AUDIO_S16SYS;
+        audiospec.format = AUDIO_F32SYS;
         audiospec.channels = 1;
         audiospec.samples = audio_buffer_size;
         audiospec.callback = &emulator_audio_loop;

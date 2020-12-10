@@ -1,7 +1,7 @@
 CC	=	cc
 INCLUDE	=	-Iinclude $(shell sdl2-config --cflags)
 CFLAGS	=	-W -Wall -Wextra -O2 -pipe $(INCLUDE)
-LDFLAGS	=	$(shell sdl2-config --libs) -lSDL2_ttf
+LDFLAGS	=	$(shell sdl2-config --libs) -lSDL2_ttf -lm
 
 BIN_NAME	=	gameboy
 
@@ -45,6 +45,7 @@ SRC	=	logger.c				\
 		mmu/mbc3.c				\
 		ppu/ppu.c				\
 		ppu/lcd_regs.c			\
+		apu/apu.c				\
 		apu/sound_regs.c
 
 OBJ	=	$(SRC:%.c=obj/%.o)

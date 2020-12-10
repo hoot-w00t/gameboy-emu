@@ -21,6 +21,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "logger.h"
 #include "gameboy.h"
+#include "apu/apu.h"
 
 byte_t sound_reg_readb(uint16_t addr, gb_system_t *gb)
 {
@@ -70,10 +71,32 @@ bool sound_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
         case SOUND_NR13: (*((byte_t *) &gb->apu.regs.nr13)) = value; return true;
         case SOUND_NR14: (*((byte_t *) &gb->apu.regs.nr14)) = value; return true;
 
-        case SOUND_NR21: (*((byte_t *) &gb->apu.regs.nr21)) = value; return true;
-        case SOUND_NR22: (*((byte_t *) &gb->apu.regs.nr22)) = value; return true;
-        case SOUND_NR23: (*((byte_t *) &gb->apu.regs.nr23)) = value; return true;
-        case SOUND_NR24: (*((byte_t *) &gb->apu.regs.nr24)) = value; return true;
+        case SOUND_NR21:
+            (*((byte_t *) &gb->apu.regs.nr21)) = value;
+            switch (gb->apu.regs.nr21.wave_duty) {
+                case 0x0: gb->apu.ch2.duty = 0.125; break;
+                case 0x1: gb->apu.ch2.duty = 0.25;  break;
+                case 0x2: gb->apu.ch2.duty = 0.50;  break;
+                case 0x3: gb->apu.ch2.duty = 0.75;  break;
+            }
+            gb->apu.ch2.length = apu_sound_length(gb->apu.regs.nr21.sound_length);
+            return true;
+
+        case SOUND_NR22:
+            (*((byte_t *) &gb->apu.regs.nr22)) = value;
+            gb->apu.ch2.volume = gb->apu.regs.nr22.initial_envelope_volume;
+            gb->apu.ch2.volume_step = apu_volume_step(gb->apu.regs.nr22.envelope_sweep);
+            return true;
+
+        case SOUND_NR23:
+            (*((byte_t *) &gb->apu.regs.nr23)) = value;
+            gb->apu.ch2.freq = apu_tone_freq(apu_freq11(gb->apu.regs.nr23, gb->apu.regs.nr24));
+            return true;
+
+        case SOUND_NR24:
+            (*((byte_t *) &gb->apu.regs.nr24)) = value;
+            gb->apu.ch2.freq = apu_tone_freq(apu_freq11(gb->apu.regs.nr23, gb->apu.regs.nr24));
+            return true;
 
         case SOUND_NR30: (*((byte_t *) &gb->apu.regs.nr30)) = value; return true;
         case SOUND_NR31: (*((byte_t *) &gb->apu.regs.nr31)) = value; return true;

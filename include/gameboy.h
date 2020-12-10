@@ -447,8 +447,19 @@ struct sound_regs {
     struct sound_nr52 nr52;
 };
 
+struct sound_channel_2 {
+    double stop_at;
+    double duty;
+    double length;
+    byte_t volume : 4;
+    double volume_step;
+    double next_volume_step;
+    double freq;
+};
+
 struct apu {
     struct sound_regs regs;
+    struct sound_channel_2 ch2;
 };
 
 struct serial_port {
