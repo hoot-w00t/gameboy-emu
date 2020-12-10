@@ -65,11 +65,36 @@ byte_t sound_reg_readb(uint16_t addr, gb_system_t *gb)
 bool sound_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
     switch (addr) {
-        case SOUND_NR10: (*((byte_t *) &gb->apu.regs.nr10)) = value; return true;
-        case SOUND_NR11: (*((byte_t *) &gb->apu.regs.nr11)) = value; return true;
-        case SOUND_NR12: (*((byte_t *) &gb->apu.regs.nr12)) = value; return true;
-        case SOUND_NR13: (*((byte_t *) &gb->apu.regs.nr13)) = value; return true;
-        case SOUND_NR14: (*((byte_t *) &gb->apu.regs.nr14)) = value; return true;
+        case SOUND_NR10:
+            (*((byte_t *) &gb->apu.regs.nr10)) = value;
+            gb->apu.ch1.sweep = (double) gb->apu.regs.nr10.sweep_time / 128.0;
+            return true;
+
+        case SOUND_NR11:
+            (*((byte_t *) &gb->apu.regs.nr11)) = value;
+            switch (gb->apu.regs.nr11.wave_duty) {
+                case 0x0: gb->apu.ch1.duty = 0.125; break;
+                case 0x1: gb->apu.ch1.duty = 0.25;  break;
+                case 0x2: gb->apu.ch1.duty = 0.50;  break;
+                case 0x3: gb->apu.ch1.duty = 0.75;  break;
+            }
+            gb->apu.ch1.length = apu_sound_length(gb->apu.regs.nr11.sound_length);
+            return true;
+
+        case SOUND_NR12:
+            (*((byte_t *) &gb->apu.regs.nr12)) = value;
+            gb->apu.ch1.volume = gb->apu.regs.nr12.initial_envelope_volume;
+            gb->apu.ch1.volume_step = apu_volume_step(gb->apu.regs.nr12.envelope_sweep);
+            return true;
+
+        case SOUND_NR13:
+            (*((byte_t *) &gb->apu.regs.nr13)) = value;
+            return true;
+
+        case SOUND_NR14:
+            (*((byte_t *) &gb->apu.regs.nr14)) = value;
+            gb->apu.ch1.freq = apu_tone_freq(apu_freq11(gb->apu.regs.nr13, gb->apu.regs.nr14));
+            return true;
 
         case SOUND_NR21:
             (*((byte_t *) &gb->apu.regs.nr21)) = value;

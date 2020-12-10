@@ -447,6 +447,19 @@ struct sound_regs {
     struct sound_nr52 nr52;
 };
 
+struct sound_channel_1 {
+    double stop_at;
+    double duty;
+    double length;
+    byte_t volume : 4;
+    double volume_step;
+    double next_volume_step;
+    uint16_t freq11;
+    double freq;
+    double sweep;
+    double next_sweep;
+};
+
 struct sound_channel_2 {
     double stop_at;
     double duty;
@@ -459,6 +472,7 @@ struct sound_channel_2 {
 
 struct apu {
     struct sound_regs regs;
+    struct sound_channel_1 ch1;
     struct sound_channel_2 ch2;
 };
 
