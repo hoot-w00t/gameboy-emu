@@ -320,22 +320,10 @@ struct lcd_screen {
     uint32_t line_cycle;
 };
 
-struct __attribute__((packed)) sound_nr10 {
-    byte_t _padding       : 1;
-    byte_t sweep_time     : 3;
-    byte_t sweep_decrease : 1;
-    byte_t sweep_shift    : 3;
-};
-
-struct __attribute__((packed)) sound_nr11 {
-    byte_t wave_duty    : 2;
-    byte_t sound_length : 6;
-};
-
 struct __attribute__((packed)) sound_volume_envelope {
-    byte_t initial_envelope_volume : 4;
-    byte_t envelope_increase       : 1;
     byte_t envelope_sweep          : 3;
+    byte_t envelope_increase       : 1;
+    byte_t initial_envelope_volume : 4;
 };
 
 struct __attribute__((packed)) sound_freq_lo {
@@ -343,20 +331,32 @@ struct __attribute__((packed)) sound_freq_lo {
 };
 
 struct __attribute__((packed)) sound_freq_hi {
-    byte_t initial        : 1;
-    byte_t counter_select : 1;
-    byte_t _padding       : 3;
     byte_t freq_hi        : 3;
+    byte_t _padding       : 3;
+    byte_t counter_select : 1;
+    byte_t initial        : 1;
+};
+
+struct __attribute__((packed)) sound_nr10 {
+    byte_t sweep_shift    : 3;
+    byte_t sweep_decrease : 1;
+    byte_t sweep_time     : 3;
+    byte_t _padding       : 1;
+};
+
+struct __attribute__((packed)) sound_nr11 {
+    byte_t sound_length : 6;
+    byte_t wave_duty    : 2;
 };
 
 struct __attribute__((packed)) sound_nr21 {
-    byte_t wave_duty    : 2;
     byte_t sound_length : 6;
+    byte_t wave_duty    : 2;
 };
 
 struct __attribute__((packed)) sound_nr30 {
-    byte_t active   : 1;
     byte_t _padding : 7;
+    byte_t active   : 1;
 };
 
 struct __attribute__((packed)) sound_nr31 {
@@ -364,58 +364,58 @@ struct __attribute__((packed)) sound_nr31 {
 };
 
 struct __attribute__((packed)) sound_nr32 {
-    byte_t _padding     : 1;
+    byte_t _padding     : 5;
     byte_t output_level : 2;
-    byte_t _padding2    : 5;
+    byte_t _padding2    : 1;
 };
 
 struct __attribute__((packed)) sound_wave_pattern {
-    byte_t hi : 4; // First 4-bit sample
     byte_t lo : 4; // Second 8-bit sample
+    byte_t hi : 4; // First 4-bit sample
 };
 
 struct __attribute__((packed)) sound_nr41 {
-    byte_t _padding     : 2;
     byte_t sound_length : 6;
+    byte_t _padding     : 2;
 };
 
 struct __attribute__((packed)) sound_nr43 {
-    byte_t shift_clock_freq : 4;
-    byte_t counter_width    : 1;
     byte_t dividing_ratio   : 3;
+    byte_t counter_width    : 1;
+    byte_t shift_clock_freq : 4;
 };
 
 struct __attribute__((packed)) sound_nr44 {
-    byte_t initial        : 1;
-    byte_t counter_select : 1;
     byte_t _padding       : 6;
+    byte_t counter_select : 1;
+    byte_t initial        : 1;
 };
 
 struct __attribute__((packed)) sound_nr50 {
-    byte_t vin_to_so2 : 1;
-    byte_t so2_volume : 3;
-    byte_t vin_to_so1 : 1;
     byte_t so1_volume : 3;
+    byte_t vin_to_so1 : 1;
+    byte_t so2_volume : 3;
+    byte_t vin_to_so2 : 1;
 };
 
 struct __attribute__((packed)) sound_nr51 {
-    byte_t channel_4_to_so2 : 1;
-    byte_t channel_3_to_so2 : 1;
-    byte_t channel_2_to_so2 : 1;
-    byte_t channel_1_to_so2 : 1;
-    byte_t channel_4_to_so1 : 1;
-    byte_t channel_3_to_so1 : 1;
-    byte_t channel_2_to_so1 : 1;
-    byte_t channel_1_to_so1 : 1;
+    byte_t ch1_to_so1 : 1;
+    byte_t ch2_to_so1 : 1;
+    byte_t ch3_to_so1 : 1;
+    byte_t ch4_to_so1 : 1;
+    byte_t ch1_to_so2 : 1;
+    byte_t ch2_to_so2 : 1;
+    byte_t ch3_to_so2 : 1;
+    byte_t ch4_to_so2 : 1;
 };
 
 struct __attribute__((packed)) sound_nr52 {
-    byte_t sound_on     : 1;
-    byte_t _padding     : 3;
-    byte_t channel_4_on : 1;
-    byte_t channel_3_on : 1;
-    byte_t channel_2_on : 1;
-    byte_t channel_1_on : 1;
+    byte_t ch1_on   : 1;
+    byte_t ch2_on   : 1;
+    byte_t ch3_on   : 1;
+    byte_t ch4_on   : 1;
+    byte_t _padding : 3;
+    byte_t sound_on : 1;
 };
 
 struct sound_regs {
