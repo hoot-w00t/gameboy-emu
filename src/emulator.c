@@ -414,15 +414,16 @@ void handle_events(gb_system_t *gb)
     SDL_Event e;
 
     while (SDL_PollEvent(&e)) {
+        if (e.type == SDL_QUIT) {
+            stop_emulation = true;
+            return;
+        }
+
         if (e.window.windowID == lcd_win_id) {
             switch (e.type) {
                 case SDL_WINDOWEVENT:
                     if (e.window.event == SDL_WINDOWEVENT_CLOSE)
                         stop_emulation = true;
-                    break;
-
-                case SDL_QUIT:
-                    stop_emulation = true;
                     break;
 
                 case SDL_KEYDOWN:
