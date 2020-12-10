@@ -370,8 +370,8 @@ struct __attribute__((packed)) sound_nr32 {
 };
 
 struct __attribute__((packed)) sound_wave_pattern {
-    byte_t lo : 4; // Second 8-bit sample
-    byte_t hi : 4; // First 4-bit sample
+    byte_t s1 : 4; // Second 4-bit sample
+    byte_t s0 : 4; // First 4-bit sample
 };
 
 struct __attribute__((packed)) sound_nr41 {
@@ -472,7 +472,6 @@ struct sound_channel_2 {
 
 struct sound_channel_4 {
     double stop_at;
-    double duty;
     double length;
     byte_t volume : 4;
     double volume_step;
