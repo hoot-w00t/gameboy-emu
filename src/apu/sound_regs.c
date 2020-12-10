@@ -62,6 +62,15 @@ byte_t sound_reg_readb(uint16_t addr, gb_system_t *gb)
     }
 }
 
+// Trigger event happens when bit 7 of any NRx4 is set
+void sound_reg_trigger_event(byte_t value, gb_system_t *gb)
+{
+    if ((value & 0x80)) {
+        // TODO: Add the other trigger events
+        gb->apu.lfsr = 0x7FFF;
+    }
+}
+
 bool sound_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
     switch (addr) {
@@ -94,6 +103,7 @@ bool sound_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
         case SOUND_NR14:
             (*((byte_t *) &gb->apu.regs.nr14)) = value;
             gb->apu.ch1.freq = apu_tone_freq(apu_freq11(gb->apu.regs.nr13, gb->apu.regs.nr14));
+            sound_reg_trigger_event(value, gb);
             return true;
 
         case SOUND_NR21:
@@ -121,18 +131,35 @@ bool sound_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
         case SOUND_NR24:
             (*((byte_t *) &gb->apu.regs.nr24)) = value;
             gb->apu.ch2.freq = apu_tone_freq(apu_freq11(gb->apu.regs.nr23, gb->apu.regs.nr24));
+            sound_reg_trigger_event(value, gb);
             return true;
 
         case SOUND_NR30: (*((byte_t *) &gb->apu.regs.nr30)) = value; return true;
         case SOUND_NR31: (*((byte_t *) &gb->apu.regs.nr31)) = value; return true;
         case SOUND_NR32: (*((byte_t *) &gb->apu.regs.nr32)) = value; return true;
         case SOUND_NR33: (*((byte_t *) &gb->apu.regs.nr33)) = value; return true;
-        case SOUND_NR34: (*((byte_t *) &gb->apu.regs.nr34)) = value; return true;
+        case SOUND_NR34:
+            (*((byte_t *) &gb->apu.regs.nr34)) = value;
+            sound_reg_trigger_event(value, gb);
+            return true;
 
         case SOUND_NR41: (*((byte_t *) &gb->apu.regs.nr41)) = value; return true;
-        case SOUND_NR42: (*((byte_t *) &gb->apu.regs.nr42)) = value; return true;
-        case SOUND_NR43: (*((byte_t *) &gb->apu.regs.nr43)) = value; return true;
-        case SOUND_NR44: (*((byte_t *) &gb->apu.regs.nr44)) = value; return true;
+        case SOUND_NR42:
+            (*((byte_t *) &gb->apu.regs.nr42)) = value;
+            gb->apu.ch4.volume = gb->apu.regs.nr42.initial_envelope_volume;
+            gb->apu.ch4.volume_step = apu_volume_step(gb->apu.regs.nr42.envelope_sweep);
+            return true;
+
+        case SOUND_NR43:
+            (*((byte_t *) &gb->apu.regs.nr43)) = value;
+            gb->apu.ch4.freq = apu_noise_freq(gb->apu.regs.nr43.dividing_ratio,
+                                              gb->apu.regs.nr43.shift_clock_freq);
+            return true;
+
+        case SOUND_NR44:
+            (*((byte_t *) &gb->apu.regs.nr44)) = value;
+            sound_reg_trigger_event(value, gb);
+            return true;
 
         case SOUND_NR50: (*((byte_t *) &gb->apu.regs.nr50)) = value; return true;
         case SOUND_NR51: (*((byte_t *) &gb->apu.regs.nr51)) = value; return true;

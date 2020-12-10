@@ -470,10 +470,22 @@ struct sound_channel_2 {
     double freq;
 };
 
+struct sound_channel_4 {
+    double stop_at;
+    double duty;
+    double length;
+    byte_t volume : 4;
+    double volume_step;
+    double next_volume_step;
+    double freq;
+};
+
 struct apu {
     struct sound_regs regs;
     struct sound_channel_1 ch1;
     struct sound_channel_2 ch2;
+    struct sound_channel_4 ch4;
+    uint16_t lfsr : 15;
 };
 
 struct serial_port {

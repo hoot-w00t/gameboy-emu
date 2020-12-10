@@ -58,7 +58,7 @@ static inline double ch1_sample(const double atime, gb_system_t *gb)
         gb->apu.ch1.next_volume_step = atime + gb->apu.ch1.volume_step;
     }
 
-    return apu_volume_percent(gb->apu.ch1.volume) * pulse_sample(atime, gb->apu.ch1.freq, gb->apu.ch1.duty);;
+    return apu_volume_percent(gb->apu.ch1.volume) * pulse_sample(atime, gb->apu.ch1.freq, gb->apu.ch1.duty);
 }
 
 static inline double ch2_sample(const double atime, gb_system_t *gb)
@@ -79,7 +79,48 @@ static inline double ch2_sample(const double atime, gb_system_t *gb)
         gb->apu.ch2.next_volume_step = atime + gb->apu.ch2.volume_step;
     }
 
-    return apu_volume_percent(gb->apu.ch2.volume) * pulse_sample(atime, gb->apu.ch2.freq, gb->apu.ch2.duty);;
+    return apu_volume_percent(gb->apu.ch2.volume) * pulse_sample(atime, gb->apu.ch2.freq, gb->apu.ch2.duty);
+}
+
+static inline double ch4_sample(const double atime, gb_system_t *gb)
+{
+    if (gb->apu.regs.nr44.initial) {
+        gb->apu.regs.nr44.initial = 0;
+        gb->apu.regs.nr52.ch4_on = 1;
+        gb->apu.ch4.stop_at = atime + gb->apu.ch4.length;
+        gb->apu.ch4.next_volume_step = atime + gb->apu.ch4.volume_step;
+    }
+    if (!gb->apu.regs.nr52.ch4_on || (gb->apu.regs.nr44.counter_select && atime >= gb->apu.ch4.stop_at)) {
+        gb->apu.regs.nr52.ch4_on = 0;
+        return 0.0;
+    }
+
+    if (gb->apu.ch4.volume_step && atime >= gb->apu.ch4.next_volume_step) {
+        apu_volume_envelope(gb->apu.ch4.volume, gb->apu.regs.nr42.envelope_increase)
+        gb->apu.ch4.next_volume_step = atime + gb->apu.ch4.volume_step;
+    }
+
+    if ((gb->apu.lfsr & 0x1))
+        return 0.0;
+    return apu_volume_percent(gb->apu.ch4.volume) * 1.0;
+}
+
+void apu_lfsr_clock(gb_system_t *gb)
+{
+    byte_t lfsr_xor;
+
+    // XOR bits 1-0 and shift lfsr to the right
+    lfsr_xor = (gb->apu.lfsr & 0x1);
+    gb->apu.lfsr >>= 1;
+    lfsr_xor ^= (gb->apu.lfsr & 0x1);
+
+    // Put XOR result on bit 15
+    gb->apu.lfsr |= (lfsr_xor << 14);
+    if (gb->apu.regs.nr43.counter_width) {
+        // Put XOR result on bit 7 when counter_width is set to 7 bits
+        gb->apu.lfsr &= ~(1 << 6);
+        gb->apu.lfsr |= (lfsr_xor << 6);
+    }
 }
 
 double apu_generate_sample(const double atime,
@@ -103,6 +144,12 @@ double apu_generate_sample(const double atime,
         sample += so1_volume * ch2_sample(atime, gb);
     } else if (gb->apu.regs.nr51.ch2_to_so2) {
         sample += so2_volume * ch2_sample(atime, gb);
+    }
+
+    if (gb->apu.regs.nr51.ch4_to_so1) {
+        sample += so1_volume * ch4_sample(atime, gb);
+    } else if (gb->apu.regs.nr51.ch4_to_so2) {
+        sample += so2_volume * ch4_sample(atime, gb);
     }
 
     return sample * amplitude;

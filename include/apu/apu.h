@@ -23,10 +23,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _APU_APU_H
 #define _APU_APU_H
 
-double apu_generate_sample(const double atime,
-                           const double amplitude,
-                           gb_system_t *gb);
-
 #define PI (3.14159265358979323846)
 #define AMP_HIGH  (1.0)
 #define AMP_LOW   (0.0)
@@ -56,6 +52,9 @@ double apu_generate_sample(const double atime,
 // Calculate frequency in Hz for Tone channels 1 and 2
 #define apu_tone_freq(freq_11) (131072.0 / (2048.0 - (double) freq_11))
 
+#define apu_noise_r(r) ((r) ? (r) : (0.5))
+#define apu_noise_freq(r,s) (524288.0 / apu_noise_r(r) / pow(2.0, (double) (s + 1)))
+
 // Generate a pulse wave sample
 static inline double pulse_sample(const double atime,
                                   const double frequency,
@@ -63,5 +62,10 @@ static inline double pulse_sample(const double atime,
 {
     return sin(frequency * 2 * PI * atime) > duty ? AMP_HIGH : AMP_LOW;
 }
+
+void apu_lfsr_clock(gb_system_t *gb);
+double apu_generate_sample(const double atime,
+                           const double amplitude,
+                           gb_system_t *gb);
 
 #endif

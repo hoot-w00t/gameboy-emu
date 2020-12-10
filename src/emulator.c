@@ -316,6 +316,8 @@ void emulate_clocks(gb_system_t *gb, float *audio_buffer)
     Uint32 ticks = SDL_GetTicks();
     size_t audio_remaining_clocks;
     size_t audio_clock_delay;
+    size_t lfsr_remaining;
+    size_t lfsr_delay;
     size_t remaining_clocks;
     double elapsed;
 
@@ -347,6 +349,11 @@ void emulate_clocks(gb_system_t *gb, float *audio_buffer)
         audio_clock_delay = remaining_clocks / audio_buffer_size;
         audio_remaining_clocks = 0;
 
+        // Calculate when to clock LFSR
+        lfsr_remaining = (size_t) (gb->apu.ch4.freq * elapsed);
+        lfsr_delay = (lfsr_remaining > 0) ? (remaining_clocks / lfsr_remaining) : 0;
+        lfsr_remaining = 0;
+
         // Count the clocks we are about to emulate
         clocks_per_second += remaining_clocks;
 
@@ -371,6 +378,13 @@ void emulate_clocks(gb_system_t *gb, float *audio_buffer)
                     audio_remaining_clocks = audio_clock_delay;
                     audio_buffer[audio_pos++] = (float) apu_generate_sample(audio_time(), audio_amp, gb);
                 }
+            }
+
+            if (lfsr_remaining > 0) {
+                lfsr_remaining -= 1;
+            } else if (lfsr_delay > 0) {
+                lfsr_remaining = lfsr_delay;
+                apu_lfsr_clock(gb);
             }
         }
     }
