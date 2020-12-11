@@ -25,6 +25,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "mmu/mmu.h"
 #include "mmu/banks.h"
 #include "ppu/lcd_regs.h"
+#include "apu/sound_regs.h"
 #include "timer.h"
 #include "joypad.h"
 #include <stdio.h>
@@ -217,24 +218,24 @@ void gb_system_reset(bool enable_bootrom, gb_system_t *gb)
         timer_reg_writeb(TIM_TAC, 0, gb);
 
         // Sound
-        gb->memory.ioregs[0x10] = 0x80; // NR10
-        gb->memory.ioregs[0x11] = 0xBF; // NR11
-        gb->memory.ioregs[0x12] = 0xF3; // NR12
-        gb->memory.ioregs[0x14] = 0xBF; // NR14
-        gb->memory.ioregs[0x16] = 0x3F; // NR21
-        gb->memory.ioregs[0x17] = 0x00; // NR22
-        gb->memory.ioregs[0x19] = 0xBF; // NR24
-        gb->memory.ioregs[0x1A] = 0x7F; // NR30
-        gb->memory.ioregs[0x1B] = 0xFF; // NR31
-        gb->memory.ioregs[0x1C] = 0x9F; // NR32
-        gb->memory.ioregs[0x1E] = 0xBF; // NR33
-        gb->memory.ioregs[0x20] = 0xFF; // NR41
-        gb->memory.ioregs[0x21] = 0x00; // NR42
-        gb->memory.ioregs[0x22] = 0x00; // NR43
-        gb->memory.ioregs[0x23] = 0xBF; // NR30
-        gb->memory.ioregs[0x24] = 0x77; // NR50
-        gb->memory.ioregs[0x25] = 0xF3; // NR51
-        gb->memory.ioregs[0x26] = 0xF1; // NR52
+        sound_reg_writeb(SOUND_NR10, 0x80, gb);
+        sound_reg_writeb(SOUND_NR11, 0xBF, gb);
+        sound_reg_writeb(SOUND_NR12, 0xF3, gb);
+        sound_reg_writeb(SOUND_NR14, 0xBF, gb);
+        sound_reg_writeb(SOUND_NR21, 0x3F, gb);
+        sound_reg_writeb(SOUND_NR22, 0x00, gb);
+        sound_reg_writeb(SOUND_NR24, 0xBF, gb);
+        sound_reg_writeb(SOUND_NR30, 0x7F, gb);
+        sound_reg_writeb(SOUND_NR31, 0xFF, gb);
+        sound_reg_writeb(SOUND_NR32, 0x9F, gb);
+        sound_reg_writeb(SOUND_NR33, 0xBF, gb);
+        sound_reg_writeb(SOUND_NR41, 0xFF, gb);
+        sound_reg_writeb(SOUND_NR42, 0x00, gb);
+        sound_reg_writeb(SOUND_NR43, 0x00, gb);
+        sound_reg_writeb(SOUND_NR44, 0xBF, gb);
+        sound_reg_writeb(SOUND_NR50, 0x77, gb);
+        sound_reg_writeb(SOUND_NR51, 0xF3, gb);
+        sound_reg_writeb(SOUND_NR52, 0xF1, gb);
 
         // LCD
         memset(&gb->screen, 0, sizeof(struct lcd_screen));
