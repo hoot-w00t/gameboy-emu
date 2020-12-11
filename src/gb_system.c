@@ -218,24 +218,24 @@ void gb_system_reset(bool enable_bootrom, gb_system_t *gb)
         timer_reg_writeb(TIM_TAC, 0, gb);
 
         // Sound
-        sound_reg_writeb(SOUND_NR10, 0x80, gb);
-        sound_reg_writeb(SOUND_NR11, 0xBF, gb);
-        sound_reg_writeb(SOUND_NR12, 0xF3, gb);
-        sound_reg_writeb(SOUND_NR14, 0xBF, gb);
-        sound_reg_writeb(SOUND_NR21, 0x3F, gb);
-        sound_reg_writeb(SOUND_NR22, 0x00, gb);
-        sound_reg_writeb(SOUND_NR24, 0xBF, gb);
-        sound_reg_writeb(SOUND_NR30, 0x7F, gb);
-        sound_reg_writeb(SOUND_NR31, 0xFF, gb);
-        sound_reg_writeb(SOUND_NR32, 0x9F, gb);
-        sound_reg_writeb(SOUND_NR33, 0xBF, gb);
-        sound_reg_writeb(SOUND_NR41, 0xFF, gb);
-        sound_reg_writeb(SOUND_NR42, 0x00, gb);
-        sound_reg_writeb(SOUND_NR43, 0x00, gb);
-        sound_reg_writeb(SOUND_NR44, 0xBF, gb);
-        sound_reg_writeb(SOUND_NR50, 0x77, gb);
-        sound_reg_writeb(SOUND_NR51, 0xF3, gb);
-        sound_reg_writeb(SOUND_NR52, 0xF1, gb);
+        (*((byte_t *) &gb->apu.regs.nr10)) = 0x80;
+        (*((byte_t *) &gb->apu.regs.nr11)) = 0xBF;
+        (*((byte_t *) &gb->apu.regs.nr12)) = 0xF3;
+        (*((byte_t *) &gb->apu.regs.nr14)) = 0xBF;
+        (*((byte_t *) &gb->apu.regs.nr21)) = 0x3F;
+        (*((byte_t *) &gb->apu.regs.nr22)) = 0x00;
+        (*((byte_t *) &gb->apu.regs.nr24)) = 0xBF;
+        (*((byte_t *) &gb->apu.regs.nr30)) = 0x7F;
+        (*((byte_t *) &gb->apu.regs.nr31)) = 0xFF;
+        (*((byte_t *) &gb->apu.regs.nr32)) = 0x9F;
+        (*((byte_t *) &gb->apu.regs.nr34)) = 0xBF;
+        (*((byte_t *) &gb->apu.regs.nr41)) = 0xFF;
+        (*((byte_t *) &gb->apu.regs.nr42)) = 0x00;
+        (*((byte_t *) &gb->apu.regs.nr43)) = 0x00;
+        (*((byte_t *) &gb->apu.regs.nr44)) = 0xBF;
+        (*((byte_t *) &gb->apu.regs.nr50)) = 0x77;
+        (*((byte_t *) &gb->apu.regs.nr51)) = 0xF3;
+        (*((byte_t *) &gb->apu.regs.nr52)) = 0xF1;
 
         // LCD
         memset(&gb->screen, 0, sizeof(struct lcd_screen));
