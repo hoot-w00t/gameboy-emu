@@ -22,6 +22,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _EMULATOR_H
 #define _EMULATOR_H
 
-int emulate_gameboy(gb_system_t *gb, const bool enable_audio);
+int emulate_gameboy(gb_system_t *gb, bool enable_audio);
 
 #endif

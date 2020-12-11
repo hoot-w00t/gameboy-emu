@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "xalloc.h"
 #include "gb_system.h"
 #include "cpu/cpu.h"
 #include "cpu/registers.h"
@@ -32,9 +33,11 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <SDL_audio.h>
 #include <SDL_ttf.h>
 
-#define audio_sample_rate (48000)
-#define audio_buffer_size (1024)
-#define audio_sample_time (1.0 / (double) audio_sample_rate)
+#define audio_sample_rate        (48000)
+#define audio_buffer_samples     (audio_sample_rate / 60)
+#define audio_buffer_size        (audio_buffer_samples * sizeof(float))
+#define audio_sample_duration    (1.0 / (double) audio_sample_rate)
+#define audio_sample_duration_ms (1000.0 / (double) audio_sample_rate)
 
 // TODO: Add customizable key mappings
 
@@ -101,7 +104,9 @@ static size_t clocks_per_second = 0;
 static uint32_t clock_speed = CPU_CLOCK_SPEED; // 4.194304 MHz
 static uint32_t frameskip = 0;
 
+static SDL_AudioDeviceID audio_devid = 0;
 static int audio_pos = 0;
+static bool audio_mute = false;
 static double audio_volume = 0.5;
 static const double audio_volume_step = 0.05;
 #define audio_amp (audio_volume * 0.5)
@@ -109,7 +114,7 @@ static const double audio_volume_step = 0.05;
 static double audio_time(void)
 {
     static double atime = 0.0;
-    return (atime += audio_sample_time);
+    return (atime += audio_sample_duration);
 }
 
 // Update window title
@@ -346,7 +351,7 @@ void emulate_clocks(gb_system_t *gb, float *audio_buffer)
             remaining_clocks = clock_speed - clocks_per_second;
 
         // Calculate when to generate an audio sample
-        audio_clock_delay = remaining_clocks / audio_buffer_size;
+        audio_clock_delay = remaining_clocks / audio_buffer_samples;
         audio_remaining_clocks = 0;
 
         // Calculate when to clock LFSR
@@ -374,7 +379,7 @@ void emulate_clocks(gb_system_t *gb, float *audio_buffer)
                 // Only generate audio samples if an audio_buffer is given
                 if (audio_remaining_clocks > 0) {
                     audio_remaining_clocks -= 1;
-                } else if (audio_pos < audio_buffer_size) {
+                } else if (audio_pos < audio_buffer_samples) {
                     audio_remaining_clocks = audio_clock_delay;
                     audio_buffer[audio_pos++] = (float) apu_generate_sample(audio_time(), audio_amp, gb);
                 }
@@ -396,6 +401,16 @@ void update_windows(gb_system_t *gb)
 {
     if (pause_emulation) {
         update_window_title(lcd_win, "GameBoy (paused)");
+    } else if (audio_devid == 0) {
+        update_window_title(lcd_win, "GameBoy (%.06f MHz: %.02f%%, %u fps, audio off)",
+            lcd_win_clock_freq,
+            lcd_win_clock_speed,
+            lcd_win_framerate);
+    } else if (audio_mute) {
+        update_window_title(lcd_win, "GameBoy (%.06f MHz: %.02f%%, %u fps, volume: muted)",
+            lcd_win_clock_freq,
+            lcd_win_clock_speed,
+            lcd_win_framerate);
     } else {
         update_window_title(lcd_win, "GameBoy (%.06f MHz: %.02f%%, %u fps, volume: %.f%%)",
             lcd_win_clock_freq,
@@ -508,31 +523,41 @@ int emulator_loop(gb_system_t *gb)
     return 0;
 }
 
-// Main emulator loop (timed using SDL audio callbacks)
-void emulator_audio_loop(void *userdata,
-                         Uint8 *stream,
-                         __attribute__((unused)) int len)
+// Main emulator loop (timed using audio queue)
+int emulator_audio_loop(gb_system_t *gb)
 {
-    gb_system_t *gb = (gb_system_t *) userdata;
-    float *audio_buffer = (float *) stream;
+    float *audio_buffer = xalloc(audio_buffer_size);
+    Uint32 audio_pending, audio_delay;
 
-    if (stop_emulation)
-        return;
+    SDL_PauseAudioDevice(audio_devid, 0);
+    while (!stop_emulation) {
+        audio_mute = clock_speed > CPU_CLOCK_SPEED;
+        audio_pos = 0;
+        emulate_clocks(gb, audio_mute ? NULL : audio_buffer);
+        handle_events(gb);
+        update_windows(gb);
 
-    audio_pos = 0;
-    emulate_clocks(gb, audio_buffer);
-    handle_events(gb);
-    update_windows(gb);
+        if (pause_emulation || audio_mute) {
+            // Mute the audio when paused
+            for (int i = 0; i < audio_buffer_samples; ++i)
+                audio_buffer[i] = 0;
+        } else {
+            // Fill any remaining samples
+            while (audio_pos < audio_buffer_samples)
+                audio_buffer[audio_pos++] = (float) apu_generate_sample(audio_time(), audio_amp, gb);
+        }
 
-    if (pause_emulation) {
-        // Mute the audio when paused
-        for (int i = 0; i < audio_buffer_size; ++i)
-            audio_buffer[i] = 0;
-    } else {
-        // Fill any remaining samples
-        while (audio_pos < audio_buffer_size)
-            audio_buffer[audio_pos++] = (float) apu_generate_sample(audio_time(), audio_amp, gb);
+        // Wait for the queue to be empty before queuing more samples
+        while ((audio_pending = SDL_GetQueuedAudioSize(audio_devid)) > 0) {
+            audio_delay = (audio_sample_duration_ms * (audio_pending / sizeof(float))) / 4;
+            SDL_Delay(audio_delay);
+            handle_events(gb);
+        }
+        SDL_QueueAudio(audio_devid, audio_buffer, audio_buffer_size);
     }
+
+    free(audio_buffer);
+    return 0;
 }
 
 // Emulate GameBoy system loaded in *gb
@@ -540,7 +565,7 @@ void emulator_audio_loop(void *userdata,
 // Returns < 0 on initialization error
 // Returns 0 on success
 // Returns > 0 on error during emulation
-int emulate_gameboy(gb_system_t *gb, const bool enable_audio)
+int emulate_gameboy(gb_system_t *gb, bool enable_audio)
 {
     SDL_AudioSpec audiospec;
     SDL_RWops *fontrwo;
@@ -563,15 +588,13 @@ int emulate_gameboy(gb_system_t *gb, const bool enable_audio)
         audiospec.freq = audio_sample_rate;
         audiospec.format = AUDIO_F32SYS;
         audiospec.channels = 1;
-        audiospec.samples = audio_buffer_size;
-        audiospec.callback = &emulator_audio_loop;
+        audiospec.samples = audio_buffer_samples;
+        audiospec.callback = NULL;
         audiospec.userdata = gb;
 
-        if (SDL_OpenAudio(&audiospec, NULL) < 0) {
-            fprintf(stderr, "SDL_OpenAudio: %s\n", SDL_GetError());
-            return -1;
+        if (!(audio_devid = SDL_OpenAudioDevice(NULL, 0, &audiospec, NULL, 0))) {
+            fprintf(stderr, "SDL_OpenAudioDevice: %s\n", SDL_GetError());
         }
-        SDL_PauseAudio(1);
     }
 
     if (!(fontrwo = SDL_RWFromConstMem(ModernDOS8x16_ttf,
@@ -608,15 +631,11 @@ int emulate_gameboy(gb_system_t *gb, const bool enable_audio)
         mmu_battery_load(gb);
 
     printf("Emulating: %s\n", gb->cartridge.title);
-    if (enable_audio) {
-        SDL_PauseAudio(0);
-        while (!stop_emulation)
-            SDL_Delay(200);
-        SDL_PauseAudio(1);
+    if (audio_devid) {
+        emulator_audio_loop(gb);
     } else {
         emulator_loop(gb);
     }
-
     printf("Emulation stopped\n");
 
     if (gb->memory.mbc_battery)
