@@ -23,7 +23,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _APU_APU_H
 #define _APU_APU_H
 
-#define PI (3.14159265358979323846)
+#define PI        (3.14159265358979323846)
+#define PI_HALF   (1.57079632679489661923)
 #define AMP_HIGH  (1.0)
 #define AMP_LOW   (0.0)
 
@@ -52,6 +53,23 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 // Calculate frequency in Hz for Tone channels 1 and 2
 #define apu_tone_freq(freq_11) (131072.0 / (2048.0 - (double) freq_11))
 
+// Calculate Wave channel sound length
+#define apu_wave_sound_length(t1) ((double) (256 - t1) * (1.0 / 256.0))
+
+// Calculate Wave channel frequency
+#define apu_wave_freq(freq_11) ((double) (65536 / (2048 - freq_11)))
+
+// Calculate Wave channel sample period (duration) in seconds
+#define apu_wave_period(freq) (1.0 / freq)
+
+// Return the selected 4-bit sample
+// n is the sample index (0-31)
+// wpram points to gb->apu.regs.wave_pattern_ram
+#define apu_wave_sample(n,wpram) ((n % 2) ? (wpram[(n / 2)].s1) : (wpram[(n / 2)].s0))
+
+// Return audio sample from a 4-bit unsigned sample
+#define apu_wave_audio_sample(s) (((double) (s) - 8.0) / 8.0)
+
 #define apu_noise_r(r) ((r) ? (r) : (0.5))
 #define apu_noise_freq(r,s) (524288.0 / apu_noise_r(r) / pow(2.0, (double) (s + 1)))
 
@@ -61,6 +79,12 @@ static inline double pulse_sample(const double atime,
                                   const double duty)
 {
     return sin(frequency * 2 * PI * atime) > duty ? AMP_HIGH : AMP_LOW;
+}
+
+// Generate a sawtooth wave sample
+static inline double sawtooth_sample(const double atime, const double frequency)
+{
+    return ((frequency * PI * fmod(atime, 1.0 / frequency)) - PI_HALF) / (PI * 2.0);
 }
 
 void apu_lfsr_clock(gb_system_t *gb);

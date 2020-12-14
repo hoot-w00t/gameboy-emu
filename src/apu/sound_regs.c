@@ -98,6 +98,7 @@ bool sound_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 
         case SOUND_NR13:
             (*((byte_t *) &gb->apu.regs.nr13)) = value;
+            gb->apu.ch1.freq = apu_tone_freq(apu_freq11(gb->apu.regs.nr13, gb->apu.regs.nr14));
             return true;
 
         case SOUND_NR14:
@@ -134,12 +135,26 @@ bool sound_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
             sound_reg_trigger_event(value, gb);
             return true;
 
-        case SOUND_NR30: (*((byte_t *) &gb->apu.regs.nr30)) = value; return true;
-        case SOUND_NR31: (*((byte_t *) &gb->apu.regs.nr31)) = value; return true;
+        case SOUND_NR30:
+            (*((byte_t *) &gb->apu.regs.nr30)) = value;
+            if (gb->apu.regs.nr30.active)
+                gb->apu.regs.nr52.ch3_on = 1;
+            return true;
+
+        case SOUND_NR31:
+            (*((byte_t *) &gb->apu.regs.nr31)) = value;
+            gb->apu.ch3.length = apu_wave_sound_length(gb->apu.regs.nr31.sound_length);
+            return true;
+
         case SOUND_NR32: (*((byte_t *) &gb->apu.regs.nr32)) = value; return true;
-        case SOUND_NR33: (*((byte_t *) &gb->apu.regs.nr33)) = value; return true;
+        case SOUND_NR33:
+            (*((byte_t *) &gb->apu.regs.nr33)) = value;
+            gb->apu.ch3.freq = apu_wave_freq(apu_freq11(gb->apu.regs.nr33, gb->apu.regs.nr34));
+            return true;
+
         case SOUND_NR34:
             (*((byte_t *) &gb->apu.regs.nr34)) = value;
+            gb->apu.ch3.freq = apu_wave_freq(apu_freq11(gb->apu.regs.nr33, gb->apu.regs.nr34));
             sound_reg_trigger_event(value, gb);
             return true;
 
@@ -165,6 +180,12 @@ bool sound_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
         case SOUND_NR51: (*((byte_t *) &gb->apu.regs.nr51)) = value; return true;
         case SOUND_NR52:
             gb->apu.regs.nr52.sound_on = (value >> 7);
+            if (!gb->apu.regs.nr52.sound_on) {
+                gb->apu.regs.nr52.ch1_on = 0;
+                gb->apu.regs.nr52.ch2_on = 0;
+                gb->apu.regs.nr52.ch3_on = 0;
+                gb->apu.regs.nr52.ch4_on = 0;
+            }
             return true;
 
         default:

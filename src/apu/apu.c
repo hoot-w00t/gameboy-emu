@@ -82,6 +82,58 @@ static inline double ch2_sample(const double atime, gb_system_t *gb)
     return apu_volume_percent(gb->apu.ch2.volume) * pulse_sample(atime, gb->apu.ch2.freq, gb->apu.ch2.duty);
 }
 
+static byte_t ch3_selected_sample(const byte_t nb, gb_system_t *gb)
+{
+    byte_t s = apu_wave_sample(nb % 32, gb->apu.regs.wave_pattern_ram);
+
+    switch (gb->apu.regs.nr32.output_level) {
+        case 0: s = 0; break;
+        case 1: break;
+        case 2: s >>= 1; break;
+        case 3: s >>= 2; break;
+    }
+    return s;
+}
+
+static inline void ch3_select_next_sample(const double atime, gb_system_t *gb)
+{
+    gb->apu.ch3.last_sample = ch3_selected_sample(gb->apu.ch3.selected_sample, gb);
+    gb->apu.ch3.period = apu_wave_period(gb->apu.ch3.freq);
+    gb->apu.ch3.ptime = atime + gb->apu.ch3.period;
+    if ((gb->apu.ch3.selected_sample += 1) >= 32)
+        gb->apu.ch3.selected_sample = 0;
+}
+
+static inline double ch3_sample(const double atime, gb_system_t *gb)
+{
+    if (gb->apu.regs.nr34.initial) {
+        gb->apu.regs.nr34.initial = 0;
+        gb->apu.regs.nr52.ch3_on = 1;
+        gb->apu.ch3.stop_at = atime + gb->apu.ch3.length;
+        gb->apu.ch3.selected_sample = 0;
+        ch3_select_next_sample(atime, gb);
+    }
+
+    if (!gb->apu.regs.nr30.active || !gb->apu.regs.nr52.ch3_on || (gb->apu.regs.nr34.counter_select && atime >= gb->apu.ch3.stop_at)) {
+        gb->apu.regs.nr52.ch3_on = 0;
+        return 0.0;
+    }
+
+    if (atime >= gb->apu.ch3.ptime)
+        ch3_select_next_sample(atime, gb);
+
+    // TODO: Interpolate the samples, otherwise it sounds horrible
+    //return apu_wave_audio_sample(gb->apu.ch3.last_sample) * AMP_HIGH;
+
+    // Return a sawtooth wave of the playback frequency
+    switch (gb->apu.regs.nr32.output_level) {
+        case 0: return 0.0;
+        case 1: return sawtooth_sample(atime, gb->apu.ch3.freq) * 1.00 * AMP_HIGH;
+        case 2: return sawtooth_sample(atime, gb->apu.ch3.freq) * 0.50 * AMP_HIGH;
+        case 3: return sawtooth_sample(atime, gb->apu.ch3.freq) * 0.25 * AMP_HIGH;
+    }
+}
+
 static inline double ch4_sample(const double atime, gb_system_t *gb)
 {
     if (gb->apu.regs.nr44.initial) {
@@ -102,7 +154,7 @@ static inline double ch4_sample(const double atime, gb_system_t *gb)
 
     if ((gb->apu.lfsr & 0x1))
         return 0.0;
-    return apu_volume_percent(gb->apu.ch4.volume) * 1.0;
+    return apu_volume_percent(gb->apu.ch4.volume) * AMP_HIGH;
 }
 
 void apu_lfsr_clock(gb_system_t *gb)
@@ -144,6 +196,12 @@ double apu_generate_sample(const double atime,
         sample += so1_volume * ch2_sample(atime, gb);
     } else if (gb->apu.regs.nr51.ch2_to_so2) {
         sample += so2_volume * ch2_sample(atime, gb);
+    }
+
+    if (gb->apu.regs.nr51.ch3_to_so1) {
+        sample += so1_volume * ch3_sample(atime, gb);
+    } else if (gb->apu.regs.nr51.ch3_to_so2) {
+        sample += so2_volume * ch3_sample(atime, gb);
     }
 
     if (gb->apu.regs.nr51.ch4_to_so1) {
