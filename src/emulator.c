@@ -18,16 +18,16 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "xalloc.h"
+#include "emulator_utils.h"
+#include "emulator_events.h"
+#include "cpu_view.h"
 #include "gb_system.h"
 #include "cpu/cpu.h"
-#include "cpu/registers.h"
-#include "cpu/opcodes.h"
+#include "mmu/mmu.h"
 #include "ppu/ppu.h"
 #include "apu/apu.h"
-#include "mmu/mmu.h"
 #include "joypad.h"
 #include "serial.h"
-#include "moderndos8x16_ttf.h"
 #include <stdio.h>
 #include <SDL.h>
 #include <SDL_audio.h>
@@ -41,92 +41,34 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 // TODO: Add customizable key mappings
 
-static struct keymap {
-    SDL_Scancode gb_left;
-    SDL_Scancode gb_right;
-    SDL_Scancode gb_up;
-    SDL_Scancode gb_down;
-    SDL_Scancode gb_a;
-    SDL_Scancode gb_b;
-    SDL_Scancode gb_select;
-    SDL_Scancode gb_start;
-    SDL_Scancode emu_pause;
-    SDL_Scancode emu_speed;
-    SDL_Scancode emu_slow;
-    SDL_Scancode emu_debug;
-    SDL_Scancode emu_exit;
-    SDL_Scancode emu_zoom_in;
-    SDL_Scancode emu_zoom_out;
-    SDL_Scancode emu_vol_up;
-    SDL_Scancode emu_vol_down;
-} keymap = {
-    .gb_left       = SDL_SCANCODE_A,
-    .gb_right      = SDL_SCANCODE_D,
-    .gb_up         = SDL_SCANCODE_Z,
-    .gb_down       = SDL_SCANCODE_S,
-    .gb_a          = SDL_SCANCODE_L,
-    .gb_b          = SDL_SCANCODE_K,
-    .gb_select     = SDL_SCANCODE_RSHIFT,
-    .gb_start      = SDL_SCANCODE_RETURN,
-    .emu_pause     = SDL_SCANCODE_SPACE,
-    .emu_speed     = SDL_SCANCODE_N,
-    .emu_slow      = SDL_SCANCODE_H,
-    .emu_debug     = SDL_SCANCODE_B,
-    .emu_exit      = SDL_SCANCODE_ESCAPE,
-    .emu_zoom_in   = SDL_SCANCODE_9,
-    .emu_zoom_out  = SDL_SCANCODE_8,
-    .emu_vol_up    = SDL_SCANCODE_7,
-    .emu_vol_down  = SDL_SCANCODE_6
-};
+static SDL_Window  *lcd_win             = NULL;
+static SDL_Surface *lcd_surface         = NULL;
+static uint32_t     lcd_pixel_size      = 4;
+static uint32_t    *lcd_pixels          = NULL;
+static double       lcd_win_clock_freq  = 0.0;
+static double       lcd_win_clock_speed = 0.0;
+static uint32_t     lcd_win_framerate   = 0;
 
-static TTF_Font *font = NULL;
-
-static const int debug_win_width = 500;
-static const int debug_win_height = 500;
-static SDL_Window *debug_win = NULL;
-static uint32_t debug_win_id = 0;
-static SDL_Renderer *debug_ren = NULL;
-
-static SDL_Window *lcd_win = NULL;
-static uint32_t lcd_win_id = 0;
-static SDL_Surface *lcd_surface = NULL;
-static uint32_t lcd_pixel_size = 4;
-static uint32_t *lcd_pixels = NULL;
-static double lcd_win_clock_freq = 0.0;
-static double lcd_win_clock_speed = 0.0;
-static uint32_t lcd_win_framerate = 0;
-
-static bool stop_emulation = false;
-static bool pause_emulation = false;
+static bool     stop_emulation    = false;
+static bool     pause_emulation   = false;
 static uint32_t frames_per_second = 0;
 
-static size_t clocks_per_second = 0;
-static uint32_t clock_speed = CPU_CLOCK_SPEED; // 4.194304 MHz
-static uint32_t frameskip = 0;
+static size_t   clocks_per_second = 0;
+static uint32_t clock_speed       = CPU_CLOCK_SPEED;
+static uint32_t frameskip         = 0;
 
-static SDL_AudioDeviceID audio_devid = 0;
-static int audio_pos = 0;
-static bool audio_mute = false;
-static double audio_volume = 0.5;
-static const double audio_volume_step = 0.05;
-#define audio_amp (audio_volume * 0.5)
+static SDL_AudioDeviceID audio_devid       = 0;
+static int               audio_pos         = 0;
+static bool              audio_mute        = false;
+static double            audio_volume      = 0.5;
+static const double      audio_volume_step = 0.05;
+#define audio_amp       (audio_volume * 0.5)
 
+// Returns the elapsed audio time in seconds since the program start
 static double audio_time(void)
 {
     static double atime = 0.0;
     return (atime += audio_sample_duration);
-}
-
-// Update window title
-void update_window_title(SDL_Window *win, const char *format, ...)
-{
-    char title[256];
-    va_list ap;
-
-    va_start(ap, format);
-    vsnprintf(title, sizeof(title), format, ap);
-    va_end(ap);
-    SDL_SetWindowTitle(win, title);
 }
 
 // Update pixel size, resize window and update surface
@@ -145,77 +87,6 @@ void update_pixel_size(uint32_t size)
         }
         lcd_pixels = (uint32_t *) lcd_surface->pixels;
     }
-}
-
-// Draw text using *font
-void draw_text(SDL_Renderer *ren, int x, int y, const char *format, ...)
-{
-    SDL_Surface *surface;
-    SDL_Texture *texture;
-    SDL_Rect rect;
-    char text[256];
-    va_list ap;
-
-    va_start(ap, format);
-    vsnprintf(text, sizeof(text), format, ap);
-    va_end(ap);
-    surface = TTF_RenderText_Solid(font, text, (SDL_Color) {0, 0, 0, 255});
-    texture = SDL_CreateTextureFromSurface(ren, surface);
-    rect.x = x;
-    rect.y = y;
-    TTF_SizeText(font, text, &rect.w, &rect.h);
-    SDL_RenderCopy(ren, texture, NULL, &rect);
-    SDL_FreeSurface(surface);
-    SDL_DestroyTexture(texture);
-}
-
-// Render the debug panel
-void render_debug(gb_system_t *gb)
-{
-    int coll = 5;
-    int colr = coll + ((debug_win_width - 5) / 2);
-    int w4 = (debug_win_width - 5) / 4;
-    int w3 = (debug_win_width - 5) / 3;
-    int line_height = TTF_FontHeight(font);
-    const opcode_t *opcode;
-    byte_t pc_byte;
-
-    if ((pc_byte = mmu_readb_nolog(gb->pc, gb)) == 0xCB) {
-        opcode = opcode_cb_identify(mmu_readb_nolog(gb->pc + 1, gb));
-    } else {
-        opcode = opcode_identify(pc_byte);
-    }
-
-    SDL_SetRenderDrawColor(debug_ren, 255, 204, 153, 255);
-    SDL_RenderClear(debug_ren);
-    draw_text(debug_ren, coll, line_height * 0, "Cycle #%lu", gb->cycle_nb);
-    draw_text(debug_ren, coll, line_height * 1, "PC: $%04X", gb->pc);
-    draw_text(debug_ren, colr, line_height * 1, "SP: $%04X", gb->sp);
-    draw_text(debug_ren, coll, line_height * 2, "A: $%02X", reg_readb(REG_A, gb));
-    draw_text(debug_ren, colr, line_height * 2, "F: $%02X", reg_readb(REG_F, gb));
-    draw_text(debug_ren, coll, line_height * 3, "B: $%02X", reg_readb(REG_B, gb));
-    draw_text(debug_ren, colr, line_height * 3, "C: $%02X", reg_readb(REG_C, gb));
-    draw_text(debug_ren, coll, line_height * 4, "D: $%02X", reg_readb(REG_D, gb));
-    draw_text(debug_ren, colr, line_height * 4, "E: $%02X", reg_readb(REG_E, gb));
-    draw_text(debug_ren, coll, line_height * 5, "H: $%02X", reg_readb(REG_H, gb));
-    draw_text(debug_ren, colr, line_height * 5, "L: $%02X", reg_readb(REG_L, gb));
-    draw_text(debug_ren, coll,          line_height * 6, "Z: %i", reg_flag(FLAG_Z, gb));
-    draw_text(debug_ren, coll + w4,     line_height * 6, "H: %i", reg_flag(FLAG_H, gb));
-    draw_text(debug_ren, coll + w4 * 2, line_height * 6, "N: %i", reg_flag(FLAG_N, gb));
-    draw_text(debug_ren, coll + w4 * 3, line_height * 6, "C: %i", reg_flag(FLAG_C, gb));
-    draw_text(debug_ren, coll,          line_height * 7, "IME: %u", gb->interrupts.ime);
-    draw_text(debug_ren, coll + w3,     line_height * 7, "IE: $%02X", gb->interrupts.ie_reg);
-    draw_text(debug_ren, coll + w3 * 2, line_height * 7, "IF: $%02X", gb->interrupts.if_reg);
-    if (gb->halt) draw_text(debug_ren, coll, line_height * 8, "Halted");
-    if (gb->stop) draw_text(debug_ren, colr, line_height * 8, "Stopped");
-    draw_text(debug_ren, coll, line_height * 10, "Next instruction:");
-    if (opcode) {
-        draw_text(debug_ren, coll, line_height * 11, opcode->mnemonic);
-        draw_text(debug_ren, coll, line_height * 12, opcode->comment);
-    } else {
-        draw_text(debug_ren, coll, line_height * 11, "Illegal ($%02X)", pc_byte);
-    }
-    SDL_RenderPresent(debug_ren);
 }
 
 // Render the GameBoy framebuffer to the lcd_win framebuffer
@@ -265,51 +136,22 @@ void set_clock_speed(uint32_t speed)
 // Handle SDL input for the joypad
 void handle_joypad_input(SDL_Event *e, const bool pressed, gb_system_t *gb)
 {
-    if (e->key.keysym.scancode == keymap.gb_up) {
+    if (e->key.keysym.scancode == emu_keymap.gb_up) {
         joypad_button(BTN_UP, pressed, gb);
-    } else if (e->key.keysym.scancode == keymap.gb_down) {
+    } else if (e->key.keysym.scancode == emu_keymap.gb_down) {
         joypad_button(BTN_DOWN, pressed, gb);
-    } else if (e->key.keysym.scancode == keymap.gb_right) {
+    } else if (e->key.keysym.scancode == emu_keymap.gb_right) {
         joypad_button(BTN_RIGHT, pressed, gb);
-    } else if (e->key.keysym.scancode == keymap.gb_left) {
+    } else if (e->key.keysym.scancode == emu_keymap.gb_left) {
         joypad_button(BTN_LEFT, pressed, gb);
-    } else if (e->key.keysym.scancode == keymap.gb_a) {
+    } else if (e->key.keysym.scancode == emu_keymap.gb_a) {
         joypad_button(BTN_A, pressed, gb);
-    } else if (e->key.keysym.scancode == keymap.gb_b) {
+    } else if (e->key.keysym.scancode == emu_keymap.gb_b) {
         joypad_button(BTN_B, pressed, gb);
-    } else if (e->key.keysym.scancode == keymap.gb_select) {
+    } else if (e->key.keysym.scancode == emu_keymap.gb_select) {
         joypad_button(BTN_SELECT, pressed, gb);
-    } else if (e->key.keysym.scancode == keymap.gb_start) {
+    } else if (e->key.keysym.scancode == emu_keymap.gb_start) {
         joypad_button(BTN_START, pressed, gb);
-    }
-}
-
-// Open debug window
-void debug_open(void)
-{
-    if (!debug_win && !debug_ren) {
-        SDL_CreateWindowAndRenderer(debug_win_width, debug_win_height, 0, &debug_win, &debug_ren);
-        if (!debug_win || !debug_ren) {
-            fprintf(stderr, "SDL_CreateWindowAndRenderer: %s\n", SDL_GetError());
-            if (debug_ren) SDL_DestroyRenderer(debug_ren);
-            if (debug_win) SDL_DestroyWindow(debug_win);
-            debug_ren = NULL;
-            debug_win = NULL;
-            return;
-        }
-        debug_win_id = SDL_GetWindowID(debug_win);
-        update_window_title(debug_win, "Debug");
-    }
-}
-
-// Close debug window
-void debug_close(void)
-{
-    if (debug_win) {
-        SDL_DestroyRenderer(debug_ren);
-        SDL_DestroyWindow(debug_win);
-        debug_ren = NULL;
-        debug_win = NULL;
     }
 }
 
@@ -419,8 +261,65 @@ void update_windows(gb_system_t *gb)
             (float) (audio_volume * 100.0));
     }
 
-    if (debug_win)
-        render_debug(gb);
+    if (emu_windows[EMU_WINDOWS_CPU_VIEW].win)
+        cpu_view_render(gb);
+}
+
+// Handle main window event
+void lcd_event(SDL_Event *e, gb_system_t *gb)
+{
+    switch (e->type) {
+        case SDL_WINDOWEVENT:
+            if (e->window.event == SDL_WINDOWEVENT_CLOSE)
+                stop_emulation = true;
+            break;
+
+        case SDL_KEYDOWN:
+            if (e->key.keysym.scancode == emu_keymap.emu_exit) {
+                stop_emulation = true;
+            } else if (e->key.keysym.scancode == emu_keymap.emu_pause) {
+                pause_emulation = !pause_emulation;
+                update_windows(gb);
+            } else if (e->key.keysym.scancode == emu_keymap.emu_speed) {
+                set_clock_speed(CPU_CLOCK_SPEED * 4);
+            } else if (e->key.keysym.scancode == emu_keymap.emu_slow) {
+                set_clock_speed(CPU_CLOCK_SPEED / 4);
+            } else if (e->key.keysym.scancode == emu_keymap.emu_zoom_in) {
+                update_pixel_size(lcd_pixel_size + 1);
+            } else if (e->key.keysym.scancode == emu_keymap.emu_zoom_out) {
+                update_pixel_size(lcd_pixel_size - 1);
+            } else if (e->key.keysym.scancode == emu_keymap.emu_vol_up) {
+                if ((audio_volume += audio_volume_step) > 1.0)
+                    audio_volume = 1.0;
+                update_windows(gb);
+            } else if (e->key.keysym.scancode == emu_keymap.emu_vol_down) {
+                if (audio_volume <= audio_volume_step) {
+                    audio_volume = 0.0;
+                } else {
+                    audio_volume -= audio_volume_step;
+                }
+                update_windows(gb);
+            } else if (e->key.keysym.scancode == emu_keymap.emu_cpu_view) {
+                if (emu_windows[EMU_WINDOWS_CPU_VIEW].win) {
+                    cpu_view_close();
+                } else {
+                    cpu_view_open();
+                }
+            } else {
+                handle_joypad_input(e, true, gb);
+            }
+            break;
+
+        case SDL_KEYUP:
+            if (e->key.keysym.scancode == emu_keymap.emu_speed || e->key.keysym.scancode == emu_keymap.emu_slow) {
+                set_clock_speed(CPU_CLOCK_SPEED);
+            } else {
+                handle_joypad_input(e, false, gb);
+            }
+            break;
+
+        default: break;
+    }
 }
 
 // Handle SDL events
@@ -434,63 +333,10 @@ void handle_events(gb_system_t *gb)
             return;
         }
 
-        if (e.window.windowID == lcd_win_id) {
-            switch (e.type) {
-                case SDL_WINDOWEVENT:
-                    if (e.window.event == SDL_WINDOWEVENT_CLOSE)
-                        stop_emulation = true;
-                    break;
-
-                case SDL_KEYDOWN:
-                    if (e.key.keysym.scancode == keymap.emu_exit) {
-                        stop_emulation = true;
-                    } else if (e.key.keysym.scancode == keymap.emu_pause) {
-                        pause_emulation = !pause_emulation;
-                        update_windows(gb);
-                    } else if (e.key.keysym.scancode == keymap.emu_speed) {
-                        set_clock_speed(CPU_CLOCK_SPEED * 4);
-                    } else if (e.key.keysym.scancode == keymap.emu_slow) {
-                        set_clock_speed(CPU_CLOCK_SPEED / 4);
-                    } else if (e.key.keysym.scancode == keymap.emu_debug) {
-                        debug_win ? debug_close() : debug_open();
-                    } else if (e.key.keysym.scancode == keymap.emu_zoom_in) {
-                        update_pixel_size(lcd_pixel_size + 1);
-                    } else if (e.key.keysym.scancode == keymap.emu_zoom_out) {
-                        update_pixel_size(lcd_pixel_size - 1);
-                    } else if (e.key.keysym.scancode == keymap.emu_vol_up) {
-                        if ((audio_volume += audio_volume_step) > 1.0)
-                            audio_volume = 1.0;
-                        update_windows(gb);
-                    } else if (e.key.keysym.scancode == keymap.emu_vol_down) {
-                        if (audio_volume <= audio_volume_step) {
-                            audio_volume = 0.0;
-                        } else {
-                            audio_volume -= audio_volume_step;
-                        }
-                        update_windows(gb);
-                    } else {
-                        handle_joypad_input(&e, true, gb);
-                    }
-                    break;
-
-                case SDL_KEYUP:
-                    if (e.key.keysym.scancode == keymap.emu_speed || e.key.keysym.scancode == keymap.emu_slow) {
-                        set_clock_speed(CPU_CLOCK_SPEED);
-                    } else {
-                        handle_joypad_input(&e, false, gb);
-                    }
-                    break;
-
-                default: break;
-            }
-        } else if (e.window.windowID == debug_win_id) {
-            switch (e.type) {
-                case SDL_WINDOWEVENT:
-                    if (e.window.event == SDL_WINDOWEVENT_CLOSE)
-                        debug_close();
-                    break;
-
-                default: break;
+        for (int i = 0; i < EMU_WINDOWS_SIZE; ++i) {
+            if (emu_windows[i].win && emu_windows[i].id == e.window.windowID) {
+                if (emu_windows[i].handle_event)
+                    (*(emu_windows[i].handle_event))(&e, gb);
             }
         }
     }
@@ -568,9 +414,9 @@ int emulator_audio_loop(gb_system_t *gb)
 int emulate_gameboy(gb_system_t *gb, bool enable_audio)
 {
     SDL_AudioSpec audiospec;
-    SDL_RWops *fontrwo;
     Uint32 sdl_init_flags = SDL_INIT_VIDEO | SDL_INIT_EVENTS;
 
+    memset(emu_windows, 0, EMU_WINDOWS_SIZE * sizeof(struct emu_windows));
     if (enable_audio)
         sdl_init_flags |= SDL_INIT_AUDIO;
 
@@ -597,17 +443,6 @@ int emulate_gameboy(gb_system_t *gb, bool enable_audio)
         }
     }
 
-    if (!(fontrwo = SDL_RWFromConstMem(ModernDOS8x16_ttf,
-                                       ModernDOS8x16_ttf_len))) {
-        fprintf(stderr, "SDL_RWFromConstMem: %s\n", SDL_GetError());
-        return -1;
-    }
-
-    if (!(font = TTF_OpenFontRW(fontrwo, 1, 16))) {
-        fprintf(stderr, "TTF_OpenFont: %s\n", TTF_GetError());
-        return -1;
-    }
-
     if (!(lcd_win = SDL_CreateWindow("GameBoy",
             SDL_WINDOWPOS_UNDEFINED,
             SDL_WINDOWPOS_UNDEFINED,
@@ -617,7 +452,7 @@ int emulate_gameboy(gb_system_t *gb, bool enable_audio)
         fprintf(stderr, "SDL_CreateWindow: %s\n", SDL_GetError());
         return -1;
     }
-    lcd_win_id = SDL_GetWindowID(lcd_win);
+    emu_windows_set(EMU_WINDOWS_LCD, lcd_win, &lcd_event);
 
     if (!(lcd_surface = SDL_GetWindowSurface(lcd_win))) {
         fprintf(stderr, "SDL_GetWindowSurface: %s\n", SDL_GetError());
@@ -641,9 +476,8 @@ int emulate_gameboy(gb_system_t *gb, bool enable_audio)
     if (gb->memory.mbc_battery)
         mmu_battery_save(gb);
 
-    debug_close();
+    cpu_view_close();
     SDL_DestroyWindow(lcd_win);
-    TTF_CloseFont(font);
     TTF_Quit();
     SDL_Quit();
     return 0;

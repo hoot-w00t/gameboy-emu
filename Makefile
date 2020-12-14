@@ -8,7 +8,10 @@ BIN_NAME	=	gameboy
 SRC	=	logger.c				\
 		xalloc.c				\
 		main.c					\
+		emulator_utils.c		\
+		emulator_events.c		\
 		emulator.c				\
+		cpu_view.c				\
 		gb_system.c				\
 		cartridge.c				\
 		timer.c					\
