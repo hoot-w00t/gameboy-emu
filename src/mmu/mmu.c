@@ -230,7 +230,19 @@ bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb)
             gb->memory.mbc_readb = &mbc1_readb;
             gb->memory.mbc_writeb = &mbc1_writeb;
             gb->memory.mbc_regs = xzalloc(sizeof(mbc1_regs_t));
-            ((mbc1_regs_t *) gb->memory.mbc_regs)->large_ram_cart = (gb->memory.ram.bank_size * gb->memory.ram.max_bank_nb) > 8192;
+            ((mbc1_regs_t *) gb->memory.mbc_regs)->large_ram = (gb->memory.ram.bank_size * gb->memory.ram.max_bank_nb) > 8192;
+            ((mbc1_regs_t *) gb->memory.mbc_regs)->large_rom = (gb->cartridge.rom_banks > 32);
+            if (gb->cartridge.rom_banks <= 0x1) {
+                ((mbc1_regs_t *) gb->memory.mbc_regs)->rom_mask = 0x1;
+            } else if (gb->cartridge.rom_banks <= 0x3) {
+                ((mbc1_regs_t *) gb->memory.mbc_regs)->rom_mask = 0x3;
+            } else if (gb->cartridge.rom_banks <= 0x7) {
+                ((mbc1_regs_t *) gb->memory.mbc_regs)->rom_mask = 0x7;
+            } else if (gb->cartridge.rom_banks <= 0xF) {
+                ((mbc1_regs_t *) gb->memory.mbc_regs)->rom_mask = 0xF;
+            } else {
+                ((mbc1_regs_t *) gb->memory.mbc_regs)->rom_mask = 0x1F;
+            }
             return true;
 
         case 0x0F: // MBC3 + Timer + Battery

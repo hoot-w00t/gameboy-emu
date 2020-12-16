@@ -28,8 +28,11 @@ struct mbc1_regs {
     bool ram_select;
     bool ram_write_enabled;
     byte_t bank_upper_bits;
-    bool large_ram_cart;
-    byte_t large_rom_bank;
+    bool large_ram;
+    bool large_rom;
+    byte_t rom_bank;
+    byte_t rom_mask;
+    byte_t rom_0_bank;
 };
 
 int16_t mbc1_readb(uint16_t addr, gb_system_t *gb);
