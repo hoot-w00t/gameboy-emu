@@ -556,6 +556,8 @@ struct rambank {
     uint16_t banks_nb;  // Number of RAM banks in **banks
     uint16_t bank_size; // Size in bytes of each RAM bank
     uint16_t bank;      // Selected RAM bank for range $A000-$BFFF
+    bool can_read;      // Can the banks be accessed for reading
+    bool can_write;     // Can the banks be accessed for writing
 };
 
 struct mmu {

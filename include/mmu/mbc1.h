@@ -26,7 +26,6 @@ typedef struct mbc1_regs mbc1_regs_t;
 
 struct mbc1_regs {
     bool ram_select;
-    bool ram_write_enabled;
     byte_t bank_upper_bits;
     bool large_ram;
     bool large_rom;

@@ -56,12 +56,14 @@ void mbc1_ram_switch(gb_system_t *gb)
 bool mbc1_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
     if (addr <= 0x1FFF) {
-        if ((mbc1_regs->ram_write_enabled = ((value & 0xF) == 0xA))) {
+        if ((gb->memory.ram.can_write = ((value & 0xF) == 0xA))) {
             logger(LOG_DEBUG, "mbc1: RAM banking enabled");
             mbc1_ram_switch(gb);
         } else {
             logger(LOG_DEBUG, "mbc1: RAM banking disabled");
         }
+        gb->memory.ram.can_read = gb->memory.ram.can_write;
+
         return true;
 
     } else if (ADDR_IN_RANGE(addr, 0x2000, 0x3FFF)) {
@@ -84,10 +86,6 @@ bool mbc1_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
         return true;
 
     } else if (ADDR_IN_RANGE(addr, RAM_BANK_N_LADDR, RAM_BANK_N_UADDR)) {
-        if (!mbc1_regs->ram_write_enabled) {
-            logger(LOG_ERROR, "mbc1_writeb: RAM banks are disabled");
-            return true;
-        }
         return false; // Let mmu_internal handle it
 
     } else {

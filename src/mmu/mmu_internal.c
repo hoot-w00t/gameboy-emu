@@ -55,6 +55,10 @@ byte_t mmu_internal_readb(uint16_t addr, gb_system_t *gb)
             logger(LOG_ERROR, "mmu_readb failed: address $%04X: No RAM banks are available", addr);
             return 0;
         }
+        if (!gb->memory.ram.can_read) {
+            logger(LOG_ERROR, "mmu_readb failed: address $%04X: Reading is disabled for RAM banks", addr);
+            return 0;
+        }
         return gb->memory.ram.banks[gb->memory.ram.bank][addr - RAM_BANK_N_LADDR];
 
     } else if (ADDR_IN_RANGE(addr, OAM_LADDR, OAM_UADDR)) {
@@ -130,6 +134,10 @@ bool mmu_internal_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
     } else if (ADDR_IN_RANGE(addr, RAM_BANK_N_LADDR, RAM_BANK_N_UADDR)) {
         if (!rambank_exists(&gb->memory.ram)) {
             logger(LOG_ERROR, "mmu_writeb failed: address $%04X: No RAM banks are available", addr);
+            return false;
+        }
+        if (!gb->memory.ram.can_write) {
+            logger(LOG_ERROR, "mmu_writeb failed: address $%04X: Writing is disabled for RAM banks", addr);
             return false;
         }
         gb->memory.ram.banks[gb->memory.ram.bank][addr - RAM_BANK_N_LADDR] = value;

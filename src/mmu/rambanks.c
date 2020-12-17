@@ -37,6 +37,8 @@ void rambank_free(rambank_t *ramb)
 void rambank_alloc(uint16_t banks, uint16_t bank_size, rambank_t *ramb)
 {
     ramb->bank = 0;
+    ramb->can_read = false;
+    ramb->can_write = false;
     if (banks == 0) {
         ramb->banks_nb = 0;
         ramb->bank_size = 0;

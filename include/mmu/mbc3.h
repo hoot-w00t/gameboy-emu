@@ -47,7 +47,6 @@ struct mbc3_regs {
     struct rtc_regs rtc_latched;
     byte_t latch_reg;
     byte_t ram_bank;
-    bool ram_bank_enabled;
     uint16_t clocks;
     uint16_t clocks_per_second;
 };
