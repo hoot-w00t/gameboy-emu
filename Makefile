@@ -12,6 +12,7 @@ SRC	=	logger.c				\
 		emulator_events.c		\
 		emulator.c				\
 		cpu_view.c				\
+		mmu_view.c				\
 		gb_system.c				\
 		cartridge.c				\
 		timer.c					\

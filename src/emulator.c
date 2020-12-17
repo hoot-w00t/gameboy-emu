@@ -21,6 +21,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "emulator_utils.h"
 #include "emulator_events.h"
 #include "cpu_view.h"
+#include "mmu_view.h"
 #include "gb_system.h"
 #include "cpu/cpu.h"
 #include "mmu/mmu.h"
@@ -263,6 +264,8 @@ void update_windows(gb_system_t *gb)
 
     if (emu_windows[EMU_WINDOWS_CPU_VIEW].win)
         cpu_view_render(gb);
+    if (emu_windows[EMU_WINDOWS_MMU_VIEW].win)
+        mmu_view_render(gb);
 }
 
 // Handle main window event
@@ -304,6 +307,12 @@ void lcd_event(SDL_Event *e, gb_system_t *gb)
                     cpu_view_close();
                 } else {
                     cpu_view_open();
+                }
+            } else if (e->key.keysym.scancode == emu_keymap.emu_mmu_view) {
+                if (emu_windows[EMU_WINDOWS_MMU_VIEW].win) {
+                    mmu_view_close();
+                } else {
+                    mmu_view_open();
                 }
             } else {
                 handle_joypad_input(e, true, gb);
@@ -477,6 +486,7 @@ int emulate_gameboy(gb_system_t *gb, bool enable_audio)
         mmu_battery_save(gb);
 
     cpu_view_close();
+    mmu_view_close();
     SDL_DestroyWindow(lcd_win);
     TTF_Quit();
     SDL_Quit();

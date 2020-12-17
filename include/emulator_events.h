@@ -43,6 +43,7 @@ struct keymap {
     SDL_Scancode emu_vol_up;
     SDL_Scancode emu_vol_down;
     SDL_Scancode emu_cpu_view;
+    SDL_Scancode emu_mmu_view;
 };
 
 struct emu_windows {
@@ -51,11 +52,12 @@ struct emu_windows {
     handle_event_t handle_event;
 };
 
-#define EMU_WINDOWS_SIZE     (2)
+#define EMU_WINDOWS_SIZE     (3)
 
 enum emu_windows_index {
     EMU_WINDOWS_LCD      = 0,
-    EMU_WINDOWS_CPU_VIEW = 1
+    EMU_WINDOWS_CPU_VIEW = 1,
+    EMU_WINDOWS_MMU_VIEW = 2
 };
 
 #endif

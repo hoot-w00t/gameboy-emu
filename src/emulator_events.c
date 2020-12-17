@@ -41,7 +41,8 @@ struct keymap emu_keymap = {
     .emu_zoom_out  = SDL_SCANCODE_8,
     .emu_vol_up    = SDL_SCANCODE_7,
     .emu_vol_down  = SDL_SCANCODE_6,
-    .emu_cpu_view  = SDL_SCANCODE_1
+    .emu_cpu_view  = SDL_SCANCODE_1,
+    .emu_mmu_view  = SDL_SCANCODE_2
 };
 
 struct emu_windows emu_windows[EMU_WINDOWS_SIZE];
