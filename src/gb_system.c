@@ -100,7 +100,7 @@ byte_t *load_file(const char *filename, int *size)
 int load_rom(byte_t *rom, int size, gb_system_t *gb)
 {
     byte_t hdr_checksum;
-    uint32_t rom_bytes;
+    int rom_bytes;
 
     if (!cartridge_decode_hdr(rom, &gb->cartridge))
         return -1;
@@ -118,7 +118,7 @@ int load_rom(byte_t *rom, int size, gb_system_t *gb)
     }
 
     if ((rom_bytes = (gb->cartridge.rom_banks * ROM_BANK_SIZE)) != size) {
-        logger(LOG_ERROR, "load_rom: Expected ROM of %u bytes but %i bytes are loaded",
+        logger(LOG_ERROR, "load_rom: Expected ROM of %i bytes but %i bytes are loaded",
             rom_bytes,
             size);
         return -4;
