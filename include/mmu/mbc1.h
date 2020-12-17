@@ -32,10 +32,8 @@ struct mbc1_regs {
     bool large_rom;
     byte_t rom_bank;
     byte_t rom_mask;
-    byte_t rom_0_bank;
 };
 
-int16_t mbc1_readb(uint16_t addr, gb_system_t *gb);
 bool mbc1_writeb(uint16_t addr, byte_t value, gb_system_t *gb);
 
 #endif

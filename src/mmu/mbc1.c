@@ -20,27 +20,12 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "logger.h"
 #include "gameboy.h"
 #include "mmu/mbc1.h"
-#include "mmu/banks.h"
+#include "mmu/rombanks.h"
+#include "mmu/rambanks.h"
 
 #define mbc1_regs ((mbc1_regs_t *) gb->memory.mbc_regs)
 
 // TODO: Add support for MBC1m (Multi-Game Compilation Carts)
-
-int16_t mbc1_readb(uint16_t addr, gb_system_t *gb)
-{
-    if (addr <= ROM_BANK_0_UADDR) {
-        return membank_readb_bank(addr, mbc1_regs->rom_0_bank, &gb->memory.rom);
-
-    } else if (ADDR_IN_RANGE(addr, ROM_BANK_N_LADDR, ROM_BANK_N_UADDR)) {
-        return membank_readb(addr - ROM_BANK_N_LADDR, &gb->memory.rom);
-
-    } else if (ADDR_IN_RANGE(addr, RAM_BANK_N_LADDR, RAM_BANK_N_UADDR)) {
-        return membank_readb(addr - RAM_BANK_N_LADDR, &gb->memory.ram);
-
-    } else {
-        return -1;
-    }
-}
 
 void mbc1_rom_switch(gb_system_t *gb)
 {
@@ -49,8 +34,7 @@ void mbc1_rom_switch(gb_system_t *gb)
     if (mbc1_regs->large_rom && !mbc1_regs->ram_select)
         bank_nb |= mbc1_regs->bank_upper_bits;
 
-    logger(LOG_DEBUG, "mbc1: Switching to ROM bank $%02X", bank_nb);
-    membank_switch(bank_nb, &gb->memory.rom);
+    rombank_switch_n(bank_nb, &gb->memory.rom);
 }
 
 void mbc1_ram_switch(gb_system_t *gb)
@@ -58,17 +42,15 @@ void mbc1_ram_switch(gb_system_t *gb)
     byte_t bank_nb = 0;
 
     if (mbc1_regs->large_rom && !mbc1_regs->large_ram && mbc1_regs->ram_select) {
-        mbc1_regs->rom_0_bank = mbc1_regs->bank_upper_bits;
+        rombank_switch_0(mbc1_regs->bank_upper_bits, &gb->memory.rom);
     } else {
-        mbc1_regs->rom_0_bank = 0;
+        rombank_switch_0(0, &gb->memory.rom);
     }
-    logger(LOG_DEBUG, "mbc1: Switching $%04X-$%04X to ROM bank $%02X", mbc1_regs->rom_0_bank);
 
     if (mbc1_regs->large_ram && mbc1_regs->ram_select)
         bank_nb = (mbc1_regs->bank_upper_bits >> 5);
 
-    logger(LOG_DEBUG, "mbc1: Switching to RAM bank $%02X", bank_nb);
-    membank_switch(bank_nb, &gb->memory.ram);
+    rambank_switch(bank_nb, &gb->memory.ram);
 }
 
 bool mbc1_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
@@ -104,9 +86,9 @@ bool mbc1_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
     } else if (ADDR_IN_RANGE(addr, RAM_BANK_N_LADDR, RAM_BANK_N_UADDR)) {
         if (!mbc1_regs->ram_write_enabled) {
             logger(LOG_ERROR, "mbc1_writeb: RAM banks are disabled");
-            return false;
+            return true;
         }
-        return membank_writeb(addr - RAM_BANK_N_LADDR, value, &gb->memory.ram);
+        return false; // Let mmu_internal handle it
 
     } else {
         return false;

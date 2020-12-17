@@ -20,7 +20,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "logger.h"
 #include "gameboy.h"
 #include "mmu/mmu.h"
-#include "mmu/banks.h"
+#include "mmu/rombanks.h"
+#include "mmu/rambanks.h"
 #include "timer.h"
 #include "ppu/lcd_regs.h"
 #include "apu/sound_regs.h"
@@ -30,10 +31,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 byte_t mmu_internal_readb(uint16_t addr, gb_system_t *gb)
 {
     if (addr <= ROM_BANK_0_UADDR) {
-        return membank_readb_bank(addr, 0, &gb->memory.rom);
+        return gb->memory.rom.banks[gb->memory.rom.bank_0][addr];
 
     } else if (ADDR_IN_RANGE(addr, ROM_BANK_N_LADDR, ROM_BANK_N_UADDR)) {
-        return membank_readb(addr - ROM_BANK_N_LADDR, &gb->memory.rom);
+        return gb->memory.rom.banks[gb->memory.rom.bank_n][addr - ROM_BANK_N_LADDR];
 
     } else if (ADDR_IN_RANGE(addr, VRAM_LADDR, VRAM_UADDR)) {
         if (mmu_vram_blocked(gb)) {
@@ -44,13 +45,17 @@ byte_t mmu_internal_readb(uint16_t addr, gb_system_t *gb)
         return gb->memory.vram[addr - VRAM_LADDR];
 
     } else if (ADDR_IN_RANGE(addr, RAM_BANK_0_LADDR, RAM_BANK_0_UADDR)) {
-        return membank_readb_bank(addr - RAM_BANK_0_LADDR, 0, &gb->memory.ram);
+        return gb->memory.wram[addr - RAM_BANK_0_LADDR];
 
     } else if (ADDR_IN_RANGE(addr, RAM_ECHO_LADDR, RAM_ECHO_UADDR)) {
-        return membank_readb_bank(addr - RAM_ECHO_LADDR, 0, &gb->memory.ram);
+        return gb->memory.wram[addr - RAM_ECHO_LADDR];
 
     } else if (ADDR_IN_RANGE(addr, RAM_BANK_N_LADDR, RAM_BANK_N_UADDR)) {
-        return membank_readb(addr - RAM_BANK_N_LADDR, &gb->memory.ram);
+        if (!rambank_exists(&gb->memory.ram)) {
+            logger(LOG_ERROR, "mmu_readb failed: address $%04X: No RAM banks are available", addr);
+            return 0;
+        }
+        return gb->memory.ram.banks[gb->memory.ram.bank][addr - RAM_BANK_N_LADDR];
 
     } else if (ADDR_IN_RANGE(addr, OAM_LADDR, OAM_UADDR)) {
         if (mmu_oam_blocked(gb)) {
@@ -115,13 +120,20 @@ bool mmu_internal_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
         return true;
 
     } else if (ADDR_IN_RANGE(addr, RAM_BANK_0_LADDR, RAM_BANK_0_UADDR)) {
-        return membank_writeb_bank(addr - RAM_BANK_0_LADDR, value, 0, &gb->memory.ram);
+        gb->memory.wram[addr - RAM_BANK_0_LADDR] = value;
+        return true;
 
     } else if (ADDR_IN_RANGE(addr, RAM_ECHO_LADDR, RAM_ECHO_UADDR)) {
-        return membank_writeb_bank(addr - RAM_ECHO_LADDR, value, 0, &gb->memory.ram);
+        gb->memory.wram[addr - RAM_ECHO_LADDR] = value;
+        return true;
 
     } else if (ADDR_IN_RANGE(addr, RAM_BANK_N_LADDR, RAM_BANK_N_UADDR)) {
-        return membank_writeb(addr - RAM_BANK_N_LADDR, value, &gb->memory.ram);
+        if (!rambank_exists(&gb->memory.ram)) {
+            logger(LOG_ERROR, "mmu_writeb failed: address $%04X: No RAM banks are available", addr);
+            return false;
+        }
+        gb->memory.ram.banks[gb->memory.ram.bank][addr - RAM_BANK_N_LADDR] = value;
+        return true;
 
     } else if (ADDR_IN_RANGE(addr, OAM_LADDR, OAM_UADDR)) {
         if (mmu_oam_blocked(gb)) {

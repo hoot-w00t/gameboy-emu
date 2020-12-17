@@ -41,7 +41,8 @@ SRC	=	logger.c				\
 		cpu/opcodes/alu/cp.c	\
 		cpu/opcodes/alu/inc.c	\
 		cpu/opcodes/alu/dec.c	\
-		mmu/banks.c				\
+		mmu/rombanks.c			\
+		mmu/rambanks.c			\
 		mmu/mmu.c				\
 		mmu/mmu_internal.c		\
 		mmu/mbc1.c				\

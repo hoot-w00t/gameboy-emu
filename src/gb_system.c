@@ -23,7 +23,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cartridge.h"
 #include "cpu/registers.h"
 #include "mmu/mmu.h"
-#include "mmu/banks.h"
+#include "mmu/rombanks.h"
+#include "mmu/rambanks.h"
 #include "ppu/lcd_regs.h"
 #include "apu/sound_regs.h"
 #include "timer.h"
@@ -99,7 +100,7 @@ byte_t *load_file(const char *filename, int *size)
 int load_rom(byte_t *rom, int size, gb_system_t *gb)
 {
     byte_t hdr_checksum;
-    uint16_t addr, bank_index;
+    uint32_t rom_bytes;
 
     if (!cartridge_decode_hdr(rom, &gb->cartridge))
         return -1;
@@ -108,30 +109,27 @@ int load_rom(byte_t *rom, int size, gb_system_t *gb)
         logger(LOG_ERROR, "load_rom: Nintendo Bitmap Logo is invalid");
         return -2;
     }
+
     if ((hdr_checksum = compute_header_checksum(rom)) != gb->cartridge.header_checksum) {
-        logger(LOG_ERROR,
-               "load_rom: Header checksum is invalid (expected $%02X, got $%02X)",
-               gb->cartridge.header_checksum,
-               hdr_checksum);
+        logger(LOG_ERROR, "load_rom: Header checksum is invalid (expected $%02X, got $%02X)",
+            gb->cartridge.header_checksum,
+            hdr_checksum);
         return -3;
     }
 
-    if (!mmu_set_mbc(gb->cartridge.mbc_type, gb))
+    if ((rom_bytes = (gb->cartridge.rom_banks * ROM_BANK_SIZE)) != size) {
+        logger(LOG_ERROR, "load_rom: Expected ROM of %u bytes but %i bytes are loaded",
+            rom_bytes,
+            size);
         return -4;
-
-    membank_init(gb->cartridge.rom_banks, ROM_BANK_SIZE, ROM_BANK_SIZE, &gb->memory.rom);
-    membank_init(gb->cartridge.ram_banks + 1, RAM_BANK_SIZE, gb->cartridge.ram_size, &gb->memory.ram);
-
-    addr = 0x0; bank_index = 0;
-    for (int i = 0; i < size; ++i, ++addr) {
-        if (addr >= ROM_BANK_SIZE) {
-            addr = 0x0;
-            ++bank_index;
-        }
-
-        if (!membank_writeb_bank(addr, rom[i], bank_index, &gb->memory.rom))
-            return -5;
     }
+    if (!mmu_set_mbc(gb->cartridge.mbc_type, gb))
+        return -5;
+
+    rombank_alloc(gb->cartridge.rom_banks, &gb->memory.rom);
+    rambank_alloc(gb->cartridge.ram_banks, gb->cartridge.ram_size, &gb->memory.ram);
+    for (uint16_t i = 0; i < gb->memory.rom.banks_nb; ++i)
+        memcpy(gb->memory.rom.banks[i], (rom + (ROM_BANK_SIZE * i)), ROM_BANK_SIZE);
 
     return 0;
 }
@@ -159,8 +157,8 @@ int load_rom_from_file(const char *filename, gb_system_t *gb)
     if (!(rom = load_file(filename, &size)))
         return -1;
 
-    if (size < ROM_BANK_SIZE) {
-        logger(LOG_ERROR, "%s: not a valid ROM file", filename);
+    if ((size % ROM_BANK_SIZE) != 0) {
+        logger(LOG_ERROR, "%s: Not a valid ROM file", filename);
         free(rom);
         return -1;
     }
@@ -257,8 +255,8 @@ void gb_system_reset(bool enable_bootrom, gb_system_t *gb)
 // Destroy gb_system_t and free all allocated memory
 void gb_system_destroy(gb_system_t *gb)
 {
-    membank_free(&gb->memory.rom);
-    membank_free(&gb->memory.ram);
+    rombank_free(&gb->memory.rom);
+    rambank_free(&gb->memory.ram);
     free(gb->memory.mbc_regs);
     free(gb->rom_file);
     free(gb->sav_file);

@@ -159,9 +159,8 @@ bool mmu_battery_save(gb_system_t *gb)
         return false;
     }
 
-    for (uint16_t i = 1; i < gb->memory.ram.max_bank_nb; ++i) {
+    for (uint16_t i = 0; i < gb->memory.ram.banks_nb; ++i) {
         offset = 0;
-
         while (offset < gb->memory.ram.bank_size) {
             if ((n = write(fd, gb->memory.ram.banks[i] + offset,
                                gb->memory.ram.bank_size - offset)) <= 0) {
@@ -192,9 +191,8 @@ bool mmu_battery_load(gb_system_t *gb)
         return false;
     }
 
-    for (uint16_t i = 1; i < gb->memory.ram.max_bank_nb; ++i) {
+    for (uint16_t i = 0; i < gb->memory.ram.banks_nb; ++i) {
         offset = 0;
-
         while (offset < gb->memory.ram.bank_size) {
             if ((n = read(fd, gb->memory.ram.banks[i] + offset,
                                gb->memory.ram.bank_size - offset)) <= 0) {
@@ -227,10 +225,10 @@ bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb)
             __attribute__((fallthrough));
         case 0x01: // MBC1
         case 0x02: // MBC1 + RAM
-            gb->memory.mbc_readb = &mbc1_readb;
+            gb->memory.mbc_readb = NULL;
             gb->memory.mbc_writeb = &mbc1_writeb;
             gb->memory.mbc_regs = xzalloc(sizeof(mbc1_regs_t));
-            ((mbc1_regs_t *) gb->memory.mbc_regs)->large_ram = (gb->memory.ram.bank_size * gb->memory.ram.max_bank_nb) > 8192;
+            ((mbc1_regs_t *) gb->memory.mbc_regs)->large_ram = (gb->memory.ram.bank_size * gb->memory.ram.banks_nb) > RAM_BANK_SIZE;
             ((mbc1_regs_t *) gb->memory.mbc_regs)->large_rom = (gb->cartridge.rom_banks > 32);
             if (gb->cartridge.rom_banks <= 0x1) {
                 ((mbc1_regs_t *) gb->memory.mbc_regs)->rom_mask = 0x1;

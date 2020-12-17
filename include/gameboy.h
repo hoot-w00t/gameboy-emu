@@ -253,7 +253,8 @@ typedef int8_t sbyte_t;
 typedef struct pixel pixel_t;
 typedef struct lcd_screen lcd_screen_t;
 typedef struct cartridge_hdr cartridge_hdr_t;
-typedef struct membank membank_t;
+typedef struct rombank rombank_t;
+typedef struct rambank rambank_t;
 typedef struct mmu mmu_t;
 typedef struct gb_system gb_system_t;
 typedef void (*lcd_callback_t)(gb_system_t *);
@@ -543,20 +544,25 @@ struct cartridge_hdr {
     uint16_t global_checksum; // Global Checksum
 };
 
-struct membank {
-    byte_t **banks;            // Memory banks
-    uint16_t index;            // Index of the selected memory bank
-    uint16_t max_bank_nb;      // Maximum number of memory banks
-    uint16_t current_bank_nb;  // Current number of accessible memory banks
-    uint16_t bank0_size;       // Size in bytes of the memory bank #0
-    uint16_t bank_size;        // Size in bytes of the other memory banks
-    bool enabled;              // Is the memory bank enabled
+struct rombank {
+    byte_t **banks;    // ROM banks (0 to banks_nb - 1)
+    uint16_t banks_nb; // Number of ROM banks in **banks
+    uint16_t bank_0;   // Selected ROM bank for range $0000-$3FFF
+    uint16_t bank_n;   // Selected ROM bank for range $4000-$7FFF
+};
+
+struct rambank {
+    byte_t **banks;     // RAM banks (0 to banks_nb - 1)
+    uint16_t banks_nb;  // Number of RAM banks in **banks
+    uint16_t bank_size; // Size in bytes of each RAM bank
+    uint16_t bank;      // Selected RAM bank for range $A000-$BFFF
 };
 
 struct mmu {
     byte_t bootrom_reg;          // Register $FF50
-    struct membank rom;          // ROM Banks
-    struct membank ram;          // RAM Banks
+    struct rombank rom;          // ROM Banks
+    byte_t wram[RAM_BANK_SIZE];  // Work RAM
+    struct rambank ram;          // External RAM Banks
     byte_t vram[VRAM_SIZE];      // Video RAM (Tiles + the 2 BG Maps)
     byte_t oam[OAM_SIZE];        // Object Attribute Memory
     byte_t ioregs[IO_REGS_SIZE]; // IO Registers
