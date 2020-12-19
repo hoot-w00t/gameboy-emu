@@ -262,7 +262,7 @@ int opcode_ld_sp(const opcode_t *opcode, gb_system_t *gb)
         case 0xF9: gb->sp = reg_read_u16(REG_HL, gb); break;
 
         // LDHL SP,n
-        case 0xF8: reg_write_u16(REG_HL, cpu_add_sb_u16(gb->sp, (sbyte_t) cpu_fetchb(gb), gb), gb); break;
+        case 0xF8: reg_write_u16(REG_HL, cpu_add_sp_e((sbyte_t) cpu_fetchb(gb), gb), gb); break;
 
         // LD (nn),SP
         case 0x08: mmu_write_u16(cpu_fetch_u16(gb), gb->sp, gb); break;

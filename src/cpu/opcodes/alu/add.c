@@ -57,20 +57,25 @@ uint16_t cpu_add_u16(const uint16_t target, const uint16_t value, gb_system_t *g
     return (uint16_t) (result & 0xFFFF);
 }
 
-// Add signed byte to uint16
+// Add signed byte e to SP
 // Affected flags
 //     Z reset
 //     N reset
-//     H carry/borrow from bit 11
-//     C carry/borrow from bit 15
-uint16_t cpu_add_sb_u16(const uint16_t target, const sbyte_t value, gb_system_t *gb)
+//     H carry/borrow from bit 3
+//     C carry/borrow from bit 7
+uint16_t cpu_add_sp_e(const sbyte_t e, gb_system_t *gb)
 {
-    uint16_t result;
+    uint16_t result = gb->sp + e;
 
-    if (value >= 0) {
-        result = cpu_add_u16(target, value, gb);
+    if ((result & 0xF) < (gb->sp & 0xF)) {
+        reg_flag_set(FLAG_H, gb);
     } else {
-        result = cpu_sub_u16(target, -value, gb);
+        reg_flag_clear(FLAG_H, gb);
+    }
+    if ((result & 0xFF) < (gb->sp & 0xFF)) {
+        reg_flag_set(FLAG_C, gb);
+    } else {
+        reg_flag_clear(FLAG_C, gb);
     }
     reg_flag_clear(FLAG_Z, gb);
     reg_flag_clear(FLAG_N, gb);
@@ -131,7 +136,7 @@ int opcode_add_hl_n(const opcode_t *opcode, gb_system_t *gb)
 
 int opcode_add_sp_n(const opcode_t *opcode, gb_system_t *gb)
 {
-    gb->sp = cpu_add_sb_u16(gb->sp, (sbyte_t) cpu_fetchb(gb), gb);
+    gb->sp = cpu_add_sp_e((sbyte_t) cpu_fetchb(gb), gb);
 
     return opcode->cycles_true;
 }
