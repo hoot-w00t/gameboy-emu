@@ -292,15 +292,12 @@ void lcd_event(SDL_Event *e, gb_system_t *gb)
             } else if (e->key.keysym.scancode == emu_keymap.emu_zoom_out) {
                 update_pixel_size(lcd_pixel_size - 1);
             } else if (e->key.keysym.scancode == emu_keymap.emu_vol_up) {
-                if ((audio_volume += audio_volume_step) > 1.0)
+                if ((audio_volume += audio_volume_step) >= 1.0)
                     audio_volume = 1.0;
                 update_windows(gb);
             } else if (e->key.keysym.scancode == emu_keymap.emu_vol_down) {
-                if (audio_volume <= audio_volume_step) {
+                if ((audio_volume -= audio_volume_step) <= audio_volume_step)
                     audio_volume = 0.0;
-                } else {
-                    audio_volume -= audio_volume_step;
-                }
                 update_windows(gb);
             } else if (e->key.keysym.scancode == emu_keymap.emu_cpu_view) {
                 if (emu_windows[EMU_WINDOWS_CPU_VIEW].win) {
@@ -386,20 +383,19 @@ int emulator_audio_loop(gb_system_t *gb)
 
     SDL_PauseAudioDevice(audio_devid, 0);
     while (!stop_emulation) {
-        audio_mute = clock_speed > CPU_CLOCK_SPEED;
+        audio_mute = (clock_speed > CPU_CLOCK_SPEED) || (audio_volume <= 0.0);
         audio_pos = 0;
-        emulate_clocks(gb, audio_mute ? NULL : audio_buffer);
+        emulate_clocks(gb, audio_buffer);
         handle_events(gb);
         update_windows(gb);
 
+        // Fill any remaining samples
+        while (audio_pos < audio_buffer_samples)
+            audio_buffer[audio_pos++] = (float) apu_generate_sample(audio_time(), audio_amp, gb);
+
         if (pause_emulation || audio_mute) {
             // Mute the audio when paused
-            for (int i = 0; i < audio_buffer_samples; ++i)
-                audio_buffer[i] = 0;
-        } else {
-            // Fill any remaining samples
-            while (audio_pos < audio_buffer_samples)
-                audio_buffer[audio_pos++] = (float) apu_generate_sample(audio_time(), audio_amp, gb);
+            memset(audio_buffer, 0, audio_buffer_size);
         }
 
         // Wait for the queue to be empty before queuing more samples
