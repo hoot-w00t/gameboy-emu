@@ -251,6 +251,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 typedef uint8_t byte_t;
 typedef int8_t sbyte_t;
 typedef struct pixel pixel_t;
+typedef struct oam_attr oam_attr_t;
+typedef struct oam_entry oam_entry_t;
 typedef struct lcd_screen lcd_screen_t;
 typedef struct cartridge_hdr cartridge_hdr_t;
 typedef struct rombank rombank_t;
@@ -271,24 +273,46 @@ struct pixel {
     byte_t b;
 };
 
-struct lcd_screen {
-    // LCD Control Register (RW)
-    bool bg_display;        // Bit 0 -- Background/Window display
-    bool obj_display;       // Bit 1 -- Object display (sprites)
-    bool obj_size;          // Bit 2 -- Object size (8x8 or 8x16 tiles)
-    bool bg_tilemap_select; // Bit 3 -- Background Tile Map Select
-    bool bg_select;         // Bit 4 -- Background and Window Tile Data Select
-    bool window_display;    // Bit 5 -- Window Display
-    bool window_select;     // Bit 6 -- Window Tile Map Select
-    bool enable;            // Bit 7 -- LCD Enable
+struct __attribute__((packed)) oam_attr {
+    byte_t cgb_palette   : 3;  // CGB Only
+    byte_t tile_vram_bank: 1;  // CGB Only
+    byte_t dmg_palette   : 1;  // DMG Only
+    byte_t x_flip        : 1;
+    byte_t y_flip        : 1;
+    byte_t obj_behind_bg : 1;
+};
 
-    // LCD Status Register
-    byte_t mode;            // Bits 0-1 -- LCD Mode (RO)
-    bool coincidence_flag;  // Bit 2    -- Coincidence Flag (RO)
-    bool hblank_int;        // Bit 3    -- H-Blank Interrupt (RW)
-    bool vblank_int;        // Bit 4    -- V-Blank Interrupt (RW)
-    bool oam_int;           // Bit 5    -- OAM Interrupt (RW)
-    bool coincidence_int;   // Bit 6    -- Coincidence Interrupt (RW)
+struct __attribute__((packed)) oam_entry {
+    byte_t y;
+    byte_t x;
+    byte_t tile_id;
+    oam_attr_t attr;
+};
+
+struct __attribute__((packed)) lcdc_reg {
+    byte_t bg_display       : 1;  // Background/Window display
+    byte_t obj_display      : 1;  // Object display (sprites)
+    byte_t obj_size         : 1;  // Object size (8x8 or 8x16 tiles)
+    byte_t bg_tilemap_select: 1;  // Background Tile Map Select
+    byte_t bg_select        : 1;  // Background and Window Tile Data Select
+    byte_t window_display   : 1;  // Window Display
+    byte_t window_select    : 1;  // Window Tile Map Select
+    byte_t enable           : 1;  // LCD Enable
+};
+
+struct __attribute__((packed)) lcd_stat_reg {
+    byte_t mode            : 2;  // LCD Mode (RO)
+    byte_t coincidence_flag: 1;  // Coincidence Flag (RO)
+    byte_t hblank_int      : 1;  // H-Blank Interrupt (RW)
+    byte_t vblank_int      : 1;  // V-Blank Interrupt (RW)
+    byte_t oam_int         : 1;  // OAM Interrupt (RW)
+    byte_t coincidence_int : 1;  // Coincidence Interrupt (RW)
+    byte_t _padding        : 1;
+};
+
+struct lcd_screen {
+    struct lcdc_reg lcdc;
+    struct lcd_stat_reg lcd_stat;
 
     // LCD Positions and Scrolling Registers
     byte_t scy; // Scroll Y (RW)
@@ -303,6 +327,12 @@ struct lcd_screen {
     byte_t obp0;    // Object Palette 0 Data
     byte_t obp1;    // Object Palette 1 Data
 
+    // OAM buffer to fill during mode 2
+    byte_t oam_search_index;
+    oam_entry_t oam_buffer[10];
+    oam_entry_t *oam_sorted[10];
+    byte_t oam_buffer_size;
+
     // DMA
     byte_t dma;                     // DMA Transfer
     uint16_t dma_src;               // DMA Source Address
@@ -312,13 +342,16 @@ struct lcd_screen {
     // Screen framebuffer to hold the pixels
     pixel_t framebuffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 
+    // Rendering buffers
+    byte_t sl_bg_shade_id[SCREEN_WIDTH];
+    sbyte_t sl_sprite_shade_id[SCREEN_WIDTH];
+
     // Callback function called when the PPU enters the V-Blank period
     // (after a full frame is drawn)
     lcd_callback_t vblank_callback;
 
-
     // LCD State
-    uint32_t line_cycle;
+    uint32_t scanline_clock;
 };
 
 struct __attribute__((packed)) sound_volume_envelope {

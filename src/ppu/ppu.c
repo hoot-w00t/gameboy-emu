@@ -22,6 +22,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "gameboy.h"
 #include "cpu/interrupts.h"
 #include "mmu/mmu.h"
+#include <string.h>
 
 #define SHADE_FROM_PALETTE(id, palette) ((palette >> (id * 2)) & 0x3)
 
@@ -35,46 +36,59 @@ const pixel_t monochrome_pal[4] = {
 // Draw sprites on given scanline
 void ppu_draw_sprites(const byte_t scanline, gb_system_t *gb)
 {
-    byte_t sprite_addr, y, x, tile_id, attributes, size, palette;
-    bool y_flip, x_flip, palette_nb;
+    byte_t sprite_height = 8 + (gb->screen.lcdc.obj_size * 8);
+    int16_t y, x, line;
     uint16_t tile_data_addr;
-    sbyte_t line;
-    byte_t lo, hi;
+    byte_t tile_lo, tile_hi;
+    byte_t palette;
+    oam_entry_t *oam_entry;
 
-    for (byte_t sprite = 0; sprite < 40; ++sprite) {
-        sprite_addr = sprite * 4;
-        y = gb->memory.oam[sprite_addr] - 16;
-        x = gb->memory.oam[sprite_addr + 1] - 8;
-        tile_id = gb->memory.oam[sprite_addr + 2];
-        attributes = gb->memory.oam[sprite_addr + 3];
-        size = gb->screen.obj_size ? 16 : 8;
-        y_flip = (attributes >> 6) & 1;
-        x_flip = (attributes >> 5) & 1;
-        palette_nb = (attributes >> 4) & 1;
-        palette = palette_nb ? gb->screen.obp1 : gb->screen.obp0;
+    memset(gb->screen.sl_sprite_shade_id, -1, sizeof(gb->screen.sl_sprite_shade_id));
+    for (byte_t i = 0; i < gb->screen.oam_buffer_size; ++i) {
+        oam_entry = gb->screen.oam_sorted[i];
+        y = oam_entry->y - 16;
+        x = oam_entry->x - 8;
+        palette = oam_entry->attr.dmg_palette ? gb->screen.obp1 : gb->screen.obp0;
 
-        if (scanline >= y && scanline < y + size) {
-            line = y_flip ? (-(scanline - y - size) * 2) : ((scanline - y) * 2);
+        if (oam_entry->attr.y_flip) {
+            line = (-(scanline - y - (sprite_height - 1)) * 2);
+        } else {
+            line = ((scanline - y) * 2);
+        }
 
-            tile_data_addr = (tile_id * 16) + line;
-            lo = gb->memory.vram[tile_data_addr];
-            hi = gb->memory.vram[tile_data_addr + 1];
+        tile_data_addr = (oam_entry->tile_id * 16) + line;
+        if ((unsigned) (tile_data_addr + 1) >= sizeof(gb->memory.vram)) {
+            logger(LOG_CRIT, "ppu_draw_sprites: tile_data_addr out of bounds: %X", tile_data_addr);
+            continue;
+        }
 
-            for (sbyte_t pixel = 7; pixel >= 0; --pixel) {
-                sbyte_t pixel_bit = x_flip ? (-(pixel - 7)) : pixel;
-                byte_t pixel_shade_id = (((hi >> pixel_bit) & 1) << 1) | ((lo >> pixel_bit) & 1);
+        tile_lo = gb->memory.vram[tile_data_addr];
+        tile_hi = gb->memory.vram[tile_data_addr + 1];
 
-                // Shade 0 is transparent for sprites
-                if (pixel_shade_id == 0) continue;
+        for (sbyte_t pixel = 7; pixel >= 0; --pixel) {
+            sbyte_t pixel_bit = oam_entry->attr.x_flip ? (-(pixel - 7)) : pixel;
+            byte_t pixel_shade_id = (((tile_hi >> pixel_bit) & 1) << 1) | ((tile_lo >> pixel_bit) & 1);
 
-                byte_t pixel_shade = SHADE_FROM_PALETTE(pixel_shade_id, palette);
-                int16_t pixel_x = x + (7 - pixel);
+            // Shade 0 is transparent for sprites
+            if (pixel_shade_id == 0)
+                continue;
 
-                if (scanline >= SCREEN_HEIGHT || pixel_x < 0 || pixel_x >= SCREEN_WIDTH)
-                    continue;
+            byte_t pixel_shade = SHADE_FROM_PALETTE(pixel_shade_id, palette);
+            int16_t pixel_x = x + (7 - pixel);
 
-                gb->screen.framebuffer[scanline][pixel_x] = monochrome_pal[pixel_shade];
-            }
+            if (scanline >= SCREEN_HEIGHT || pixel_x < 0 || pixel_x >= SCREEN_WIDTH)
+                continue;
+
+            // Object pixel is behind background
+            if (oam_entry->attr.obj_behind_bg && gb->screen.sl_bg_shade_id[pixel_x] != 0)
+                continue;
+
+            // Sprite overlap
+            if (gb->screen.sl_sprite_shade_id[pixel_x] >= 0)
+                continue;
+
+            gb->screen.framebuffer[scanline][pixel_x] = monochrome_pal[pixel_shade];
+            gb->screen.sl_sprite_shade_id[pixel_x] = pixel_shade_id;
         }
     }
 }
@@ -86,13 +100,13 @@ void ppu_draw_background(const byte_t scanline, gb_system_t *gb)
     const byte_t scx = gb->screen.scx;
     const byte_t wy = gb->screen.wy;
     const byte_t wx = gb->screen.wx - 7;
-    const bool use_window = gb->screen.window_display && wy <= scanline;
+    const bool use_window = gb->screen.lcdc.window_display && wy <= scanline;
     bool signed_tile_id = false;
     uint16_t base_tile_data_addr;
     uint16_t base_tile_map_addr;
     byte_t y, x;
 
-    if (gb->screen.bg_select) {
+    if (gb->screen.lcdc.bg_select) {
         base_tile_data_addr = 0;
     } else {
         base_tile_data_addr = 0x800;
@@ -100,10 +114,10 @@ void ppu_draw_background(const byte_t scanline, gb_system_t *gb)
     }
 
     if (use_window) {
-        base_tile_map_addr = gb->screen.window_select ? BG_MAP_2_LADDR - TILE_LADDR : BG_MAP_1_LADDR - TILE_LADDR;
+        base_tile_map_addr = gb->screen.lcdc.window_select ? BG_MAP_2_LADDR - TILE_LADDR : BG_MAP_1_LADDR - TILE_LADDR;
         y = scanline - wy;
     } else {
-        base_tile_map_addr = gb->screen.bg_tilemap_select ? BG_MAP_2_LADDR - TILE_LADDR : BG_MAP_1_LADDR - TILE_LADDR;
+        base_tile_map_addr = gb->screen.lcdc.bg_tilemap_select ? BG_MAP_2_LADDR - TILE_LADDR : BG_MAP_1_LADDR - TILE_LADDR;
         y = scanline + scy;
     }
 
@@ -128,16 +142,91 @@ void ppu_draw_background(const byte_t scanline, gb_system_t *gb)
         byte_t pixel_shade_id = (((hi >> pixel_bit) & 1) << 1) | ((lo >> pixel_bit) & 1);
         byte_t pixel_shade = SHADE_FROM_PALETTE(pixel_shade_id, gb->screen.bgp);
 
-        if (scanline >= SCREEN_HEIGHT || pixel >= SCREEN_WIDTH) continue;
+        if (scanline >= SCREEN_HEIGHT || pixel >= SCREEN_WIDTH)
+            continue;
+
         gb->screen.framebuffer[scanline][pixel] = monochrome_pal[pixel_shade];
+        gb->screen.sl_bg_shade_id[pixel] = pixel_shade_id;
     }
 }
 
 // Draw scanline
 void ppu_draw_scanline(const byte_t scanline, gb_system_t *gb)
 {
-    if (gb->screen.bg_display) ppu_draw_background(scanline, gb);
-    if (gb->screen.obj_display) ppu_draw_sprites(scanline, gb);
+#ifdef PPU_USE_PIXEL_FIFO
+#error "Pixel FIFO not implemented yet"
+#else
+    if (gb->screen.lcdc.bg_display)
+        ppu_draw_background(scanline, gb);
+
+    if (gb->screen.lcdc.obj_display)
+        ppu_draw_sprites(scanline, gb);
+#endif
+}
+
+// Bubble-sort OAM buffer for sprite priority
+void ppu_oam_sort(gb_system_t *gb)
+{
+    bool sorted = false;
+    oam_entry_t *tmp;
+
+    for (byte_t i = 0; i < gb->screen.oam_buffer_size; ++i)
+        gb->screen.oam_sorted[i] = &gb->screen.oam_buffer[i];
+
+    while (!sorted) {
+        sorted = true;
+        for (byte_t i = 1; i < gb->screen.oam_buffer_size; ++i) {
+            if (gb->screen.oam_sorted[i - 1]->x > gb->screen.oam_sorted[i]->x) {
+                tmp = gb->screen.oam_sorted[i];
+                gb->screen.oam_sorted[i] = gb->screen.oam_sorted[i - 1];
+                gb->screen.oam_sorted[i - 1] = tmp;
+                sorted = false;
+            }
+        }
+    }
+}
+
+// Fetch the OAM buffer (complete OAM search)
+void ppu_oam_search(gb_system_t *gb)
+{
+    byte_t sprite_height = 8 + (gb->screen.lcdc.obj_size * 8);
+    oam_entry_t *oam_entry;
+    uint16_t sprite_addr;
+    int16_t sprite_y_top, sprite_y_bot;
+
+    gb->screen.oam_buffer_size = 0;
+    for (byte_t sprite = 0; sprite < 40 && gb->screen.oam_buffer_size < 10; ++sprite) {
+        sprite_addr = sprite * 4;
+        oam_entry = (oam_entry_t *) (gb->memory.oam + sprite_addr);
+        sprite_y_top = oam_entry->y - 16;
+        sprite_y_bot = sprite_y_top + sprite_height;
+        if (gb->screen.ly >= sprite_y_top && gb->screen.ly < sprite_y_bot) {
+            gb->screen.oam_buffer[gb->screen.oam_buffer_size] = *oam_entry;
+            gb->screen.oam_buffer_size += 1;
+        }
+    }
+}
+
+// Fetch next valid OAM entry
+void ppu_oam_search_cycle(gb_system_t *gb)
+{
+    byte_t sprite_height = 8 + (gb->screen.lcdc.obj_size * 8);
+    oam_entry_t *oam_entry;
+    uint16_t sprite_addr;
+    int16_t sprite_y_top, sprite_y_bot;
+
+    if (gb->screen.oam_search_index >= 40)
+        return;
+
+    sprite_addr = gb->screen.oam_search_index * 4;
+    oam_entry = (oam_entry_t *) (gb->memory.oam + sprite_addr);
+    sprite_y_top = oam_entry->y - 16;
+    sprite_y_bot = sprite_y_top + sprite_height;
+    if (gb->screen.oam_buffer_size < 10 && gb->screen.ly >= sprite_y_top && gb->screen.ly < sprite_y_bot) {
+        gb->screen.oam_buffer[gb->screen.oam_buffer_size] = *oam_entry;
+        gb->screen.oam_buffer_size += 1;
+    }
+    gb->screen.oam_search_index += 1;
 }
 
 // TODO: Move DMA Transfer to CPU
@@ -159,60 +248,73 @@ int ppu_cycle(gb_system_t *gb)
     }
 
     // LCD is disabled
-    if (!gb->screen.enable) return gb->screen.mode;
+    if (!gb->screen.lcdc.enable)
+        return gb->screen.lcd_stat.mode;
 
-    old_mode = gb->screen.mode;
+    old_mode = gb->screen.lcd_stat.mode;
     lcd_stat_int = false;
 
-    gb->screen.line_cycle += 1;
-    if (gb->screen.line_cycle == LCD_MODE_2_CYCLES) {
-        // Entering Draw period
-        gb->screen.mode = LCDC_MODE_DRAW;
+    if (gb->screen.ly < 144) {
+        if (gb->screen.scanline_clock < LCD_MODE_2_CYCLES) {
+            gb->screen.lcd_stat.mode = LCDC_MODE_2;
+            if ((gb->screen.scanline_clock % 2) == 1) {
+                ppu_oam_search_cycle(gb);
+                if (gb->screen.oam_search_index >= 40)
+                    ppu_oam_sort(gb);
+            }
+        } else if (gb->screen.scanline_clock < LCD_MODE_3_CYCLES) {
+            gb->screen.lcd_stat.mode = LCDC_MODE_3;
+        } else {
+            gb->screen.lcd_stat.mode = LCDC_MODE_0;
+        }
+    }
 
-    } else if (gb->screen.line_cycle == LCD_MODE_3_CYCLES) {
-        // Entering HBlank period
-        if (gb->screen.hblank_int) lcd_stat_int = true;
-        gb->screen.mode = LCDC_MODE_HBLANK;
-
-    } else if (gb->screen.line_cycle >= LCD_LINE_CYCLES) {
-        // One scanline completed
-        gb->screen.line_cycle = 0;
+    // One scanline completed
+    if ((gb->screen.scanline_clock += 1) >= LCD_LINE_CYCLES) {
+        gb->screen.scanline_clock = 0;
 
         if (gb->screen.ly < 144) {
             // Draw the scanline
             ppu_draw_scanline(gb->screen.ly, gb);
+        }
 
-            gb->screen.mode = LCDC_MODE_SEARCH;
-            if (gb->screen.oam_int) lcd_stat_int = true;
+        // Coincidence Flag
+        gb->screen.lcd_stat.coincidence_flag = gb->screen.ly == gb->screen.lyc;
+        if (gb->screen.lcd_stat.coincidence_flag && gb->screen.lcd_stat.coincidence_int)
+            cpu_int_flag_set(INT_LCD_STAT_BIT, gb);
 
-        } else if (gb->screen.ly == 144) {
+        if ((gb->screen.ly += 1) >= LCD_LINES)
+            gb->screen.ly = 0;
+
+        if (gb->screen.ly == 144) {
             // VBlank period
             if (gb->screen.vblank_callback)
                 (*(gb->screen.vblank_callback))(gb);
 
             cpu_int_flag_set(INT_VBLANK_BIT, gb);
-            gb->screen.mode = LCDC_MODE_VBLANK;
-            if (gb->screen.vblank_int) lcd_stat_int = true;
-        }
-
-        // Coincidence Flag
-        gb->screen.coincidence_flag = gb->screen.ly == gb->screen.lyc;
-        if (gb->screen.coincidence_flag && gb->screen.coincidence_int)
-            cpu_int_flag_set(INT_LCD_STAT_BIT, gb);
-
-        gb->screen.ly += 1;
-        if (gb->screen.ly >= LCD_LINES) {
-            // Full frame drawn
-            gb->screen.ly = 0;
-
-            gb->screen.mode = LCDC_MODE_SEARCH;
-            if (gb->screen.oam_int) lcd_stat_int = true;
+            gb->screen.lcd_stat.mode = LCDC_MODE_VBLANK;
+            if (gb->screen.lcd_stat.vblank_int)
+                lcd_stat_int = true;
         }
     }
 
-    // LCD_STAT interrupt request if mode has changed and there is a pending IR
-    if (lcd_stat_int && gb->screen.mode != old_mode)
-        cpu_int_flag_set(INT_LCD_STAT_BIT, gb);
+    if (gb->screen.lcd_stat.mode != old_mode) {
+        if (gb->screen.lcd_stat.mode == LCDC_MODE_2) {
+            // Reset OAM buffer when entering OAM search
+            if (gb->screen.lcd_stat.oam_int)
+                lcd_stat_int = true;
 
-    return gb->screen.mode;
+            gb->screen.oam_buffer_size = 0;
+            gb->screen.oam_search_index = 0;
+        } else if (gb->screen.lcd_stat.mode == LCDC_MODE_0) {
+            if (gb->screen.lcd_stat.hblank_int)
+                lcd_stat_int = true;
+        }
+
+        // LCD_STAT interrupt request if mode has changed and there is a pending IR
+        if (lcd_stat_int)
+            cpu_int_flag_set(INT_LCD_STAT_BIT, gb);
+    }
+
+    return gb->screen.lcd_stat.mode;
 }

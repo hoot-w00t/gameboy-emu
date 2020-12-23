@@ -23,30 +23,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 byte_t lcd_reg_readb(uint16_t addr, gb_system_t *gb)
 {
-    byte_t tmp;
-
     switch (addr) {
-        case LCDC:
-            tmp = 0;
-            if (gb->screen.bg_display)        tmp |= 1;
-            if (gb->screen.obj_display)       tmp |= (1 << 1);
-            if (gb->screen.obj_size)          tmp |= (1 << 2);
-            if (gb->screen.bg_tilemap_select) tmp |= (1 << 3);
-            if (gb->screen.bg_select)         tmp |= (1 << 4);
-            if (gb->screen.window_display)    tmp |= (1 << 5);
-            if (gb->screen.window_select)     tmp |= (1 << 6);
-            if (gb->screen.enable)            tmp |= (1 << 7);
-            return tmp;
-
-        case LCDC_STATUS:
-            tmp = (gb->screen.mode & 0b11);
-            if (gb->screen.coincidence_flag) tmp |= (1 << 2);
-            if (gb->screen.hblank_int)       tmp |= (1 << 3);
-            if (gb->screen.vblank_int)       tmp |= (1 << 4);
-            if (gb->screen.oam_int)          tmp |= (1 << 5);
-            if (gb->screen.coincidence_int)  tmp |= (1 << 6);
-            return tmp;
-
+        case LCDC       : return (*((byte_t *) &gb->screen.lcdc));
+        case LCDC_STATUS: return (*((byte_t *) &gb->screen.lcd_stat));
         case LCDC_SCY   : return gb->screen.scy;
         case LCDC_SCX   : return gb->screen.scx;
         case LCDC_LY    : return gb->screen.ly;
@@ -65,35 +44,18 @@ byte_t lcd_reg_readb(uint16_t addr, gb_system_t *gb)
 
 bool lcd_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
-    bool tmp;
-
     switch (addr) {
         case LCDC:
-            tmp = gb->screen.enable;
-            gb->screen.bg_display        = value & 1;
-            gb->screen.obj_display       = (value >> 1) & 1;
-            gb->screen.obj_size          = (value >> 2) & 1;
-            gb->screen.bg_tilemap_select = (value >> 3) & 1;
-            gb->screen.bg_select         = (value >> 4) & 1;
-            gb->screen.window_display    = (value >> 5) & 1;
-            gb->screen.window_select     = (value >> 6) & 1;
-            gb->screen.enable            = (value >> 7) & 1;
-
-            if (!gb->screen.enable) {
-                if (gb->screen.mode != LCDC_MODE_VBLANK && tmp)
-                    logger(LOG_CRIT, "LCD Display was disabled during mode %u", gb->screen.mode);
-
-                gb->screen.mode = LCDC_MODE_VBLANK;
+            (*((byte_t *) &gb->screen.lcdc)) = value;
+            if (!gb->screen.lcdc.enable) {
+                gb->screen.lcd_stat.mode = LCDC_MODE_VBLANK;
                 gb->screen.ly = 0;
-                gb->screen.line_cycle = 0;
+                gb->screen.scanline_clock = 0;
             }
             break;
 
         case LCDC_STATUS:
-            gb->screen.hblank_int      = (value >> 3) & 1;
-            gb->screen.vblank_int      = (value >> 4) & 1;
-            gb->screen.oam_int         = (value >> 5) & 1;
-            gb->screen.coincidence_int = (value >> 6) & 1;
+            (*((byte_t *) &gb->screen.lcd_stat)) = ((value & 0x78) | ((*((byte_t *) &gb->screen.lcd_stat)) & 0x7));
             break;
 
         case LCDC_DMA:
