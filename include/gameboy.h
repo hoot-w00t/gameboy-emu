@@ -138,11 +138,12 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define TIM_TIMA        (0xFF05)                 // Timer Counter (RW)
 #define TIM_TMA         (0xFF06)                 // Timer Modulo (RW)
 #define TIM_TAC         (0xFF07)                 // Timer Control (RW)
-#define TIM_CLOCK_0     (CPU_CLOCK_SPEED / 1024) // TAC Clock Select 0 (4096)
-#define TIM_CLOCK_1     (CPU_CLOCK_SPEED / 16)   // TAC Clock Select 1 (262144)
-#define TIM_CLOCK_2     (CPU_CLOCK_SPEED / 64)   // TAC Clock Select 2 (65536)
-#define TIM_CLOCK_3     (CPU_CLOCK_SPEED / 256)  // TAC Clock Select 3 (16384)
+#define TIM_CLOCK_0     (1024) // TAC Clock Select 0 (4096 Hz)
+#define TIM_CLOCK_1     (16)   // TAC Clock Select 1 (262144 Hz)
+#define TIM_CLOCK_2     (64)   // TAC Clock Select 2 (65536 Hz)
+#define TIM_CLOCK_3     (256)  // TAC Clock Select 3 (16384 Hz)
 #define TIM_CLOCK_DIV   (16384)                  // Timer Divider Clock
+
 // LCD IO Registers
 #define LCDC         (0xFF40) // LCD Control Register
 #define LCDC_STATUS  (0xFF41) // LCD Status Register
@@ -627,9 +628,9 @@ struct timer {
     byte_t tma;           // Timer Modulo
     struct timer_tac tac; // Timer Control
 
-    uint32_t div_count;   // Divider Clocks Count
-    uint32_t timer_clock; // Input Clock Select frequency
-    uint32_t timer_count; // Timer Clocks Count
+    uint16_t counter;     // Timer Counter
+    byte_t tima_overflow; // TIMA Overflow Clocks
+    uint16_t tima_clock;  // TIMA Clock Select (divider)
 };
 
 struct gb_system {

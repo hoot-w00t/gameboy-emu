@@ -21,8 +21,20 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "gameboy.h"
 #include "cpu/interrupts.h"
 
-// TODO: Fine tune the timing and behavior of reading/writing to some of the
-//       registers and timer_cycle()
+static const uint16_t clock_divider[4] = {TIM_CLOCK_0, TIM_CLOCK_1, TIM_CLOCK_2, TIM_CLOCK_3};
+#define divider_mask(div) ((div) >> 1)
+#define high_to_low(initial, new, mask) (((initial) & (mask)) && !((new) & (mask)))
+#define log_obscure(msg) logger(LOG_INFO, msg)
+
+// Increment TIMA
+// If TIMA overflows set tima_overflow to delay the overflow behavior
+// by 4 clocks
+static inline void timer_tima_inc(gb_system_t *gb)
+{
+    if ((gb->timer.tima += 1) == 0) {
+        gb->timer.tima_overflow = 4;
+    }
+}
 
 byte_t timer_reg_readb(uint16_t addr, gb_system_t *gb)
 {
@@ -39,22 +51,41 @@ byte_t timer_reg_readb(uint16_t addr, gb_system_t *gb)
 
 bool timer_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
+    uint16_t old_clock;
+    byte_t old_enable;
+
     switch (addr) {
         case TIM_DIV:
             gb->timer.div = 0;
+            gb->timer.tima = 0;
+            if (gb->timer.tac.enable && (gb->timer.counter & divider_mask(gb->timer.tima_clock))) {
+                log_obscure("Obscure TIMA increase (write to div)");
+                timer_tima_inc(gb);
+            }
             break;
 
         case TIM_TIMA: gb->timer.tima = value; break;
         case TIM_TMA: gb->timer.tma = value; break;
         case TIM_TAC:
+            old_clock = gb->timer.tima_clock;
+            old_enable = gb->timer.tac.enable;
             (*((byte_t *) &gb->timer.tac)) = value;
-            gb->timer.timer_count = 0;
-            switch (gb->timer.tac.clock_select) {
-                case 0: gb->timer.timer_clock = TIM_CLOCK_0; break;
-                case 1: gb->timer.timer_clock = TIM_CLOCK_1; break;
-                case 2: gb->timer.timer_clock = TIM_CLOCK_2; break;
-                case 3: gb->timer.timer_clock = TIM_CLOCK_3; break;
-                default: break;
+            gb->timer.tima_clock = clock_divider[gb->timer.tac.clock_select];
+
+            if (old_enable) {
+                // No obscure TIMA increase on the DMG
+            } else {
+                if (gb->timer.tac.enable) {
+                    if ((gb->timer.counter & divider_mask(old_clock)) && (!(gb->timer.counter & divider_mask(gb->timer.tima_clock)))) {
+                        log_obscure("Obscure TIMA increase (write to tac, enable: 1>1)");
+                        timer_tima_inc(gb);
+                    }
+                } else {
+                    if ((gb->timer.counter & divider_mask(old_clock))) {
+                        log_obscure("Obscure TIMA increase (write to tac, enable: 1>0)");
+                        timer_tima_inc(gb);
+                    }
+                }
             }
             break;
 
@@ -68,20 +99,19 @@ bool timer_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 // Emulate a timer cycle
 void timer_cycle(gb_system_t *gb)
 {
-    if (gb->stop) {
-        gb->timer.div = 0;
-    } else if ((gb->timer.div_count += 1) >= TIM_CLOCK_DIV) {
-        gb->timer.div += 1;
-        gb->timer.div_count = 0;
-    }
+    uint16_t old_counter = gb->timer.counter;
 
-    if (gb->timer.tac.enable) {
-        if ((gb->timer.timer_count += 1) >= gb->timer.timer_clock) {
-            if ((gb->timer.tima += 1) == 0) {
-                gb->timer.tima = gb->timer.tma;
-                cpu_int_flag_set(INT_TIMER_BIT, gb);
-            }
-            gb->timer.timer_count = 0;
+    gb->timer.counter += 1;
+    if (high_to_low(old_counter, gb->timer.counter, divider_mask(TIM_CLOCK_DIV)))
+        gb->timer.div += 1;
+
+    if (gb->timer.tima_overflow > 0) {
+        if ((gb->timer.tima_overflow -= 1) == 0) {
+            gb->timer.tima = gb->timer.tma;
+            cpu_int_flag_set(INT_TIMER_BIT, gb);
         }
     }
+
+    if (gb->timer.tac.enable && high_to_low(old_counter, gb->timer.counter, divider_mask(gb->timer.tima_clock)))
+        timer_tima_inc(gb);
 }
