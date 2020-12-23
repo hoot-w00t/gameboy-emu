@@ -26,17 +26,11 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 byte_t timer_reg_readb(uint16_t addr, gb_system_t *gb)
 {
-    byte_t tmp;
-
     switch (addr) {
-        case TIM_DIV : return gb->timer.reg_div;
-        case TIM_TIMA: return gb->timer.reg_tima;
-        case TIM_TMA : return gb->timer.reg_tma;
-        case TIM_TAC :
-            tmp = gb->timer.clock_select & 0x3;
-            if (gb->timer.enable) tmp |= 0x4;
-            return tmp;
-
+        case TIM_DIV : return gb->timer.div;
+        case TIM_TIMA: return gb->timer.tima;
+        case TIM_TMA : return gb->timer.tma;
+        case TIM_TAC : return (*((byte_t *) &gb->timer.tac));
         default:
             logger(LOG_ERROR, "timer_reg_readb failed: unhandled address $%04X", addr);
             return 0;
@@ -46,17 +40,20 @@ byte_t timer_reg_readb(uint16_t addr, gb_system_t *gb)
 bool timer_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
     switch (addr) {
-        case TIM_DIV : gb->timer.reg_div = 0; break;
-        case TIM_TIMA: gb->timer.reg_tima = value; break;
-        case TIM_TMA : gb->timer.reg_tma = value; break;
-        case TIM_TAC :
-            gb->timer.enable = value & 0x4;
-            gb->timer.clock_select = value & 0x3;
-            switch (gb->timer.clock_select) {
-                case 0x0: gb->timer.timer_clock = TIM_CLOCK_0; break;
-                case 0x1: gb->timer.timer_clock = TIM_CLOCK_1; break;
-                case 0x2: gb->timer.timer_clock = TIM_CLOCK_2; break;
-                case 0x3: gb->timer.timer_clock = TIM_CLOCK_3; break;
+        case TIM_DIV:
+            gb->timer.div = 0;
+            break;
+
+        case TIM_TIMA: gb->timer.tima = value; break;
+        case TIM_TMA: gb->timer.tma = value; break;
+        case TIM_TAC:
+            (*((byte_t *) &gb->timer.tac)) = value;
+            gb->timer.timer_count = 0;
+            switch (gb->timer.tac.clock_select) {
+                case 0: gb->timer.timer_clock = TIM_CLOCK_0; break;
+                case 1: gb->timer.timer_clock = TIM_CLOCK_1; break;
+                case 2: gb->timer.timer_clock = TIM_CLOCK_2; break;
+                case 3: gb->timer.timer_clock = TIM_CLOCK_3; break;
                 default: break;
             }
             break;
@@ -71,25 +68,20 @@ bool timer_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 // Emulate a timer cycle
 void timer_cycle(gb_system_t *gb)
 {
-    gb->timer.div_cycles += 1;
-
-    if (gb->timer.div_cycles >= TIM_CLOCK_DIV) {
-        gb->timer.reg_div += 1;
-        gb->timer.div_cycles = 0;
+    if (gb->stop) {
+        gb->timer.div = 0;
+    } else if ((gb->timer.div_count += 1) >= TIM_CLOCK_DIV) {
+        gb->timer.div += 1;
+        gb->timer.div_count = 0;
     }
 
-    if (gb->timer.enable) {
-        gb->timer.timer_cycles += 1;
-
-        if (gb->timer.timer_cycles >= gb->timer.timer_clock) {
-            if (gb->timer.reg_tima == 0xFF) {
-                gb->timer.reg_tima = gb->timer.reg_tma;
+    if (gb->timer.tac.enable) {
+        if ((gb->timer.timer_count += 1) >= gb->timer.timer_clock) {
+            if ((gb->timer.tima += 1) == 0) {
+                gb->timer.tima = gb->timer.tma;
                 cpu_int_flag_set(INT_TIMER_BIT, gb);
-            } else {
-                gb->timer.reg_tima += 1;
             }
-
-            gb->timer.timer_cycles = 0;
+            gb->timer.timer_count = 0;
         }
     }
 }

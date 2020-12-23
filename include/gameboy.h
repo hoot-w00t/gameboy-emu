@@ -582,18 +582,21 @@ struct interrupts {
     byte_t if_reg;  // Interrupt Enable register
 };
 
-struct builtin_timer {
-    byte_t reg_div;        // Timer Divider
-    byte_t reg_tima;       // Timer Counter
-    byte_t reg_tma;        // Timer Modulo
+struct __attribute__((packed)) timer_tac {
+    byte_t clock_select : 2;
+    byte_t enable       : 1;
+    byte_t _padding     : 5;
+};
 
-    // TAC register
-    bool enable;           // Timer Enable (bit 2)
-    byte_t clock_select;   // Input Clock Select (bits 0-1)
+struct timer {
+    byte_t div;           // Timer Divider
+    byte_t tima;          // Timer Counter
+    byte_t tma;           // Timer Modulo
+    struct timer_tac tac; // Timer Control
 
-    uint16_t div_cycles;   // Divider Cycles
-    uint32_t timer_clock;  // Input Clock Select frequency
-    uint32_t timer_cycles; // Timer Cycles
+    uint32_t div_count;   // Divider Clocks Count
+    uint32_t timer_clock; // Input Clock Select frequency
+    uint32_t timer_count; // Timer Clocks Count
 };
 
 struct gb_system {
@@ -604,7 +607,7 @@ struct gb_system {
     struct mmu memory;                 // Memory areas
     struct apu apu;                    // Audio Processing Unit
     struct interrupts interrupts;      // Interrupt registers
-    struct builtin_timer timer;        // Built-in GameBoy timer
+    struct timer timer;                // Built-in GameBoy timer
     struct joypad joypad;              // Joypad
     struct serial_port serial;         // Serial Port
     byte_t registers[8];               // CPU Registers
