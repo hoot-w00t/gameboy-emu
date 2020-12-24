@@ -60,6 +60,13 @@ ifdef DEBUG
 	CFLAGS	+=	-g
 endif
 
+ifdef WINDOWS
+	CFLAGS	+=	-Wno-format
+	ifdef WINDOWS_NOCONSOLE
+		LDFLAGS	+=	-Wl,-subsystem,windows
+	endif
+endif
+
 .PHONY:	all	clean	fclean	re
 
 all:	$(BIN_NAME)
