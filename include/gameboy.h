@@ -510,9 +510,11 @@ struct sound_channel_3 {
     double length;
     double freq;
     double period;
-    double ptime;
-    byte_t selected_sample;
-    byte_t last_sample;
+    byte_t wave_index;
+    byte_t wave_sample;
+    double wave_sample_duration;
+    double time_elapsed;
+    byte_t sample_out;
 };
 
 struct sound_channel_4 {
@@ -531,7 +533,9 @@ struct apu {
     struct sound_channel_3 ch3;
     struct sound_channel_4 ch4;
     uint16_t lfsr : 15;
+
     uint32_t sample_rate;
+    double sample_duration;
 };
 
 struct serial_port {

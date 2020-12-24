@@ -389,9 +389,11 @@ int emulator_audio_loop(gb_system_t *gb)
         handle_events(gb);
         update_windows(gb);
 
-        // Fill any remaining samples
-        while (audio_pos < audio_buffer_samples)
-            audio_buffer[audio_pos++] = (float) apu_generate_sample(audio_time(), audio_amp, gb);
+        if (!pause_emulation) {
+            // Fill any remaining samples
+            while (audio_pos < audio_buffer_samples)
+                audio_buffer[audio_pos++] = (float) apu_generate_sample(audio_time(), audio_amp, gb);
+        }
 
         if (pause_emulation || audio_mute) {
             // Mute the audio when paused
@@ -472,6 +474,7 @@ int emulate_gameboy(gb_system_t *gb, bool enable_audio)
 
     printf("Emulating: %s\n", gb->cartridge.title);
     if (audio_devid) {
+        apu_initialize(audio_sample_rate, gb);
         emulator_audio_loop(gb);
     } else {
         emulator_loop(gb);

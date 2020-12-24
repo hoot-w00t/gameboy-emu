@@ -54,8 +54,10 @@ byte_t sound_reg_readb(uint16_t addr, gb_system_t *gb)
 
         default:
             if (ADDR_IN_RANGE(addr, SOUND_WAVE_PATTERN_LADDR, SOUND_WAVE_PATTERN_UADDR)) {
-                logger(LOG_ERROR, "sound_reg_readb: address $%04X: Wave Pattern RAM is write-only", addr);
-                return 0;
+                if (gb->apu.regs.nr30.active)
+                    return *(apu_wave_ram_selected(gb));
+
+                return (*((byte_t *) &gb->apu.regs.wave_pattern_ram[addr - SOUND_WAVE_PATTERN_LADDR]));
             }
             logger(LOG_ERROR, "sound_reg_readb failed: unhandled address $%04X", addr);
             return 0;
@@ -149,12 +151,12 @@ bool sound_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
         case SOUND_NR32: (*((byte_t *) &gb->apu.regs.nr32)) = value; return true;
         case SOUND_NR33:
             (*((byte_t *) &gb->apu.regs.nr33)) = value;
-            gb->apu.ch3.freq = apu_wave_freq(apu_freq11(gb->apu.regs.nr33, gb->apu.regs.nr34));
+            ch3_update_playback_speed(gb);
             return true;
 
         case SOUND_NR34:
             (*((byte_t *) &gb->apu.regs.nr34)) = value;
-            gb->apu.ch3.freq = apu_wave_freq(apu_freq11(gb->apu.regs.nr33, gb->apu.regs.nr34));
+            ch3_update_playback_speed(gb);
             sound_reg_trigger_event(value, gb);
             return true;
 
@@ -190,10 +192,9 @@ bool sound_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 
         default:
             if (ADDR_IN_RANGE(addr, SOUND_WAVE_PATTERN_LADDR, SOUND_WAVE_PATTERN_UADDR)) {
-                // TODO: Emulate writing during operation (should corrupt the current Wave Pattern sample)
                 if (gb->apu.regs.nr30.active) {
-                    logger(LOG_ERROR, "sound_reg_writeb: address $%04X: Wave Pattern RAM is not accessible", addr);
-                    return false;
+                    *(apu_wave_ram_selected(gb)) = value;
+                    return true;
                 }
 
                 (*((byte_t *) &gb->apu.regs.wave_pattern_ram[addr - SOUND_WAVE_PATTERN_LADDR])) = value;

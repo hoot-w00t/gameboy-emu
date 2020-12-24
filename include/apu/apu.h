@@ -48,7 +48,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 // Calculate the 11-bit frequency from freq_lo and freq_hi
 // nrlo is a (struct sound_freq_lo)
 // nrhi is a (struct sound_freq_hi)
-#define apu_freq11(nrlo,nrhi) ((nrhi.freq_hi << 8) | nrlo.freq_lo)
+#define apu_freq11(nrlo,nrhi) (((nrhi.freq_hi) << 8) | (nrlo.freq_lo))
 
 // Calculate frequency in Hz for Tone channels 1 and 2
 #define apu_tone_freq(freq_11) (131072.0 / (2048.0 - (double) freq_11))
@@ -64,11 +64,36 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 // Return the selected 4-bit sample
 // n is the sample index (0-31)
-// wpram points to gb->apu.regs.wave_pattern_ram
-#define apu_wave_sample(n,wpram) ((n % 2) ? (wpram[(n / 2)].s1) : (wpram[(n / 2)].s0))
+static inline byte_t apu_wave_sample(const byte_t n,
+                                     const struct sound_wave_pattern *wpram)
+{
+    if (n % 2) {
+        return wpram[n / 2].s1;
+    } else {
+        return wpram[n / 2].s0;
+    }
+}
+
+// Pointer to the selected wave pattern RAM byte
+// gb is a pointer to gb_system_t
+#define apu_wave_ram_selected(gb) ((byte_t *) &gb->apu.regs.wave_pattern_ram[gb->apu.ch3.wave_index / 2])
 
 // Return audio sample from a 4-bit unsigned sample
 #define apu_wave_audio_sample(s) (((double) (s) - 8.0) / 8.0)
+
+static inline void ch3_update_playback_speed(gb_system_t *gb)
+{
+    gb->apu.ch3.freq = apu_wave_freq(apu_freq11(gb->apu.regs.nr33, gb->apu.regs.nr34));
+    gb->apu.ch3.period = apu_wave_period(gb->apu.ch3.freq);
+    gb->apu.ch3.wave_sample_duration = gb->apu.ch3.period / 32.0;
+}
+
+static inline void ch3_select_next_sample(gb_system_t *gb)
+{
+    gb->apu.ch3.wave_sample = apu_wave_sample(gb->apu.ch3.wave_index, gb->apu.regs.wave_pattern_ram);
+    if ((gb->apu.ch3.wave_index += 1) >= 32)
+        gb->apu.ch3.wave_index = 0;
+}
 
 #define apu_noise_r(r) ((r) ? (r) : (0.5))
 #define apu_noise_freq(r,s) (524288.0 / apu_noise_r(r) / pow(2.0, (double) (s + 1)))
@@ -81,15 +106,10 @@ static inline double pulse_sample(const double atime,
     return sin(frequency * 2 * PI * atime) > duty ? AMP_HIGH : AMP_LOW;
 }
 
-// Generate a sawtooth wave sample
-static inline double sawtooth_sample(const double atime, const double frequency)
-{
-    return ((frequency * PI * fmod(atime, 1.0 / frequency)) - PI_HALF) / (PI * 2.0);
-}
-
 void apu_lfsr_clock(gb_system_t *gb);
 double apu_generate_sample(const double atime,
                            const double amplitude,
                            gb_system_t *gb);
+void apu_initialize(const uint32_t sample_rate, gb_system_t *gb);
 
 #endif
