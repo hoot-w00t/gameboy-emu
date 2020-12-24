@@ -26,7 +26,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define PI        (3.14159265358979323846)
 #define PI_HALF   (1.57079632679489661923)
 #define AMP_HIGH  (1.0)
-#define AMP_LOW   (0.0)
+#define AMP_LOW   (-1.0)
 
 // Apply the volume envelope
 // vol is the 4-bit volume value
