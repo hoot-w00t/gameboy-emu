@@ -46,6 +46,9 @@ bool lcd_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
     switch (addr) {
         case LCDC:
+            if (gb->screen.lcdc.enable && !(value & 0x80) && gb->screen.lcd_stat.mode != LCDC_MODE_VBLANK)
+                logger(LOG_CRIT, "LCD screen should only be disabled during VBlank! (currently mode %u)", gb->screen.lcd_stat.mode);
+
             (*((byte_t *) &gb->screen.lcdc)) = value;
             if (!gb->screen.lcdc.enable) {
                 gb->screen.lcd_stat.mode = LCDC_MODE_0;
