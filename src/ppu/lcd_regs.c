@@ -48,7 +48,7 @@ bool lcd_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
         case LCDC:
             (*((byte_t *) &gb->screen.lcdc)) = value;
             if (!gb->screen.lcdc.enable) {
-                gb->screen.lcd_stat.mode = LCDC_MODE_VBLANK;
+                gb->screen.lcd_stat.mode = LCDC_MODE_0;
                 gb->screen.ly = 0;
                 gb->screen.scanline_clock = 0;
             }
