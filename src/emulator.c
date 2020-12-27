@@ -116,7 +116,7 @@ void render_framebuffer(gb_system_t *gb)
         frames_per_second += 1;
         SDL_UpdateWindowSurface(lcd_win);
     }
-    if ((++frameskip_counter) >= frameskip)
+    if ((++frameskip_counter) > frameskip)
         frameskip_counter = 0;
 }
 
