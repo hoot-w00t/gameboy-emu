@@ -23,6 +23,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "mmu/mmu_internal.h"
 #include "mmu/mbc1.h"
 #include "mmu/mbc3.h"
+#include "mmu/mbc5.h"
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -254,6 +255,19 @@ bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb)
             gb->memory.mbc_writeb = &mbc3_writeb;
             gb->memory.mbc_clock = &mbc3_clock;
             gb->memory.mbc_regs = xzalloc(sizeof(mbc3_regs_t));
+            return true;
+
+        case 0x1C: // MBC5 + Rumble
+        case 0x1D: // MBC5 + Rumble + RAM
+        case 0x1E: // MBC5 + Rumble + RAM + Battery
+            logger(LOG_WARN, "Rumble is not supported\n");
+            __attribute__((fallthrough));
+        case 0x19: // MBC5
+        case 0x1A: // MBC5 + RAM
+        case 0x1B: // MBC5 + RAM + Battery
+            gb->memory.mbc_writeb = &mbc5_writeb;
+            gb->memory.mbc_regs = xzalloc(sizeof(mbc5_regs_t));
+            gb->memory.mbc_battery = (mbc_type == 0x1E || mbc_type == 0x1B);
             return true;
 
         default: logger(LOG_ERROR, "Unsupported MBC type $%02X", mbc_type);
