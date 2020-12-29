@@ -278,13 +278,13 @@ int ppu_cycle(gb_system_t *gb)
             ppu_draw_scanline(gb->screen.ly, gb);
         }
 
+        if ((gb->screen.ly += 1) >= LCD_LINES)
+            gb->screen.ly = 0;
+
         // Coincidence Flag
         gb->screen.lcd_stat.coincidence_flag = gb->screen.ly == gb->screen.lyc;
         if (gb->screen.lcd_stat.coincidence_flag && gb->screen.lcd_stat.coincidence_int)
             cpu_int_flag_set(INT_LCD_STAT_BIT, gb);
-
-        if ((gb->screen.ly += 1) >= LCD_LINES)
-            gb->screen.ly = 0;
 
         if (gb->screen.ly == 144) {
             // VBlank period
