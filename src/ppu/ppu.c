@@ -25,6 +25,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <string.h>
 
 #define SHADE_FROM_PALETTE(id, palette) ((palette >> (id * 2)) & 0x3)
+#define BG_MAP_2_OFFSET (BG_MAP_2_LADDR - TILE_LADDR)
+#define BG_MAP_1_OFFSET (BG_MAP_1_LADDR - TILE_LADDR)
 
 const pixel_t monochrome_pal[4] = {
     { .r = 0xFF, .g = 0xFF, .b = 0xFF},
@@ -99,12 +101,11 @@ void ppu_draw_background(const byte_t scanline, gb_system_t *gb)
     const byte_t scy = gb->screen.scy;
     const byte_t scx = gb->screen.scx;
     const byte_t wy = gb->screen.wy;
-    const byte_t wx = gb->screen.wx - 7;
     const bool use_window = gb->screen.lcdc.window_display && wy <= scanline;
     bool signed_tile_id = false;
     uint16_t base_tile_data_addr;
     uint16_t base_tile_map_addr;
-    byte_t y, x;
+    byte_t y, x, tile_map_select;
 
     if (gb->screen.lcdc.bg_select) {
         base_tile_data_addr = 0;
@@ -113,18 +114,19 @@ void ppu_draw_background(const byte_t scanline, gb_system_t *gb)
         signed_tile_id = true;
     }
 
-    if (use_window) {
-        base_tile_map_addr = gb->screen.lcdc.window_select ? BG_MAP_2_LADDR - TILE_LADDR : BG_MAP_1_LADDR - TILE_LADDR;
-        y = scanline - wy;
-    } else {
-        base_tile_map_addr = gb->screen.lcdc.bg_tilemap_select ? BG_MAP_2_LADDR - TILE_LADDR : BG_MAP_1_LADDR - TILE_LADDR;
-        y = scanline + scy;
-    }
-
-    uint16_t tile_row = (y / 8) * 32;
     for (byte_t pixel = 0; pixel < SCREEN_WIDTH; ++pixel) {
-        x = use_window ? pixel - wx : pixel + scx;
+        if (use_window && pixel >= (signed) (gb->screen.wx - 7)) {
+            tile_map_select = gb->screen.lcdc.window_select;
+            x = pixel - (gb->screen.wx - 7);
+            y = scanline - wy;
+        } else {
+            tile_map_select = gb->screen.lcdc.bg_tilemap_select;
+            x = pixel + scx;
+            y = scanline + scy;
+        }
+        base_tile_map_addr = tile_map_select ? BG_MAP_2_OFFSET : BG_MAP_1_OFFSET;
 
+        uint16_t tile_row = (y / 8) * 32;
         uint16_t tile_col = x / 8;
         uint16_t tile_map_addr = base_tile_map_addr + tile_row + tile_col;
         uint16_t tile_data_addr = base_tile_data_addr;
