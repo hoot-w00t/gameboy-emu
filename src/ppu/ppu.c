@@ -41,7 +41,7 @@ void ppu_draw_sprites(const byte_t scanline, gb_system_t *gb)
     byte_t sprite_height = 8 + (gb->screen.lcdc.obj_size * 8);
     int16_t y, x, line;
     uint16_t tile_data_addr;
-    byte_t tile_lo, tile_hi;
+    byte_t tile_id, tile_lo, tile_hi;
     byte_t palette;
     oam_entry_t *oam_entry;
 
@@ -58,7 +58,8 @@ void ppu_draw_sprites(const byte_t scanline, gb_system_t *gb)
             line = ((scanline - y) * 2);
         }
 
-        tile_data_addr = (oam_entry->tile_id * 16) + line;
+        tile_id = gb->screen.lcdc.obj_size ? (oam_entry->tile_id & 0xFE) : oam_entry->tile_id;
+        tile_data_addr = (tile_id * 16) + line;
         if ((unsigned) (tile_data_addr + 1) >= sizeof(gb->memory.vram)) {
             logger(LOG_CRIT, "ppu_draw_sprites: tile_data_addr out of bounds: %X", tile_data_addr);
             continue;
