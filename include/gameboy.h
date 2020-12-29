@@ -352,6 +352,7 @@ struct lcd_screen {
     lcd_callback_t vblank_callback;
 
     // LCD State
+    byte_t window_scanline;
     uint32_t scanline_clock;
 };
 

@@ -99,7 +99,7 @@ void ppu_draw_sprites(const byte_t scanline, gb_system_t *gb)
 // Draw background or window on given scanline
 void ppu_draw_background(const byte_t scanline, gb_system_t *gb)
 {
-    const bool use_window = gb->screen.lcdc.window_display && (gb->screen.wy <= scanline);
+    bool window_drawn = false;
     bool signed_tile_id = false;
     uint16_t base_tile_data_addr;
     uint16_t base_tile_map_addr;
@@ -113,10 +113,11 @@ void ppu_draw_background(const byte_t scanline, gb_system_t *gb)
     }
 
     for (byte_t pixel = 0; pixel < SCREEN_WIDTH; ++pixel) {
-        if (use_window && pixel >= (signed) (gb->screen.wx - 7)) {
+        if (gb->screen.lcdc.window_display && (gb->screen.wy <= scanline) && pixel >= (signed) (gb->screen.wx - 7)) {
             tile_map_select = gb->screen.lcdc.window_select;
             x = pixel - (gb->screen.wx - 7);
-            y = scanline - gb->screen.wy;
+            y = gb->screen.window_scanline;
+            window_drawn = true;
         } else {
             tile_map_select = gb->screen.lcdc.bg_tilemap_select;
             x = pixel + gb->screen.scx;
@@ -148,6 +149,8 @@ void ppu_draw_background(const byte_t scanline, gb_system_t *gb)
         gb->screen.framebuffer[scanline][pixel] = monochrome_pal[pixel_shade];
         gb->screen.sl_bg_shade_id[pixel] = pixel_shade_id;
     }
+    if (window_drawn)
+        gb->screen.window_scanline += 1;
 }
 
 // Draw scanline
@@ -278,8 +281,10 @@ int ppu_cycle(gb_system_t *gb)
             ppu_draw_scanline(gb->screen.ly, gb);
         }
 
-        if ((gb->screen.ly += 1) >= LCD_LINES)
+        if ((gb->screen.ly += 1) >= LCD_LINES) {
             gb->screen.ly = 0;
+            gb->screen.window_scanline = 0;
+        }
 
         // Coincidence Flag
         gb->screen.lcd_stat.coincidence_flag = gb->screen.ly == gb->screen.lyc;
