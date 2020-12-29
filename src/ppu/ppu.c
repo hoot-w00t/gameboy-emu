@@ -99,10 +99,7 @@ void ppu_draw_sprites(const byte_t scanline, gb_system_t *gb)
 // Draw background or window on given scanline
 void ppu_draw_background(const byte_t scanline, gb_system_t *gb)
 {
-    const byte_t scy = gb->screen.scy;
-    const byte_t scx = gb->screen.scx;
-    const byte_t wy = gb->screen.wy;
-    const bool use_window = gb->screen.lcdc.window_display && wy <= scanline;
+    const bool use_window = gb->screen.lcdc.window_display && (gb->screen.wy <= scanline);
     bool signed_tile_id = false;
     uint16_t base_tile_data_addr;
     uint16_t base_tile_map_addr;
@@ -119,11 +116,11 @@ void ppu_draw_background(const byte_t scanline, gb_system_t *gb)
         if (use_window && pixel >= (signed) (gb->screen.wx - 7)) {
             tile_map_select = gb->screen.lcdc.window_select;
             x = pixel - (gb->screen.wx - 7);
-            y = scanline - wy;
+            y = scanline - gb->screen.wy;
         } else {
             tile_map_select = gb->screen.lcdc.bg_tilemap_select;
-            x = pixel + scx;
-            y = scanline + scy;
+            x = pixel + gb->screen.scx;
+            y = scanline + gb->screen.scy;
         }
         base_tile_map_addr = tile_map_select ? BG_MAP_2_OFFSET : BG_MAP_1_OFFSET;
 
