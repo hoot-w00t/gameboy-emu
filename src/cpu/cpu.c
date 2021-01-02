@@ -63,7 +63,6 @@ int cpu_cycle(gb_system_t *gb)
     // Emulate real CPU cycles
     if (gb->idle_cycles > 0) {
         gb->idle_cycles -= 1;
-        gb->cycle_nb += 1;
         return 0;
     }
 
@@ -126,9 +125,9 @@ int cpu_cycle(gb_system_t *gb)
     }
 
     // Exclude the current cycle from the remaining
-    if (handler_ret > 0) handler_ret -= 1;
+    if (handler_ret > 0)
+        handler_ret -= 1;
 
-    gb->cycle_nb += 1;
     gb->idle_cycles += handler_ret;
     return handler_ret;
 }

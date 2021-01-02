@@ -227,7 +227,7 @@ void emulate_clocks(gb_system_t *gb, float *audio_buffer)
         clocks_per_second += remaining_clocks;
 
         // Emulate the clocks
-        for (; remaining_clocks > 0; --remaining_clocks) {
+        for (; remaining_clocks > 0; --remaining_clocks, gb->cycle_nb += 1) {
             if (cpu_cycle(gb) < 0) {
                 // Emulation should be stopped
                 stop_emulation = true;
