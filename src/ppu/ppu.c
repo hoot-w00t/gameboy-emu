@@ -265,7 +265,7 @@ int ppu_cycle(gb_system_t *gb)
                 if (gb->screen.oam_search_index >= 40)
                     ppu_oam_sort(gb);
             }
-        } else if (gb->screen.scanline_clock < LCD_MODE_3_CYCLES) {
+        } else if (gb->screen.scanline_clock < (LCD_MODE_3_CYCLES + LCD_MODE_2_CYCLES)) {
             gb->screen.lcd_stat.mode = LCDC_MODE_3;
         } else {
             gb->screen.lcd_stat.mode = LCDC_MODE_0;
