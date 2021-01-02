@@ -40,234 +40,706 @@ uint16_t cpu_pop_u16(gb_system_t *gb)
     return value;
 }
 
-// PUSH opcodes
-int opcode_push(const opcode_t *opcode, gb_system_t *gb)
+// PUSH BC
+int opcode_push_bc(const opcode_t *opcode, gb_system_t *gb)
 {
-    switch (opcode->opcode) {
-        case 0xC5: cpu_push_u16(reg_read_u16(REG_BC, gb), gb); break;
-        case 0xD5: cpu_push_u16(reg_read_u16(REG_DE, gb), gb); break;
-        case 0xE5: cpu_push_u16(reg_read_u16(REG_HL, gb), gb); break;
-        case 0xF5: cpu_push_u16(reg_read_u16(REG_AF, gb), gb); break;
-        default: return OPCODE_ILLEGAL;
-    }
+    cpu_push_u16(reg_read_u16(REG_BC, gb), gb);
     return opcode->cycles_true;
 }
 
-// POP opcodes
-int opcode_pop(const opcode_t *opcode, gb_system_t *gb)
+// PUSH DE
+int opcode_push_de(const opcode_t *opcode, gb_system_t *gb)
 {
-    switch (opcode->opcode) {
-        case 0xC1: reg_write_u16(REG_BC, cpu_pop_u16(gb), gb); break;
-        case 0xD1: reg_write_u16(REG_DE, cpu_pop_u16(gb), gb); break;
-        case 0xE1: reg_write_u16(REG_HL, cpu_pop_u16(gb), gb); break;
-        case 0xF1: reg_write_u16(REG_AF, cpu_pop_u16(gb) & 0xFFF0, gb); break;
-        default: return OPCODE_ILLEGAL;
-    }
+    cpu_push_u16(reg_read_u16(REG_DE, gb), gb);
     return opcode->cycles_true;
 }
 
-// Set 8bit dest_reg to src_reg
-static inline void ld_rr8(const byte_t dest_reg, const byte_t src_reg, gb_system_t *gb)
+// PUSH HL
+int opcode_push_hl(const opcode_t *opcode, gb_system_t *gb)
 {
-    reg_writeb(dest_reg, reg_readb(src_reg, gb), gb);
-}
-
-// Set 8bit reg to value stored at addr in HL
-static inline void ld_r8_hl(const byte_t reg, gb_system_t *gb)
-{
-    reg_writeb(reg, mmu_readb(reg_read_u16(REG_HL, gb), gb), gb);
-}
-
-// Write value of reg at addr in HL
-static inline void ld_hl_r8(const byte_t reg, gb_system_t *gb)
-{
-    mmu_writeb(reg_read_u16(REG_HL, gb), reg_readb(reg, gb), gb);
-}
-
-// LD r,r and LD r,n excluding the A register
-int opcode_ld_r8(const opcode_t *opcode, gb_system_t *gb)
-{
-    switch (opcode->opcode) {
-        // LD r,n
-        case 0x06: reg_writeb(REG_B, cpu_fetchb(gb), gb); break;
-        case 0x0E: reg_writeb(REG_C, cpu_fetchb(gb), gb); break;
-        case 0x16: reg_writeb(REG_D, cpu_fetchb(gb), gb); break;
-        case 0x1E: reg_writeb(REG_E, cpu_fetchb(gb), gb); break;
-        case 0x26: reg_writeb(REG_H, cpu_fetchb(gb), gb); break;
-        case 0x2E: reg_writeb(REG_L, cpu_fetchb(gb), gb); break;
-
-        // LD B,r + (HL)
-        case 0x40: ld_rr8(REG_B, REG_B, gb); break;
-        case 0x41: ld_rr8(REG_B, REG_C, gb); break;
-        case 0x42: ld_rr8(REG_B, REG_D, gb); break;
-        case 0x43: ld_rr8(REG_B, REG_E, gb); break;
-        case 0x44: ld_rr8(REG_B, REG_H, gb); break;
-        case 0x45: ld_rr8(REG_B, REG_L, gb); break;
-        case 0x46: ld_r8_hl(REG_B, gb); break;
-
-        // LD C,r + (HL)
-        case 0x48: ld_rr8(REG_C, REG_B, gb); break;
-        case 0x49: ld_rr8(REG_C, REG_C, gb); break;
-        case 0x4A: ld_rr8(REG_C, REG_D, gb); break;
-        case 0x4B: ld_rr8(REG_C, REG_E, gb); break;
-        case 0x4C: ld_rr8(REG_C, REG_H, gb); break;
-        case 0x4D: ld_rr8(REG_C, REG_L, gb); break;
-        case 0x4E: ld_r8_hl(REG_C, gb); break;
-
-        // LD D,r + (HL)
-        case 0x50: ld_rr8(REG_D, REG_B, gb); break;
-        case 0x51: ld_rr8(REG_D, REG_C, gb); break;
-        case 0x52: ld_rr8(REG_D, REG_D, gb); break;
-        case 0x53: ld_rr8(REG_D, REG_E, gb); break;
-        case 0x54: ld_rr8(REG_D, REG_H, gb); break;
-        case 0x55: ld_rr8(REG_D, REG_L, gb); break;
-        case 0x56: ld_r8_hl(REG_D, gb); break;
-
-        // LD E,r + (HL)
-        case 0x58: ld_rr8(REG_E, REG_B, gb); break;
-        case 0x59: ld_rr8(REG_E, REG_C, gb); break;
-        case 0x5A: ld_rr8(REG_E, REG_D, gb); break;
-        case 0x5B: ld_rr8(REG_E, REG_E, gb); break;
-        case 0x5C: ld_rr8(REG_E, REG_H, gb); break;
-        case 0x5D: ld_rr8(REG_E, REG_L, gb); break;
-        case 0x5E: ld_r8_hl(REG_E, gb); break;
-
-        // LD H,r + (HL)
-        case 0x60: ld_rr8(REG_H, REG_B, gb); break;
-        case 0x61: ld_rr8(REG_H, REG_C, gb); break;
-        case 0x62: ld_rr8(REG_H, REG_D, gb); break;
-        case 0x63: ld_rr8(REG_H, REG_E, gb); break;
-        case 0x64: ld_rr8(REG_H, REG_H, gb); break;
-        case 0x65: ld_rr8(REG_H, REG_L, gb); break;
-        case 0x66: ld_r8_hl(REG_H, gb); break;
-
-        // LD L,r + (HL)
-        case 0x68: ld_rr8(REG_L, REG_B, gb); break;
-        case 0x69: ld_rr8(REG_L, REG_C, gb); break;
-        case 0x6A: ld_rr8(REG_L, REG_D, gb); break;
-        case 0x6B: ld_rr8(REG_L, REG_E, gb); break;
-        case 0x6C: ld_rr8(REG_L, REG_H, gb); break;
-        case 0x6D: ld_rr8(REG_L, REG_L, gb); break;
-        case 0x6E: ld_r8_hl(REG_L, gb); break;
-
-        // LD (HL),r
-        case 0x70: ld_hl_r8(REG_B, gb); break;
-        case 0x71: ld_hl_r8(REG_C, gb); break;
-        case 0x72: ld_hl_r8(REG_D, gb); break;
-        case 0x73: ld_hl_r8(REG_E, gb); break;
-        case 0x74: ld_hl_r8(REG_H, gb); break;
-        case 0x75: ld_hl_r8(REG_L, gb); break;
-
-        // LD (HL),n
-        case 0x36: mmu_writeb(reg_read_u16(REG_HL, gb), cpu_fetchb(gb), gb); break;
-
-        default: return OPCODE_ILLEGAL;
-    }
+    cpu_push_u16(reg_read_u16(REG_HL, gb), gb);
     return opcode->cycles_true;
 }
 
-// All LD opcodes related to the A register
-int opcode_ld_a(const opcode_t *opcode, gb_system_t *gb)
+// PUSH AF
+int opcode_push_af(const opcode_t *opcode, gb_system_t *gb)
 {
-    switch (opcode->opcode) {
-        // LD A,A
-        case 0x7F: ld_rr8(REG_A, REG_A, gb); break;
-
-        // LD A,r
-        case 0x78: ld_rr8(REG_A, REG_B, gb); break;
-        case 0x79: ld_rr8(REG_A, REG_C, gb); break;
-        case 0x7A: ld_rr8(REG_A, REG_D, gb); break;
-        case 0x7B: ld_rr8(REG_A, REG_E, gb); break;
-        case 0x7C: ld_rr8(REG_A, REG_H, gb); break;
-        case 0x7D: ld_rr8(REG_A, REG_L, gb); break;
-
-        // LD r,A
-        case 0x47: ld_rr8(REG_B, REG_A, gb); break;
-        case 0x4F: ld_rr8(REG_C, REG_A, gb); break;
-        case 0x57: ld_rr8(REG_D, REG_A, gb); break;
-        case 0x5F: ld_rr8(REG_E, REG_A, gb); break;
-        case 0x67: ld_rr8(REG_H, REG_A, gb); break;
-        case 0x6F: ld_rr8(REG_L, REG_A, gb); break;
-
-        // LD A,n
-        case 0x3E: reg_writeb(REG_A, cpu_fetchb(gb), gb); break;
-
-        // LD A,(nn)
-        case 0x0A: reg_writeb(REG_A, mmu_readb(reg_read_u16(REG_BC, gb), gb), gb); break;
-        case 0x1A: reg_writeb(REG_A, mmu_readb(reg_read_u16(REG_DE, gb), gb), gb); break;
-        case 0x7E: ld_r8_hl(REG_A, gb); break;
-        case 0xFA: reg_writeb(REG_A, mmu_readb(cpu_fetch_u16(gb), gb), gb); break;
-
-        // LD (nn),A
-        case 0x02: mmu_writeb(reg_read_u16(REG_BC, gb), reg_readb(REG_A, gb), gb); break;
-        case 0x12: mmu_writeb(reg_read_u16(REG_DE, gb), reg_readb(REG_A, gb), gb); break;
-        case 0x77: ld_hl_r8(REG_A, gb); break;
-        case 0xEA: mmu_writeb(cpu_fetch_u16(gb), reg_readb(REG_A, gb), gb); break;
-
-        // LD A,(C)
-        case 0xF2: reg_writeb(REG_A, mmu_readb(0xFF00 + reg_readb(REG_C, gb), gb), gb); break;
-
-        // LD (C),A
-        case 0xE2: mmu_writeb(0xFF00 + reg_readb(REG_C, gb), reg_readb(REG_A, gb), gb); break;
-
-        // LDD A,(HL) and LDI A,(HL)
-        case 0x3A:
-            ld_r8_hl(REG_A, gb);
-            reg_write_u16(REG_HL, reg_read_u16(REG_HL, gb) - 1, gb);
-            break;
-        case 0x2A:
-            ld_r8_hl(REG_A, gb);
-            reg_write_u16(REG_HL, reg_read_u16(REG_HL, gb) + 1, gb);
-            break;
-
-        // LDD (HL),A and LDI (HL),A
-        case 0x32:
-            ld_hl_r8(REG_A, gb);
-            reg_write_u16(REG_HL, reg_read_u16(REG_HL, gb) - 1, gb);
-            break;
-        case 0x22:
-            ld_hl_r8(REG_A, gb);
-            reg_write_u16(REG_HL, reg_read_u16(REG_HL, gb) + 1, gb);
-            break;
-
-        // LDH (n),A and LDH A,(n)
-        case 0xE0: mmu_writeb(0xFF00 + cpu_fetchb(gb), reg_readb(REG_A, gb), gb); break;
-        case 0xF0: reg_writeb(REG_A, mmu_readb(0xFF00 + cpu_fetchb(gb), gb), gb); break;
-
-        default: return OPCODE_ILLEGAL;
-    }
+    cpu_push_u16(reg_read_u16(REG_AF, gb), gb);
     return opcode->cycles_true;
 }
 
-// LD r16,nn opcodes
-int opcode_ld_r16_nn(const opcode_t *opcode, gb_system_t *gb)
+// POP BC
+int opcode_pop_bc(const opcode_t *opcode, gb_system_t *gb)
 {
-    switch (opcode->opcode) {
-        case 0x01: reg_write_u16(REG_BC, cpu_fetch_u16(gb), gb); break;
-        case 0x11: reg_write_u16(REG_DE, cpu_fetch_u16(gb), gb); break;
-        case 0x21: reg_write_u16(REG_HL, cpu_fetch_u16(gb), gb); break;
-        default: return OPCODE_ILLEGAL;
-    }
+    reg_write_u16(REG_BC, cpu_pop_u16(gb), gb);
     return opcode->cycles_true;
 }
 
-// All LD opcodes related to the SP
-int opcode_ld_sp(const opcode_t *opcode, gb_system_t *gb)
+// POP DE
+int opcode_pop_de(const opcode_t *opcode, gb_system_t *gb)
 {
-    switch (opcode->opcode) {
-        // LD SP,nn
-        case 0x31: gb->sp = cpu_fetch_u16(gb); break;
+    reg_write_u16(REG_DE, cpu_pop_u16(gb), gb);
+    return opcode->cycles_true;
+}
 
-        // LD SP,HL
-        case 0xF9: gb->sp = reg_read_u16(REG_HL, gb); break;
+// POP HL
+int opcode_pop_hl(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_write_u16(REG_HL, cpu_pop_u16(gb), gb);
+    return opcode->cycles_true;
+}
 
-        // LDHL SP,n
-        case 0xF8: reg_write_u16(REG_HL, cpu_add_sp_e((sbyte_t) cpu_fetchb(gb), gb), gb); break;
+// POP AF
+int opcode_pop_af(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_write_u16(REG_AF, (cpu_pop_u16(gb) & 0xFFF0), gb);
+    return opcode->cycles_true;
+}
 
-        // LD (nn),SP
-        case 0x08: mmu_write_u16(cpu_fetch_u16(gb), gb->sp, gb); break;
+// LD B,n
+int opcode_ld_b_n(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_B, cpu_fetchb(gb), gb);
+    return opcode->cycles_true;
+}
 
-        default: return OPCODE_ILLEGAL;
-    }
+// LD C,n
+int opcode_ld_c_n(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_C, cpu_fetchb(gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD D,n
+int opcode_ld_d_n(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_D, cpu_fetchb(gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD E,n
+int opcode_ld_e_n(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_E, cpu_fetchb(gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD H,n
+int opcode_ld_h_n(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_H, cpu_fetchb(gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD L,n
+int opcode_ld_l_n(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_L, cpu_fetchb(gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD (HL),n
+int opcode_ld_hl_n(const opcode_t *opcode, gb_system_t *gb)
+{
+    mmu_writeb(reg_read_u16(REG_HL, gb), cpu_fetchb(gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD A,n
+int opcode_ld_a_n(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, cpu_fetchb(gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD B,B
+int opcode_ld_b_b(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_B, reg_readb(REG_B, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD B,C
+int opcode_ld_b_c(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_B, reg_readb(REG_C, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD B,D
+int opcode_ld_b_d(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_B, reg_readb(REG_D, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD B,E
+int opcode_ld_b_e(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_B, reg_readb(REG_E, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD B,H
+int opcode_ld_b_h(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_B, reg_readb(REG_H, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD B,L
+int opcode_ld_b_l(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_B, reg_readb(REG_L, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD B,(HL)
+int opcode_ld_b_hl(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_B, mmu_readb(reg_read_u16(REG_HL, gb), gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD B,A
+int opcode_ld_b_a(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_B, reg_readb(REG_A, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD C,B
+int opcode_ld_c_b(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_C, reg_readb(REG_B, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD C,C
+int opcode_ld_c_c(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_C, reg_readb(REG_C, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD C,D
+int opcode_ld_c_d(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_C, reg_readb(REG_D, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD C,E
+int opcode_ld_c_e(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_C, reg_readb(REG_E, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD C,H
+int opcode_ld_c_h(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_C, reg_readb(REG_H, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD C,L
+int opcode_ld_c_l(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_C, reg_readb(REG_L, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD C,(HL)
+int opcode_ld_c_hl(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_C, mmu_readb(reg_read_u16(REG_HL, gb), gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD C,A
+int opcode_ld_c_a(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_C, reg_readb(REG_A, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD D,B
+int opcode_ld_d_b(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_D, reg_readb(REG_B, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD D,C
+int opcode_ld_d_c(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_D, reg_readb(REG_C, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD D,D
+int opcode_ld_d_d(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_D, reg_readb(REG_D, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD D,E
+int opcode_ld_d_e(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_D, reg_readb(REG_E, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD D,H
+int opcode_ld_d_h(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_D, reg_readb(REG_H, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD D,L
+int opcode_ld_d_l(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_D, reg_readb(REG_L, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD D,(HL)
+int opcode_ld_d_hl(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_D, mmu_readb(reg_read_u16(REG_HL, gb), gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD D,A
+int opcode_ld_d_a(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_D, reg_readb(REG_A, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD E,B
+int opcode_ld_e_b(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_E, reg_readb(REG_B, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD E,C
+int opcode_ld_e_c(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_E, reg_readb(REG_C, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD E,D
+int opcode_ld_e_d(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_E, reg_readb(REG_D, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD E,E
+int opcode_ld_e_e(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_E, reg_readb(REG_E, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD E,H
+int opcode_ld_e_h(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_E, reg_readb(REG_H, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD E,L
+int opcode_ld_e_l(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_E, reg_readb(REG_L, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD E,(HL)
+int opcode_ld_e_hl(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_E, mmu_readb(reg_read_u16(REG_HL, gb), gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD E,A
+int opcode_ld_e_a(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_E, reg_readb(REG_A, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD H,B
+int opcode_ld_h_b(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_H, reg_readb(REG_B, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD H,C
+int opcode_ld_h_c(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_H, reg_readb(REG_C, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD H,D
+int opcode_ld_h_d(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_H, reg_readb(REG_D, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD H,E
+int opcode_ld_h_e(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_H, reg_readb(REG_E, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD H,H
+int opcode_ld_h_h(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_H, reg_readb(REG_H, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD H,L
+int opcode_ld_h_l(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_H, reg_readb(REG_L, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD H,(HL)
+int opcode_ld_h_hl(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_H, mmu_readb(reg_read_u16(REG_HL, gb), gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD H,A
+int opcode_ld_h_a(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_H, reg_readb(REG_A, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD L,B
+int opcode_ld_l_b(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_L, reg_readb(REG_B, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD L,C
+int opcode_ld_l_c(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_L, reg_readb(REG_C, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD L,D
+int opcode_ld_l_d(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_L, reg_readb(REG_D, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD L,E
+int opcode_ld_l_e(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_L, reg_readb(REG_E, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD L,H
+int opcode_ld_l_h(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_L, reg_readb(REG_H, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD L,L
+int opcode_ld_l_l(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_L, reg_readb(REG_L, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD L,(HL)
+int opcode_ld_l_hl(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_L, mmu_readb(reg_read_u16(REG_HL, gb), gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD L,A
+int opcode_ld_l_a(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_L, reg_readb(REG_A, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD (HL),B
+int opcode_ld_hl_b(const opcode_t *opcode, gb_system_t *gb)
+{
+    mmu_writeb(reg_read_u16(REG_HL, gb), reg_readb(REG_B, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD (HL),C
+int opcode_ld_hl_c(const opcode_t *opcode, gb_system_t *gb)
+{
+    mmu_writeb(reg_read_u16(REG_HL, gb), reg_readb(REG_C, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD (HL),D
+int opcode_ld_hl_d(const opcode_t *opcode, gb_system_t *gb)
+{
+    mmu_writeb(reg_read_u16(REG_HL, gb), reg_readb(REG_D, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD (HL),E
+int opcode_ld_hl_e(const opcode_t *opcode, gb_system_t *gb)
+{
+    mmu_writeb(reg_read_u16(REG_HL, gb), reg_readb(REG_E, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD (HL),H
+int opcode_ld_hl_h(const opcode_t *opcode, gb_system_t *gb)
+{
+    mmu_writeb(reg_read_u16(REG_HL, gb), reg_readb(REG_H, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD (HL),L
+int opcode_ld_hl_l(const opcode_t *opcode, gb_system_t *gb)
+{
+    mmu_writeb(reg_read_u16(REG_HL, gb), reg_readb(REG_L, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD (HL),A
+int opcode_ld_hl_a(const opcode_t *opcode, gb_system_t *gb)
+{
+    mmu_writeb(reg_read_u16(REG_HL, gb), reg_readb(REG_A, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD A,B
+int opcode_ld_a_b(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, reg_readb(REG_B, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD A,C
+int opcode_ld_a_c(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, reg_readb(REG_C, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD A,D
+int opcode_ld_a_d(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, reg_readb(REG_D, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD A,E
+int opcode_ld_a_e(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, reg_readb(REG_E, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD A,H
+int opcode_ld_a_h(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, reg_readb(REG_H, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD A,L
+int opcode_ld_a_l(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, reg_readb(REG_L, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD A,(HL)
+int opcode_ld_a_hl(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, mmu_readb(reg_read_u16(REG_HL, gb), gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD A,A
+int opcode_ld_a_a(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, reg_readb(REG_A, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD A,(BC)
+int opcode_ld_a_bc(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, mmu_readb(reg_read_u16(REG_BC, gb), gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD A,(DE)
+int opcode_ld_a_de(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, mmu_readb(reg_read_u16(REG_DE, gb), gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD A,(nn)
+int opcode_ld_a_nn(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, mmu_readb(cpu_fetch_u16(gb), gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD (BC),A
+int opcode_ld_bc_a(const opcode_t *opcode, gb_system_t *gb)
+{
+    mmu_writeb(reg_read_u16(REG_BC, gb), reg_readb(REG_A, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD (DE),A
+int opcode_ld_de_a(const opcode_t *opcode, gb_system_t *gb)
+{
+    mmu_writeb(reg_read_u16(REG_DE, gb), reg_readb(REG_A, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD (nn),A
+int opcode_ld_nn_a(const opcode_t *opcode, gb_system_t *gb)
+{
+    mmu_writeb(cpu_fetch_u16(gb), reg_readb(REG_A, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD A,($FF00+C) or LD A,(C)
+int opcode_ld_a_ff00_c(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, mmu_readb(0xFF00 + reg_readb(REG_C, gb), gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD ($FF00+C),A or LD (C),A
+int opcode_ld_ff00_c_a(const opcode_t *opcode, gb_system_t *gb)
+{
+    mmu_writeb(0xFF00 + reg_readb(REG_C, gb), reg_readb(REG_A, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LDD A,(HL)
+int opcode_ldd_a_hl(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, mmu_readb(reg_read_u16(REG_HL, gb), gb), gb);
+    reg_write_u16(REG_HL, reg_read_u16(REG_HL, gb) - 1, gb);
+    return opcode->cycles_true;
+}
+
+// LDD (HL),A
+int opcode_ldd_hl_a(const opcode_t *opcode, gb_system_t *gb)
+{
+    mmu_writeb(reg_read_u16(REG_HL, gb), reg_readb(REG_A, gb), gb);
+    reg_write_u16(REG_HL, reg_read_u16(REG_HL, gb) - 1, gb);
+    return opcode->cycles_true;
+}
+
+// LDI A,(HL)
+int opcode_ldi_a_hl(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, mmu_readb(reg_read_u16(REG_HL, gb), gb), gb);
+    reg_write_u16(REG_HL, reg_read_u16(REG_HL, gb) + 1, gb);
+    return opcode->cycles_true;
+}
+
+// LDI (HL),A
+int opcode_ldi_hl_a(const opcode_t *opcode, gb_system_t *gb)
+{
+    mmu_writeb(reg_read_u16(REG_HL, gb), reg_readb(REG_A, gb), gb);
+    reg_write_u16(REG_HL, reg_read_u16(REG_HL, gb) + 1, gb);
+    return opcode->cycles_true;
+}
+
+// LDH (n),A
+int opcode_ldh_n_a(const opcode_t *opcode, gb_system_t *gb)
+{
+    mmu_writeb(0xFF00 + cpu_fetchb(gb), reg_readb(REG_A, gb), gb);
+    return opcode->cycles_true;
+}
+
+// LDH A,(n)
+int opcode_ldh_a_n(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_writeb(REG_A, mmu_readb(0xFF00 + cpu_fetchb(gb), gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD BC,nn
+int opcode_ld_bc_nn(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_write_u16(REG_BC, cpu_fetch_u16(gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD DE,nn
+int opcode_ld_de_nn(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_write_u16(REG_DE, cpu_fetch_u16(gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD HL,nn
+int opcode_ld_hl_nn(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_write_u16(REG_HL, cpu_fetch_u16(gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD SP,nn
+int opcode_ld_sp_nn(const opcode_t *opcode, gb_system_t *gb)
+{
+    gb->sp = cpu_fetch_u16(gb);
+    return opcode->cycles_true;
+}
+
+// LD SP,HL
+int opcode_ld_sp_hl(const opcode_t *opcode, gb_system_t *gb)
+{
+    gb->sp = reg_read_u16(REG_HL, gb);
+    return opcode->cycles_true;
+}
+
+// LDHL SP,e
+int opcode_ld_sp_e(const opcode_t *opcode, gb_system_t *gb)
+{
+    reg_write_u16(REG_HL, cpu_add_sp_e((sbyte_t) cpu_fetchb(gb), gb), gb);
+    return opcode->cycles_true;
+}
+
+// LD (nn),SP
+int opcode_ld_nn_sp(const opcode_t *opcode, gb_system_t *gb)
+{
+    mmu_write_u16(cpu_fetch_u16(gb), gb->sp, gb);
     return opcode->cycles_true;
 }

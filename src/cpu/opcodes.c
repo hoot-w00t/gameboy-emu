@@ -57,7 +57,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 12,
         .cycles_false = 12,
         .comment      = "Load nn to BC",
-        .handler      = &opcode_ld_r16_nn
+        .handler      = &opcode_ld_bc_nn
     },
     {
         .mnemonic     = "LD (BC),A",
@@ -66,7 +66,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load A at address BC",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_bc_a
     },
     {
         .mnemonic     = "INC BC",
@@ -102,7 +102,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load n to B",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_b_n
     },
     {
         .mnemonic     = "RLCA",
@@ -120,7 +120,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 20,
         .cycles_false = 20,
         .comment      = "Load SP at address nn",
-        .handler      = &opcode_ld_sp
+        .handler      = &opcode_ld_nn_sp
     },
     {
         .mnemonic     = "ADD HL,BC",
@@ -138,7 +138,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load value at address BC to A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_a_bc
     },
     {
         .mnemonic     = "DEC BC",
@@ -174,7 +174,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load n to C",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_c_n
     },
     {
         .mnemonic     = "RRCA",
@@ -201,7 +201,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 12,
         .cycles_false = 12,
         .comment      = "Load nn to DE",
-        .handler      = &opcode_ld_r16_nn
+        .handler      = &opcode_ld_de_nn
     },
     {
         .mnemonic     = "LD (DE),A",
@@ -210,7 +210,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load A at address DE",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_de_a
     },
     {
         .mnemonic     = "INC DE",
@@ -246,7 +246,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load n to D",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_d_n
     },
     {
         .mnemonic     = "RLA",
@@ -282,7 +282,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load value at address DE to A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_a_de
     },
     {
         .mnemonic     = "DEC DE",
@@ -318,7 +318,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load n to E",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_e_n
     },
     {
         .mnemonic     = "RRA",
@@ -345,7 +345,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 12,
         .cycles_false = 12,
         .comment      = "Load nn to HL",
-        .handler      = &opcode_ld_r16_nn
+        .handler      = &opcode_ld_hl_nn
     },
     {
         .mnemonic     = "LDI (HL),A",
@@ -354,7 +354,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load A at address HL and increment A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ldi_hl_a
     },
     {
         .mnemonic     = "INC HL",
@@ -390,7 +390,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load n to H",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_h_n
     },
     {
         .mnemonic     = "DAA",
@@ -426,7 +426,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load value at address HL to A and increment A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ldi_a_hl
     },
     {
         .mnemonic     = "DEC HL",
@@ -462,7 +462,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load n to L",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_l_n
     },
     {
         .mnemonic     = "CPL",
@@ -489,7 +489,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 12,
         .cycles_false = 12,
         .comment      = "Load nn to SP",
-        .handler      = &opcode_ld_sp
+        .handler      = &opcode_ld_sp_nn
     },
     {
         .mnemonic     = "LDD (HL),A",
@@ -498,7 +498,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load A at address HL and decrement A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ldd_hl_a
     },
     {
         .mnemonic     = "INC SP",
@@ -534,7 +534,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 12,
         .cycles_false = 12,
         .comment      = "Load n to (HL)",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_hl_n
     },
     {
         .mnemonic     = "SCF",
@@ -570,7 +570,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load value at address HL to A and decrement A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ldd_a_hl
     },
     {
         .mnemonic     = "DEC SP",
@@ -606,7 +606,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load n to A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_a_n
     },
     {
         .mnemonic     = "CCF",
@@ -624,7 +624,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load B to B",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_b_b
     },
     {
         .mnemonic     = "LD B,C",
@@ -633,7 +633,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load C to B",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_b_c
     },
     {
         .mnemonic     = "LD B,D",
@@ -642,7 +642,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load D to B",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_b_d
     },
     {
         .mnemonic     = "LD B,E",
@@ -651,7 +651,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load E to B",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_b_e
     },
     {
         .mnemonic     = "LD B,H",
@@ -660,7 +660,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load H to B",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_b_h
     },
     {
         .mnemonic     = "LD B,L",
@@ -669,7 +669,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load L to B",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_b_l
     },
     {
         .mnemonic     = "LD B,(HL)",
@@ -678,7 +678,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load value at address HL to B",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_b_hl
     },
     {
         .mnemonic     = "LD B,A",
@@ -687,7 +687,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load A to B",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_b_a
     },
     {
         .mnemonic     = "LD C,B",
@@ -696,7 +696,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load B to C",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_c_b
     },
     {
         .mnemonic     = "LD C,C",
@@ -705,7 +705,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load C to C",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_c_c
     },
     {
         .mnemonic     = "LD C,D",
@@ -714,7 +714,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load D to C",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_c_d
     },
     {
         .mnemonic     = "LD C,E",
@@ -723,7 +723,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load E to C",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_c_e
     },
     {
         .mnemonic     = "LD C,H",
@@ -732,7 +732,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load H to C",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_c_h
     },
     {
         .mnemonic     = "LD C,L",
@@ -741,7 +741,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load L to C",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_c_l
     },
     {
         .mnemonic     = "LD C,(HL)",
@@ -750,7 +750,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load value at address HL to C",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_c_hl
     },
     {
         .mnemonic     = "LD C,A",
@@ -759,7 +759,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load A to C",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_c_a
     },
     {
         .mnemonic     = "LD D,B",
@@ -768,7 +768,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load B to D",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_d_b
     },
     {
         .mnemonic     = "LD D,C",
@@ -777,7 +777,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load C to D",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_d_c
     },
     {
         .mnemonic     = "LD D,D",
@@ -786,7 +786,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load D to D",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_d_d
     },
     {
         .mnemonic     = "LD D,E",
@@ -795,7 +795,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load E to D",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_d_e
     },
     {
         .mnemonic     = "LD D,H",
@@ -804,7 +804,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load H to D",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_d_h
     },
     {
         .mnemonic     = "LD D,L",
@@ -813,7 +813,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load L to D",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_d_l
     },
     {
         .mnemonic     = "LD D,(HL)",
@@ -822,7 +822,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load value at address HL to D",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_d_hl
     },
     {
         .mnemonic     = "LD D,A",
@@ -831,7 +831,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load A to D",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_d_a
     },
     {
         .mnemonic     = "LD E,B",
@@ -840,7 +840,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load B to E",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_e_b
     },
     {
         .mnemonic     = "LD E,C",
@@ -849,7 +849,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load C to E",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_e_c
     },
     {
         .mnemonic     = "LD E,D",
@@ -858,7 +858,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load D to E",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_e_d
     },
     {
         .mnemonic     = "LD E,E",
@@ -867,7 +867,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load E to E",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_e_e
     },
     {
         .mnemonic     = "LD E,H",
@@ -876,7 +876,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load H to E",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_e_h
     },
     {
         .mnemonic     = "LD E,L",
@@ -885,7 +885,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load L to E",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_e_l
     },
     {
         .mnemonic     = "LD E,(HL)",
@@ -894,7 +894,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load value at address HL to E",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_e_hl
     },
     {
         .mnemonic     = "LD E,A",
@@ -903,7 +903,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load A to E",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_e_a
     },
     {
         .mnemonic     = "LD H,B",
@@ -912,7 +912,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load B to H",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_h_b
     },
     {
         .mnemonic     = "LD H,C",
@@ -921,7 +921,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load C to H",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_h_c
     },
     {
         .mnemonic     = "LD H,D",
@@ -930,7 +930,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load D to H",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_h_d
     },
     {
         .mnemonic     = "LD H,E",
@@ -939,7 +939,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load E to H",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_h_e
     },
     {
         .mnemonic     = "LD H,H",
@@ -948,7 +948,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load H to H",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_h_h
     },
     {
         .mnemonic     = "LD H,L",
@@ -957,7 +957,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load L to H",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_h_l
     },
     {
         .mnemonic     = "LD H,(HL)",
@@ -966,7 +966,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load value at address HL to H",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_h_hl
     },
     {
         .mnemonic     = "LD H,A",
@@ -975,7 +975,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load A to H",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_h_a
     },
     {
         .mnemonic     = "LD L,B",
@@ -984,7 +984,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load B to L",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_l_b
     },
     {
         .mnemonic     = "LD L,C",
@@ -993,7 +993,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load C to L",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_l_c
     },
     {
         .mnemonic     = "LD L,D",
@@ -1002,7 +1002,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load D to L",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_l_d
     },
     {
         .mnemonic     = "LD L,E",
@@ -1011,7 +1011,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load E to L",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_l_e
     },
     {
         .mnemonic     = "LD L,H",
@@ -1020,7 +1020,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load H to L",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_l_h
     },
     {
         .mnemonic     = "LD L,L",
@@ -1029,7 +1029,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load L to L",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_l_l
     },
     {
         .mnemonic     = "LD L,(HL)",
@@ -1038,7 +1038,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load value at address HL to L",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_l_hl
     },
     {
         .mnemonic     = "LD L,A",
@@ -1047,7 +1047,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load A to L",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_l_a
     },
     {
         .mnemonic     = "LD (HL),B",
@@ -1056,7 +1056,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load B at address HL",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_hl_b
     },
     {
         .mnemonic     = "LD (HL),C",
@@ -1065,7 +1065,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load C at address HL",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_hl_c
     },
     {
         .mnemonic     = "LD (HL),D",
@@ -1074,7 +1074,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load D at address HL",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_hl_d
     },
     {
         .mnemonic     = "LD (HL),E",
@@ -1083,7 +1083,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load E at address HL",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_hl_e
     },
     {
         .mnemonic     = "LD (HL),H",
@@ -1092,7 +1092,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load H at address HL",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_hl_h
     },
     {
         .mnemonic     = "LD (HL),L",
@@ -1101,7 +1101,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load L at address HL",
-        .handler      = &opcode_ld_r8
+        .handler      = &opcode_ld_hl_l
     },
     {
         .mnemonic     = "HALT",
@@ -1119,7 +1119,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load A at address HL",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_hl_a
     },
     {
         .mnemonic     = "LD A,B",
@@ -1128,7 +1128,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load B to A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_a_b
     },
     {
         .mnemonic     = "LD A,C",
@@ -1137,7 +1137,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load C to A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_a_c
     },
     {
         .mnemonic     = "LD A,D",
@@ -1146,7 +1146,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load D to A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_a_d
     },
     {
         .mnemonic     = "LD A,E",
@@ -1155,7 +1155,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load E to A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_a_e
     },
     {
         .mnemonic     = "LD A,H",
@@ -1164,7 +1164,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load H to A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_a_h
     },
     {
         .mnemonic     = "LD A,L",
@@ -1173,7 +1173,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load L to A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_a_l
     },
     {
         .mnemonic     = "LD A,(HL)",
@@ -1182,7 +1182,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load value at address HL to A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_a_hl
     },
     {
         .mnemonic     = "LD A,A",
@@ -1191,7 +1191,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 4,
         .cycles_false = 4,
         .comment      = "Load A to A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_a_a
     },
     {
         .mnemonic     = "ADD A,B",
@@ -1785,7 +1785,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 12,
         .cycles_false = 12,
         .comment      = "Pop SP to BC",
-        .handler      = &opcode_pop
+        .handler      = &opcode_pop_bc
     },
     {
         .mnemonic     = "JP NZ,nn",
@@ -1821,7 +1821,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 16,
         .cycles_false = 16,
         .comment      = "Push BC to stack",
-        .handler      = &opcode_push
+        .handler      = &opcode_push_bc
     },
     {
         .mnemonic     = "ADD A,n",
@@ -1929,7 +1929,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 12,
         .cycles_false = 12,
         .comment      = "Pop SP to DE",
-        .handler      = &opcode_pop
+        .handler      = &opcode_pop_de
     },
     {
         .mnemonic     = "JP NC,nn",
@@ -1957,7 +1957,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 16,
         .cycles_false = 16,
         .comment      = "Push DE to stack",
-        .handler      = &opcode_push
+        .handler      = &opcode_push_de
     },
     {
         .mnemonic     = "SUB A,n",
@@ -2040,7 +2040,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 12,
         .cycles_false = 12,
         .comment      = "Load A at address $FF00+n",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ldh_n_a
     },
     {
         .mnemonic     = "POP HL",
@@ -2049,16 +2049,16 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 12,
         .cycles_false = 12,
         .comment      = "Pop SP to HL",
-        .handler      = &opcode_pop
+        .handler      = &opcode_pop_hl
     },
     {
-        .mnemonic     = "LD (C),A",
+        .mnemonic     = "LD ($FF00+C),A",
         .opcode       = 0xE2,
         .length       = 2,
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load A at address $FF00+C",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_ff00_c_a
     },
     {NULL, 0, 0, 0, 0, NULL, NULL}, // $E3 doesn't exist, empty element for alignment
     {NULL, 0, 0, 0, 0, NULL, NULL}, // $E4 doesn't exist, empty element for alignment
@@ -2069,7 +2069,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 16,
         .cycles_false = 16,
         .comment      = "Push HL to stack",
-        .handler      = &opcode_push
+        .handler      = &opcode_push_hl
     },
     {
         .mnemonic     = "AND n",
@@ -2114,7 +2114,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 16,
         .cycles_false = 16,
         .comment      = "Load A at address nn",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_nn_a
     },
     {NULL, 0, 0, 0, 0, NULL, NULL}, // $EB doesn't exist, empty element for alignment
     {NULL, 0, 0, 0, 0, NULL, NULL}, // $EC doesn't exist, empty element for alignment
@@ -2144,7 +2144,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 12,
         .cycles_false = 12,
         .comment      = "Load value at address $FF00+n to A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ldh_a_n
     },
     {
         .mnemonic     = "POP AF",
@@ -2153,16 +2153,16 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 12,
         .cycles_false = 12,
         .comment      = "Pop SP to AF",
-        .handler      = &opcode_pop
+        .handler      = &opcode_pop_af
     },
     {
-        .mnemonic     = "LD A,(C)",
+        .mnemonic     = "LD A,($FF00+C)",
         .opcode       = 0xF2,
         .length       = 2,
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load value at address $FF00+C to A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_a_ff00_c
     },
     {
         .mnemonic     = "DI",
@@ -2181,7 +2181,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 16,
         .cycles_false = 16,
         .comment      = "Push AF to stack",
-        .handler      = &opcode_push
+        .handler      = &opcode_push_af
     },
     {
         .mnemonic     = "OR n",
@@ -2202,13 +2202,13 @@ const opcode_t opcode_table[256] = {
         .handler      = &opcode_rst
     },
     {
-        .mnemonic     = "LDHL SP,n",
+        .mnemonic     = "LDHL SP,e",
         .opcode       = 0xF8,
         .length       = 2,
         .cycles_true  = 12,
         .cycles_false = 12,
-        .comment      = "Load SP+n (signed) to HL",
-        .handler      = &opcode_ld_sp
+        .comment      = "Load SP+e (signed) to HL",
+        .handler      = &opcode_ld_sp_e
     },
     {
         .mnemonic     = "LD SP,HL",
@@ -2217,7 +2217,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 8,
         .cycles_false = 8,
         .comment      = "Load HL to SP",
-        .handler      = &opcode_ld_sp
+        .handler      = &opcode_ld_sp_hl
     },
     {
         .mnemonic     = "LD A,(nn)",
@@ -2226,7 +2226,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 16,
         .cycles_false = 16,
         .comment      = "Load value at address nn to A",
-        .handler      = &opcode_ld_a
+        .handler      = &opcode_ld_a_nn
     },
     {
         .mnemonic     = "EI",
