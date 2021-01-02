@@ -60,10 +60,31 @@ static uint32_t frameskip         = 0;
 
 static SDL_AudioDeviceID audio_devid       = 0;
 static int               audio_pos         = 0;
-static bool              audio_mute        = false;
+static double            audio_prev_volume = 0.5;
+static bool              audio_scaled      = false;
 static double            audio_volume      = 0.5;
-static const double      audio_volume_step = 0.05;
-#define audio_amp       (audio_volume * 0.5)
+#define audio_volume_step (0.05)
+#define audio_amp         (audio_volume * 0.5)
+#define audio_muted       (audio_volume <= 0.0)
+
+// Scale audio volume by percent
+static inline void audio_scale(const double percent)
+{
+    if (!audio_scaled) {
+        audio_scaled = true;
+        audio_prev_volume = audio_volume;
+        audio_volume *= percent;
+    }
+}
+
+// Restore previous audio
+static inline void audio_unscale(void)
+{
+    if (audio_scaled) {
+        audio_scaled = false;
+        audio_volume = audio_prev_volume;
+    }
+}
 
 // Returns the elapsed audio time in seconds since the program start
 static double audio_time(void)
@@ -249,7 +270,7 @@ void update_windows(gb_system_t *gb)
             lcd_win_clock_freq,
             lcd_win_clock_speed,
             lcd_win_framerate);
-    } else if (audio_mute) {
+    } else if (audio_muted) {
         update_window_title(lcd_win, "GameBoy (%.06f MHz: %.02f%%, %u fps, volume: muted)",
             lcd_win_clock_freq,
             lcd_win_clock_speed,
@@ -285,20 +306,26 @@ void lcd_event(SDL_Event *e, gb_system_t *gb)
                 update_windows(gb);
             } else if (e->key.keysym.scancode == emu_keymap.emu_speed) {
                 set_clock_speed(CPU_CLOCK_SPEED * 4);
+                audio_scale(0.2);
             } else if (e->key.keysym.scancode == emu_keymap.emu_slow) {
                 set_clock_speed(CPU_CLOCK_SPEED / 4);
+                audio_scale(0.2);
             } else if (e->key.keysym.scancode == emu_keymap.emu_zoom_in) {
                 update_pixel_size(lcd_pixel_size + 1);
             } else if (e->key.keysym.scancode == emu_keymap.emu_zoom_out) {
                 update_pixel_size(lcd_pixel_size - 1);
             } else if (e->key.keysym.scancode == emu_keymap.emu_vol_up) {
-                if ((audio_volume += audio_volume_step) >= 1.0)
-                    audio_volume = 1.0;
-                update_windows(gb);
+                if (!audio_scaled) {
+                    if ((audio_volume += audio_volume_step) >= 1.0)
+                        audio_volume = 1.0;
+                    update_windows(gb);
+                }
             } else if (e->key.keysym.scancode == emu_keymap.emu_vol_down) {
-                if ((audio_volume -= audio_volume_step) <= audio_volume_step)
-                    audio_volume = 0.0;
-                update_windows(gb);
+                if (!audio_scaled) {
+                    if ((audio_volume -= audio_volume_step) <= 0.001)
+                        audio_volume = 0.0;
+                    update_windows(gb);
+                }
             } else if (e->key.keysym.scancode == emu_keymap.emu_cpu_view) {
                 if (emu_windows[EMU_WINDOWS_CPU_VIEW].win) {
                     cpu_view_close();
@@ -319,6 +346,7 @@ void lcd_event(SDL_Event *e, gb_system_t *gb)
         case SDL_KEYUP:
             if (e->key.keysym.scancode == emu_keymap.emu_speed || e->key.keysym.scancode == emu_keymap.emu_slow) {
                 set_clock_speed(CPU_CLOCK_SPEED);
+                audio_unscale();
             } else {
                 handle_joypad_input(e, false, gb);
             }
@@ -383,21 +411,19 @@ int emulator_audio_loop(gb_system_t *gb)
 
     SDL_PauseAudioDevice(audio_devid, 0);
     while (!stop_emulation) {
-        audio_mute = (clock_speed > CPU_CLOCK_SPEED) || (audio_volume <= 0.0);
         audio_pos = 0;
         emulate_clocks(gb, audio_buffer);
         handle_events(gb);
         update_windows(gb);
 
-        if (!pause_emulation) {
+        if (pause_emulation) {
+            // Mute the audio when paused
+            for (int i = 0; i < audio_buffer_samples; ++i)
+                audio_buffer[i] = 0;
+        } else {
             // Fill any remaining samples
             while (audio_pos < audio_buffer_samples)
                 audio_buffer[audio_pos++] = (float) apu_generate_sample(audio_time(), audio_amp, gb);
-        }
-
-        if (pause_emulation || audio_mute) {
-            // Mute the audio when paused
-            memset(audio_buffer, 0, audio_buffer_size);
         }
 
         // Wait for the queue to be empty before queuing more samples
