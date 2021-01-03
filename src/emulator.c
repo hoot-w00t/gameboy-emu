@@ -190,6 +190,10 @@ void emulate_clocks(gb_system_t *gb, float *audio_buffer)
     size_t remaining_clocks;
     double elapsed;
 
+    // Initialize last_ticks
+    if (last_ticks == 0)
+        last_ticks = SDL_GetTicks();
+
     // Calculate elapsed time since last call to emulate_clocks()
     elapsed = (double) (ticks - last_ticks) / 1000.0;
 
@@ -447,32 +451,22 @@ int emulator_audio_loop(gb_system_t *gb)
 int emulate_gameboy(gb_system_t *gb, bool enable_audio)
 {
     SDL_AudioSpec audiospec;
-    Uint32 sdl_init_flags = SDL_INIT_VIDEO | SDL_INIT_EVENTS;
 
     memset(emu_windows, 0, EMU_WINDOWS_SIZE * sizeof(struct emu_windows));
-    if (enable_audio)
-        sdl_init_flags |= SDL_INIT_AUDIO;
-
-    if (SDL_Init(sdl_init_flags) < 0) {
-        fprintf(stderr, "SDL initialization failed: %s\n", SDL_GetError());
-        return -1;
-    }
-
-    if (TTF_Init() < 0) {
-        fprintf(stderr, "SDL_ttf initialization failed: %s\n", TTF_GetError());
-        return -1;
-    }
-
     if (enable_audio) {
-        audiospec.freq = audio_sample_rate;
-        audiospec.format = AUDIO_F32SYS;
-        audiospec.channels = 1;
-        audiospec.samples = audio_buffer_samples;
-        audiospec.callback = NULL;
-        audiospec.userdata = gb;
+        if (SDL_Init(SDL_INIT_AUDIO) < 0) {
+            fprintf(stderr, "SDL audio initialization failed: %s\n", SDL_GetError());
+        } else {
+            audiospec.freq = audio_sample_rate;
+            audiospec.format = AUDIO_F32SYS;
+            audiospec.channels = 1;
+            audiospec.samples = audio_buffer_samples;
+            audiospec.callback = NULL;
+            audiospec.userdata = gb;
 
-        if (!(audio_devid = SDL_OpenAudioDevice(NULL, 0, &audiospec, NULL, 0))) {
-            fprintf(stderr, "SDL_OpenAudioDevice: %s\n", SDL_GetError());
+            if (!(audio_devid = SDL_OpenAudioDevice(NULL, 0, &audiospec, NULL, 0))) {
+                fprintf(stderr, "SDL_OpenAudioDevice: %s\n", SDL_GetError());
+            }
         }
     }
 
@@ -513,7 +507,5 @@ int emulate_gameboy(gb_system_t *gb, bool enable_audio)
     cpu_view_close();
     mmu_view_close();
     SDL_DestroyWindow(lcd_win);
-    TTF_Quit();
-    SDL_Quit();
     return 0;
 }

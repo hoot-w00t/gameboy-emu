@@ -23,6 +23,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _EMULATOR_UTILS_H
 #define _EMULATOR_UTILS_H
 
+void initialize_sdl(void);
 void render_text(TTF_Font *font,
                  SDL_Renderer *ren,
                  int x,
@@ -31,5 +32,6 @@ void render_text(TTF_Font *font,
                  ...);
 TTF_Font *load_default_font(void);
 void update_window_title(SDL_Window *win, const char *format, ...);
+char *ask_for_file_drop(void);
 
 #endif

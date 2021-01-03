@@ -21,6 +21,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "gb_system.h"
 #include "emulator.h"
 #include "cartridge.h"
+#include "emulator_utils.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,6 +31,7 @@ static struct args {
     bool debug;
     bool no_audio;
     char *filename;
+    bool filename_alloc;
     bool enable_bootrom;
 } args;
 
@@ -60,6 +62,7 @@ void parse_args(int ac, char **av)
     args.debug = false;
     args.no_audio = false;
     args.filename = NULL;
+    args.filename_alloc = false;
     args.enable_bootrom = false;
 
     // Optionnal arguments
@@ -93,21 +96,30 @@ void parse_args(int ac, char **av)
     }
 
     // Positionnal arguments
-    if (optind >= ac) {
-        fprintf(stderr, "Missing argument: filename\n");
-        exit(EXIT_FAILURE);
-    }
-    args.filename = av[optind];
+    if (optind < ac)
+        args.filename = av[optind];
 }
+
 
 int main(int ac, char **av)
 {
-    int emulation_ret;
+    int emulation_ret = -1;
     gb_system_t *gb;
 
     parse_args(ac, av);
+    initialize_sdl();
+    if (!args.filename) {
+        args.filename_alloc = true;
+        if (!(args.filename = ask_for_file_drop())) {
+            fprintf(stderr, "No ROM selected\n");
+            return EXIT_FAILURE;
+        }
+    }
+
     if (!(gb = gb_system_create_load_rom(args.filename, args.enable_bootrom)))
         return EXIT_FAILURE;
+    if (args.filename_alloc)
+        free(args.filename);
 
     if (args.debug) {
         cartridge_dump(&gb->cartridge);
@@ -115,10 +127,5 @@ int main(int ac, char **av)
 
     emulation_ret = emulate_gameboy(gb, !args.no_audio);
     gb_system_destroy(gb);
-
-    if (emulation_ret < 0) {
-        return EXIT_FAILURE;
-    } else {
-        return EXIT_SUCCESS;
-    }
+    return emulation_ret < 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }

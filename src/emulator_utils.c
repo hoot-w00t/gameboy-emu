@@ -21,6 +21,22 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <SDL.h>
 #include <SDL_ttf.h>
 
+// Initialize the required parts of the SDL, exit on error
+void initialize_sdl(void)
+{
+    if (TTF_Init() < 0) {
+        fprintf(stderr, "SDL_ttf initialization failed: %s\n", TTF_GetError());
+        exit(EXIT_FAILURE);
+    }
+    atexit(TTF_Quit);
+
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
+        fprintf(stderr, "SDL initialization failed: %s\n", SDL_GetError());
+        exit(EXIT_FAILURE);
+    }
+    atexit(SDL_Quit);
+}
+
 // Render text using *font
 void render_text(TTF_Font *font,
                  SDL_Renderer *ren,
@@ -85,4 +101,67 @@ void update_window_title(SDL_Window *win, const char *format, ...)
     vsnprintf(title, sizeof(title), format, ap);
     va_end(ap);
     SDL_SetWindowTitle(win, title);
+}
+
+// Await file drop on the window
+// Returns the file path or NULL on error
+char *ask_for_file_drop(void)
+{
+    const int w_width = 300;
+    const int w_height = 300;
+    const char text[] = "Drag and drop GameBoy ROM here";
+    SDL_Window *win;
+    SDL_Renderer *ren;
+    TTF_Font *font;
+    SDL_Surface *surface;
+    SDL_Texture *texture;
+    SDL_Rect rect;
+    SDL_Event e;
+    char *filename = NULL;
+
+    font = load_default_font();
+    SDL_CreateWindowAndRenderer(w_width, w_height, 0, &win, &ren);
+    surface = TTF_RenderText_Solid(font, text, (SDL_Color) {255, 255, 255, 255});
+    texture = SDL_CreateTextureFromSurface(ren, surface);
+    if (!win || !ren || !font || !surface || !texture) {
+        fprintf(stderr, "ask_for_file_drop: %s\n", SDL_GetError());
+        exit(EXIT_FAILURE);
+    }
+
+    SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
+    SDL_RenderClear(ren);
+    TTF_SizeText(font, text, &rect.w, &rect.h);
+    rect.x = (w_width / 2) - (rect.w / 2);
+    rect.y = (w_height / 2) - (rect.h / 2);
+    SDL_RenderCopy(ren, texture, NULL, &rect);
+    SDL_RenderPresent(ren);
+
+    while (1) {
+        while (SDL_PollEvent(&e)) {
+            switch (e.type) {
+                case SDL_QUIT: goto drop_end;
+                case SDL_KEYDOWN:
+                    if (e.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
+                        goto drop_end;
+                    break;
+                case SDL_WINDOWEVENT:
+                    if (e.window.event == SDL_WINDOWEVENT_CLOSE)
+                        goto drop_end;
+                    break;
+                case SDL_DROPFILE:
+                    filename = SDL_strdup(e.drop.file);
+                    goto drop_end;
+                default: break;
+            }
+        }
+        SDL_Delay(50);
+    }
+
+drop_end:
+    SDL_DestroyRenderer(ren);
+    SDL_DestroyWindow(win);
+    SDL_FreeSurface(surface);
+    SDL_DestroyTexture(texture);
+    TTF_CloseFont(font);
+    return filename;
 }
