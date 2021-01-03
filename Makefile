@@ -62,7 +62,7 @@ ifdef DEBUG
 endif
 
 ifdef WINDOWS
-	CFLAGS	+=	-Wno-format
+	CFLAGS	+=	-Wno-format -DSDL_MAIN_HANDLED
 	ifdef WINDOWS_NOCONSOLE
 		LDFLAGS	+=	-Wl,-subsystem,windows
 	endif
