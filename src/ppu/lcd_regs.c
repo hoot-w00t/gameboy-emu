@@ -38,7 +38,7 @@ byte_t lcd_reg_readb(uint16_t addr, gb_system_t *gb)
         case LCDC_DMA   : return gb->screen.dma;
         default:
             logger(LOG_ERROR, "lcd_reg_readb failed: unhandled address $%04X", addr);
-            return 0;
+            return MMU_UNMAPPED_ADDR_VALUE;
     }
 }
 

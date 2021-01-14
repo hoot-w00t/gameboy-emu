@@ -37,7 +37,7 @@ byte_t serial_reg_readb(uint16_t addr, gb_system_t *gb)
 
         default:
             logger(LOG_ERROR, "serial_reg_readb failed: unhandled address $%04X", addr);
-            return 0;
+            return MMU_UNMAPPED_ADDR_VALUE;
     }
 }
 

@@ -39,7 +39,7 @@ byte_t mmu_internal_readb(uint16_t addr, gb_system_t *gb)
     } else if (ADDR_IN_RANGE(addr, VRAM_LADDR, VRAM_UADDR)) {
         if (mmu_vram_blocked(gb)) {
             logger(LOG_ERROR, "mmu_readb failed: address $%04X: VRAM is not accessible", addr);
-            return 0xFF;
+            return MMU_UNMAPPED_ADDR_VALUE;
         }
 
         return gb->memory.vram[addr - VRAM_LADDR];
@@ -53,23 +53,23 @@ byte_t mmu_internal_readb(uint16_t addr, gb_system_t *gb)
     } else if (ADDR_IN_RANGE(addr, RAM_BANK_N_LADDR, RAM_BANK_N_UADDR)) {
         if (!rambank_exists(&gb->memory.ram)) {
             logger(LOG_ERROR, "mmu_readb failed: address $%04X: No RAM banks are available", addr);
-            return 0;
+            return MMU_UNMAPPED_ADDR_VALUE;
         }
         if (!gb->memory.ram.can_read) {
             logger(LOG_ERROR, "mmu_readb failed: address $%04X: Reading is disabled for RAM banks", addr);
-            return 0;
+            return MMU_UNMAPPED_ADDR_VALUE;
         }
         if ((addr - RAM_BANK_N_LADDR) >= gb->memory.ram.bank_size) {
             logger(LOG_WARN, "mmu_readb failed: address $%04X: Out of bounds, bank only has %u bytes",
                 addr, gb->memory.ram.bank_size);
-            return 0;
+            return MMU_UNMAPPED_ADDR_VALUE;
         }
         return gb->memory.ram.banks[gb->memory.ram.bank][addr - RAM_BANK_N_LADDR];
 
     } else if (ADDR_IN_RANGE(addr, OAM_LADDR, OAM_UADDR)) {
         if (mmu_oam_blocked(gb)) {
             logger(LOG_ERROR, "mmu_readb failed: address $%04X: OAM is not accessible", addr);
-            return 0;
+            return MMU_UNMAPPED_ADDR_VALUE;
         }
 
         return gb->memory.oam[addr - OAM_LADDR];
@@ -109,7 +109,7 @@ byte_t mmu_internal_readb(uint16_t addr, gb_system_t *gb)
 
     } else {
         logger(LOG_WARN, "mmu_readb failed: address $%04X", addr);
-        return 0;
+        return MMU_UNMAPPED_ADDR_VALUE;
     }
 }
 

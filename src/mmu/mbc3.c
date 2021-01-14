@@ -43,11 +43,11 @@ int16_t mbc3_readb(uint16_t addr, gb_system_t *gb)
             case RTC_DL:
             case RTC_DH:
                 logger(LOG_WARN, "mbc3_readb: address $%04X: RTC not implemented yet, returning 0", addr);
-                return 0;
+                return MMU_UNMAPPED_ADDR_VALUE;
 
             default:
                 logger(LOG_ERROR, "mbc3_readb: address $%04X: invalid register $%02X", addr, mbc3_regs->ram_bank);
-                return 0;
+                return MMU_UNMAPPED_ADDR_VALUE;
         }
     } else {
         return -1;

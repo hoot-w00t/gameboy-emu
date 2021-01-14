@@ -55,6 +55,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define SPRITE_MINHEIGHT (8)
 #define SPRITE_MAXHEIGHT (16)
 
+// MMU definitions
+#define MMU_UNMAPPED_ADDR_VALUE (0xFF)
+
 // Memory map
 #define ADDR_IN_RANGE(addr,start,end) (addr >= start && addr <= end)
 

@@ -23,7 +23,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 byte_t joypad_reg_readb(gb_system_t *gb)
 {
-    byte_t value = 0x0F;
+    byte_t value = 0xFF;
 
     if (gb->joypad.select_directions) {
         if (gb->joypad.button_right) value ^= (1 << P10);
@@ -36,7 +36,6 @@ byte_t joypad_reg_readb(gb_system_t *gb)
         if (gb->joypad.button_select) value ^= (1 << P12);
         if (gb->joypad.button_start)  value ^= (1 << P13);
     }
-
     return value;
 }
 

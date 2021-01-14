@@ -29,18 +29,18 @@ byte_t sound_reg_readb(uint16_t addr, gb_system_t *gb)
         case SOUND_NR10: return (*((byte_t *) &gb->apu.regs.nr10));
         case SOUND_NR11: return (*((byte_t *) &gb->apu.regs.nr11)) & 0xC0; // Bits 7 and 6 only
         case SOUND_NR12: return (*((byte_t *) &gb->apu.regs.nr12));
-        case SOUND_NR13: return 0; // Write only
+        case SOUND_NR13: return MMU_UNMAPPED_ADDR_VALUE; // Write only
         case SOUND_NR14: return (*((byte_t *) &gb->apu.regs.nr14)) & 0x40; // Bit 6 only
 
         case SOUND_NR21: return (*((byte_t *) &gb->apu.regs.nr21)) & 0xC0; // Bits 7 and 6 only;
         case SOUND_NR22: return (*((byte_t *) &gb->apu.regs.nr22));
-        case SOUND_NR23: return 0; // Write only
+        case SOUND_NR23: return MMU_UNMAPPED_ADDR_VALUE; // Write only
         case SOUND_NR24: return (*((byte_t *) &gb->apu.regs.nr24)) & 0x40; // Bit 6 only
 
         case SOUND_NR30: return (*((byte_t *) &gb->apu.regs.nr30));
         case SOUND_NR31: return (*((byte_t *) &gb->apu.regs.nr31));
         case SOUND_NR32: return (*((byte_t *) &gb->apu.regs.nr32));
-        case SOUND_NR33: return 0; // Write Only
+        case SOUND_NR33: return MMU_UNMAPPED_ADDR_VALUE; // Write Only
         case SOUND_NR34: return (*((byte_t *) &gb->apu.regs.nr34)) & 0x40; // Bit 6 only
 
         case SOUND_NR41: return (*((byte_t *) &gb->apu.regs.nr41));
@@ -60,7 +60,7 @@ byte_t sound_reg_readb(uint16_t addr, gb_system_t *gb)
                 return (*((byte_t *) &gb->apu.regs.wave_pattern_ram[addr - SOUND_WAVE_PATTERN_LADDR]));
             }
             logger(LOG_ERROR, "sound_reg_readb failed: unhandled address $%04X", addr);
-            return 0;
+            return MMU_UNMAPPED_ADDR_VALUE;
     }
 }
 
