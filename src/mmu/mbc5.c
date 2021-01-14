@@ -24,7 +24,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "mmu/rambanks.h"
 
 #define mbc5_regs ((mbc5_regs_t *) gb->memory.mbc_regs)
-#define mbc5_switch_rom() rombank_switch_n((mbc5_regs->rom_bank_lo | ((mbc5_regs->rom_bank_hi & 0x1) << 8)), &gb->memory.rom)
+#define mbc5_switch_rom() rombank_switch_n(((mbc5_regs->rom_bank_lo | ((mbc5_regs->rom_bank_hi & 0x1) << 8)) % gb->memory.rom.banks_nb), &gb->memory.rom)
 
 bool mbc5_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
