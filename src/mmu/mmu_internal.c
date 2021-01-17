@@ -187,11 +187,9 @@ bool mmu_internal_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
         return serial_reg_writeb(addr, value, gb);
 
     } else if (addr == BOOTROM_REG_ADDR) {
-        gb->memory.bootrom_reg = value;
-        if (value) {
+        if ((value & 0x1)) {
+            gb->memory.bootrom_reg = 1;
             logger(LOG_INFO, "Bootrom disabled");
-        } else {
-            logger(LOG_WARN, "Bootrom enabled");
         }
         return true;
 
