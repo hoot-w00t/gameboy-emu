@@ -228,7 +228,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 // Serial definitions
 #define SERIAL_SB    (0xFF01)
 #define SERIAL_SC    (0xFF02)
-#define SERIAL_CLOCK (8192) // In Hz
+#define SERIAL_FREQ  (8192) // In Hz
 
 // Joypad definitions
 #define JOYPAD_REG (0xFF00)
@@ -542,18 +542,26 @@ struct apu {
     double sample_duration;
 };
 
-struct serial_port {
-    byte_t sb;
+struct  __attribute__((packed)) serial_reg_sc {
+    byte_t internal_clock : 1; // Bit 0
+                               // 0 == External clock
+                               // 1 == Internal clock
+    byte_t clock_speed    : 1; // Bit 1 (Unused on the DMG)
+    byte_t _padding       : 5;
+    byte_t transfer_start : 1; // Bit 7 Transfer Start flag
+                               // 0 == No transfer in progress or requested
+                               // 1 == Transfer in progress or requested
+};
 
-    // Serial Transfer Control Register (SC)
-    bool transfer_start_flag; // Bit 7
-    bool clock_speed;         // Bit 1 (unused on the DMG)
-    bool shift_clock;         // Bit 0
-                              // 0 == External Clock
-                              // 1 == Internal Clock
+struct serial_port {
+    byte_t sb_in; // Byte to be shifted in during transfers
+    byte_t sb;
+    struct serial_reg_sc sc;
 
     byte_t shifts;            // # of shifts left
-    uint32_t shift_cycles;    // # of cycles before shifting a bit
+    uint32_t clock_speed;     // Serial Transfer clock speed (internal or external)
+    uint32_t shift_clock;     // # of remaining clocks before shifting
+    bool plugged;             // Link Cable plugged
 };
 
 struct joypad {

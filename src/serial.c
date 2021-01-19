@@ -22,19 +22,13 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "gameboy.h"
 #include "cpu/interrupts.h"
 
+#define SERIAL_CLOCKS(freq) ((CPU_CLOCK_SPEED / (freq)) * 4)
+
 byte_t serial_reg_readb(uint16_t addr, gb_system_t *gb)
 {
-    byte_t tmp;
-
     switch (addr) {
         case SERIAL_SB: return gb->serial.sb;
-        case SERIAL_SC:
-            tmp = 0;
-            if (gb->serial.transfer_start_flag) tmp |= 0x80;
-            if (gb->serial.clock_speed) tmp |= 0x2;
-            if (gb->serial.shift_clock) tmp |= 0x1;
-            return tmp;
-
+        case SERIAL_SC: return *((byte_t *) &gb->serial.sc);
         default:
             logger(LOG_ERROR, "serial_reg_readb failed: unhandled address $%04X", addr);
             return MMU_UNMAPPED_ADDR_VALUE;
@@ -49,11 +43,21 @@ bool serial_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
             return true;
 
         case SERIAL_SC:
-            gb->serial.transfer_start_flag = (value & 0x80);
-            gb->serial.clock_speed = (value & 0x2);
-            gb->serial.shift_clock = (value & 0x1);
-            if (gb->serial.shift_clock) {
-                gb->serial.shift_cycles = SERIAL_CLOCK;
+            *((byte_t *) &gb->serial.sc) = (value | 0x7C);
+            if (!gb->serial.sc.transfer_start) {
+                gb->serial.shift_clock = 0;
+                gb->serial.shifts = 0;
+            }
+            if (gb->serial.sc.internal_clock) {
+                gb->serial.clock_speed = SERIAL_CLOCKS(SERIAL_FREQ);
+            } else if (gb->serial.plugged) {
+                // A link cable is plugged
+                // TODO: Retrieve the actual external clock speed from the
+                //       other emulator
+                gb->serial.clock_speed = SERIAL_CLOCKS(SERIAL_FREQ);
+            } else {
+                // No link cable, there is no external clock
+                gb->serial.clock_speed = 0;
             }
             return true;
 
@@ -63,27 +67,39 @@ bool serial_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
     }
 }
 
-// TODO: Implement communication between two emulators and transfer the serial
-//       port data
+// TODO: Emulate link cable between two emulators
+// TODO: Add an option to dump the serial transfers
 // Equivalent of cpu_cycle() for the Serial Port
 void serial_cycle(gb_system_t *gb)
 {
-    if (gb->serial.shift_cycles > 0) {
-        gb->serial.shift_cycles -= 1;
-
-        if (!gb->serial.shift_cycles) {
-            gb->serial.sb <<= 1;
-
-            // When the serial port is not connected, receive $FF
-            gb->serial.sb |= 1;
-            gb->serial.shifts += 1;
-
-            if (gb->serial.shifts >= 8) {
-                gb->serial.shifts = 0;
-                cpu_int_flag_set(INT_SERIAL_BIT, gb);
+    // Clock only when the transfer start flag is set to 1 and we have a
+    // clock speed (internal or external)
+    // If the clock speed is 0, the link cable is not plugged
+    if (     gb->serial.sc.transfer_start
+        &&   gb->serial.clock_speed > 0
+        &&  (gb->serial.shift_clock += 1) >= gb->serial.clock_speed)
+    {
+        gb->serial.shift_clock = 0;
+        if (gb->serial.shifts == 0) {
+            // First shift initializes the in/out bytes
+            if (gb->serial.plugged) {
+                logger(LOG_CRIT, "Link emulation is not implemented yet");
+                gb->serial.sb_in = 0xFF;
             } else {
-                gb->serial.shift_cycles = SERIAL_CLOCK;
+                // When the serial port is not plugged, received bits are 1
+                gb->serial.sb_in = 0xFF;
             }
+        }
+
+        gb->serial.sb <<= 1; // Local bit out
+        gb->serial.sb |= (gb->serial.sb_in >> 7); // Remote bit in
+        gb->serial.sb_in <<= 1; // Remote bit out
+
+        if ((gb->serial.shifts += 1) >= 8) {
+            gb->serial.shifts = 0;
+            gb->serial.sc.transfer_start = 0;
+            logger(LOG_DEBUG, "Serial IN: %02X", gb->serial.sb);
+            cpu_int_flag_set(INT_SERIAL_BIT, gb);
         }
     }
 }
