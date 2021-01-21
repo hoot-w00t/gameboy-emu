@@ -22,7 +22,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "gameboy.h"
 #include "cpu/interrupts.h"
 
-#define SERIAL_CLOCKS(freq) ((CPU_CLOCK_SPEED / (freq)) * 4)
+#define SERIAL_CLOCKS(freq) (CPU_CLOCK_SPEED / (freq))
 
 byte_t serial_reg_readb(uint16_t addr, gb_system_t *gb)
 {
