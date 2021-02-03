@@ -38,8 +38,6 @@ struct keymap {
     SDL_Scancode emu_speed;
     SDL_Scancode emu_slow;
     SDL_Scancode emu_exit;
-    SDL_Scancode emu_zoom_in;
-    SDL_Scancode emu_zoom_out;
     SDL_Scancode emu_vol_up;
     SDL_Scancode emu_vol_down;
     SDL_Scancode emu_cpu_view;
