@@ -34,6 +34,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <SDL_audio.h>
 #include <SDL_ttf.h>
 
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define audio_sample_rate        (48000)
 #define audio_buffer_samples     (audio_sample_rate / 60)
 #define audio_buffer_size        (audio_buffer_samples * sizeof(float))
@@ -42,13 +43,22 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 // TODO: Add customizable key mappings
 
-static SDL_Window  *lcd_win             = NULL;
-static SDL_Surface *lcd_surface         = NULL;
-static uint32_t     lcd_pixel_size      = 4;
-static uint32_t    *lcd_pixels          = NULL;
-static double       lcd_win_clock_freq  = 0.0;
-static double       lcd_win_clock_speed = 0.0;
-static uint32_t     lcd_win_framerate   = 0;
+static SDL_Window    *lcd_win             = NULL;
+static SDL_Renderer  *lcd_ren             = NULL;
+static double         lcd_win_clock_freq  = 0.0;
+static double         lcd_win_clock_speed = 0.0;
+static uint32_t       lcd_win_framerate   = 0;
+static int            lcd_win_width       = 0;
+static int            lcd_win_height      = 0;
+static SDL_Surface   *screen_surface      = NULL;
+static SDL_Rect       screen_dst          = {.x = 0,
+                                             .y = 0,
+                                             .w = 0,
+                                             .h = 0};
+static const SDL_Rect screen_src          = {.x = 0,
+                                             .y = 0,
+                                             .w = SCREEN_WIDTH,
+                                             .h = SCREEN_HEIGHT};
 
 static bool     stop_emulation    = false;
 static bool     pause_emulation   = false;
@@ -93,55 +103,55 @@ static double audio_time(void)
     return (atime += audio_sample_duration);
 }
 
-// Update pixel size, resize window and update surface
-void update_pixel_size(uint32_t size)
+// Update scales and positions using the window size
+void update_window_size()
 {
-    if (size > 0 && size < 8) {
-        lcd_pixel_size = size;
-        SDL_SetWindowSize(lcd_win,
-            SCREEN_WIDTH * size,
-            SCREEN_HEIGHT * size);
+    int scale;
 
-        if (!(lcd_surface = SDL_GetWindowSurface(lcd_win))) {
-            fprintf(stderr, "SDL_GetWindowSurface: %s\n", SDL_GetError());
-            stop_emulation = true;
-            return;
-        }
-        lcd_pixels = (uint32_t *) lcd_surface->pixels;
-    }
+    SDL_GetWindowSize(lcd_win, &lcd_win_width, &lcd_win_height);
+    scale = MIN(lcd_win_width / SCREEN_WIDTH, lcd_win_height / SCREEN_HEIGHT);
+    if (!scale) scale = 1;
+    screen_dst.w = SCREEN_WIDTH * scale;
+    screen_dst.h = SCREEN_HEIGHT * scale;
+    screen_dst.x = (lcd_win_width - screen_dst.w) / 2;
+    screen_dst.y = (lcd_win_height - screen_dst.h) / 2;
 }
 
 // Render the GameBoy framebuffer to the lcd_win framebuffer
 void render_framebuffer(gb_system_t *gb)
 {
     static uint32_t frameskip_counter = 0;
-    uint32_t line_width = SCREEN_WIDTH * lcd_pixel_size;
-    uint32_t line_height = line_width * lcd_pixel_size;
-    uint32_t offset;
+    SDL_Texture *screen_texture;
 
     if (frameskip_counter == 0) {
         for (byte_t y = 0; y < SCREEN_HEIGHT; ++y) {
             for (byte_t x = 0; x < SCREEN_WIDTH; ++x) {
-                offset = (x * lcd_pixel_size) + (y * line_height);
-
-                for (byte_t sy = 0; sy < lcd_pixel_size; ++sy) {
-                    for (byte_t sx = 0; sx < lcd_pixel_size; ++sx) {
-                        lcd_pixels[offset + sx + (sy * line_width)] = 0xff000000 |
-                            (gb->screen.framebuffer[y][x].r << 16) |
-                            (gb->screen.framebuffer[y][x].g << 8) |
-                            gb->screen.framebuffer[y][x].b;
-                    }
-                }
+                ((uint32_t *) screen_surface->pixels)[(x + (y * SCREEN_WIDTH))] =
+                      0xff000000
+                    | (gb->screen.framebuffer[y][x].r << 16)
+                    | (gb->screen.framebuffer[y][x].g << 8)
+                    | (gb->screen.framebuffer[y][x].b << 0);
             }
         }
+
+        // Clear the window
+        SDL_SetRenderDrawColor(lcd_ren, 0, 0, 0, 255);
+        SDL_RenderClear(lcd_ren);
+
+        // Render the Gameboy screen
+        screen_texture = SDL_CreateTextureFromSurface(lcd_ren, screen_surface);
+        SDL_RenderCopy(lcd_ren, screen_texture, &screen_src, &screen_dst);
+        SDL_DestroyTexture(screen_texture);
+
+        // Update display and increment frame counter
+        SDL_RenderPresent(lcd_ren);
         frames_per_second += 1;
-        SDL_UpdateWindowSurface(lcd_win);
     }
     if ((++frameskip_counter) > frameskip)
         frameskip_counter = 0;
 }
 
-// Change the emulated clock speed
+// Change the emulated clock speed and update the frameskip value
 void set_clock_speed(uint32_t speed)
 {
     if (clock_speed != speed) {
@@ -298,8 +308,17 @@ void lcd_event(SDL_Event *e, gb_system_t *gb)
 {
     switch (e->type) {
         case SDL_WINDOWEVENT:
-            if (e->window.event == SDL_WINDOWEVENT_CLOSE)
-                stop_emulation = true;
+            switch (e->window.event) {
+                case SDL_WINDOWEVENT_CLOSE:
+                    stop_emulation = true;
+                    break;
+
+                case SDL_WINDOWEVENT_RESIZED:
+                    update_window_size();
+                    break;
+
+                default: break;
+            }
             break;
 
         case SDL_KEYDOWN:
@@ -314,10 +333,6 @@ void lcd_event(SDL_Event *e, gb_system_t *gb)
             } else if (e->key.keysym.scancode == emu_keymap.emu_slow) {
                 set_clock_speed(CPU_CLOCK_SPEED / 4);
                 audio_scale(0.2);
-            } else if (e->key.keysym.scancode == emu_keymap.emu_zoom_in) {
-                update_pixel_size(lcd_pixel_size + 1);
-            } else if (e->key.keysym.scancode == emu_keymap.emu_zoom_out) {
-                update_pixel_size(lcd_pixel_size - 1);
             } else if (e->key.keysym.scancode == emu_keymap.emu_vol_up) {
                 if (!audio_scaled) {
                     if ((audio_volume += audio_volume_step) >= 1.0)
@@ -444,7 +459,6 @@ int emulator_audio_loop(gb_system_t *gb)
 }
 
 // Emulate GameBoy system loaded in *gb
-// Takes care of all the SDL initialization and cleanup
 // Returns < 0 on initialization error
 // Returns 0 on success
 // Returns > 0 on error during emulation
@@ -470,23 +484,32 @@ int emulate_gameboy(gb_system_t *gb, bool enable_audio)
         }
     }
 
-    if (!(lcd_win = SDL_CreateWindow("GameBoy",
-            SDL_WINDOWPOS_UNDEFINED,
-            SDL_WINDOWPOS_UNDEFINED,
-            SCREEN_WIDTH * lcd_pixel_size,
-            SCREEN_HEIGHT * lcd_pixel_size,
-            0))) {
-        fprintf(stderr, "SDL_CreateWindow: %s\n", SDL_GetError());
+    if (SDL_CreateWindowAndRenderer(SCREEN_WIDTH * 4,
+                                    SCREEN_HEIGHT * 4,
+                                    SDL_WINDOW_RESIZABLE,
+                                    &lcd_win, &lcd_ren) < 0)
+    {
+        fprintf(stderr, "SDL_CreateWindowAndRenderer: %s\n", SDL_GetError());
         return -1;
     }
-    emu_windows_set(EMU_WINDOWS_LCD, lcd_win, &lcd_event);
 
-    if (!(lcd_surface = SDL_GetWindowSurface(lcd_win))) {
-        fprintf(stderr, "SDL_GetWindowSurface: %s\n", SDL_GetError());
+    emu_windows_set(EMU_WINDOWS_LCD, lcd_win, &lcd_event);
+    update_window_title(lcd_win, "GameBoy");
+    update_window_size();
+
+    if (!(screen_surface = SDL_CreateRGBSurface(0,
+                                                SCREEN_WIDTH, SCREEN_HEIGHT,
+                                                32,
+                                                0x00ff0000, 0x0000ff00,
+                                                0x000000ff, 0xff000000)))
+    {
+        fprintf(stderr, "SDL_CreateRGBSurface: %s\n", SDL_GetError());
         return -1;
     }
-    lcd_pixels = (uint32_t *) lcd_surface->pixels;
-    SDL_UpdateWindowSurface(lcd_win);
+
+    SDL_SetRenderDrawColor(lcd_ren, 0, 0, 0, 255);
+    SDL_RenderClear(lcd_ren);
+    SDL_RenderPresent(lcd_ren);
     gb->screen.vblank_callback = &render_framebuffer;
 
     if (gb->memory.mbc_battery)
@@ -506,6 +529,8 @@ int emulate_gameboy(gb_system_t *gb, bool enable_audio)
 
     cpu_view_close();
     mmu_view_close();
+    SDL_DestroyRenderer(lcd_ren);
     SDL_DestroyWindow(lcd_win);
+    SDL_FreeSurface(screen_surface);
     return 0;
 }
