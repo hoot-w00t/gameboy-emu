@@ -30,6 +30,12 @@ void render_text(TTF_Font *font,
                  int y,
                  const char *format,
                  ...);
+void render_text_outline(TTF_Font *font,
+                         SDL_Renderer *ren,
+                         int x,
+                         int y,
+                         const char *format,
+                         ...);
 TTF_Font *load_default_font(void);
 void update_window_title(SDL_Window *win, const char *format, ...);
 char *ask_for_file_drop(void);

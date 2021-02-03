@@ -35,16 +35,21 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <SDL_ttf.h>
 
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
+#define SetRenderBackgroundColor(ren) SDL_SetRenderDrawColor(ren, 32, 32, 32, 255)
 #define audio_sample_rate        (48000)
-#define audio_buffer_samples     (audio_sample_rate / 60)
+#define audio_buffer_samples     (audio_sample_rate / 240)
 #define audio_buffer_size        (audio_buffer_samples * sizeof(float))
 #define audio_sample_duration    (1.0 / (double) audio_sample_rate)
 #define audio_sample_duration_ms (1000.0 / (double) audio_sample_rate)
 
 // TODO: Add customizable key mappings
 
+static const Uint32 target_framerate = 60;
+static const Uint32 target_framerate_ticks = 1000 / target_framerate;
 static SDL_Window    *lcd_win             = NULL;
 static SDL_Renderer  *lcd_ren             = NULL;
+static TTF_Font      *lcd_font            = NULL;
+static int            lcd_font_height     = 0;
 static double         lcd_win_clock_freq  = 0.0;
 static double         lcd_win_clock_speed = 0.0;
 static uint32_t       lcd_win_framerate   = 0;
@@ -117,11 +122,33 @@ void update_window_size()
     screen_dst.y = (lcd_win_height - screen_dst.h) / 2;
 }
 
-// Render the GameBoy framebuffer to the lcd_win framebuffer
+// Render a frame
+void render_frame(__attribute__((unused)) gb_system_t *gb)
+{
+    SDL_Texture *screen_texture;
+
+    // Clear the window
+    SetRenderBackgroundColor(lcd_ren);
+    SDL_RenderClear(lcd_ren);
+
+    // Render the Gameboy screen
+    screen_texture = SDL_CreateTextureFromSurface(lcd_ren, screen_surface);
+    SDL_RenderCopy(lcd_ren, screen_texture, &screen_src, &screen_dst);
+    SDL_DestroyTexture(screen_texture);
+
+    if (pause_emulation) {
+        render_text_outline(lcd_font, lcd_ren, 3, 3,  "Paused");
+    }
+
+    // Update display and increment frame counter
+    SDL_RenderPresent(lcd_ren);
+    frames_per_second += 1;
+}
+
+// Update the GameBoy framebuffer to the screen_surface buffer and render frame
 void render_framebuffer(gb_system_t *gb)
 {
     static uint32_t frameskip_counter = 0;
-    SDL_Texture *screen_texture;
 
     if (frameskip_counter == 0) {
         for (byte_t y = 0; y < SCREEN_HEIGHT; ++y) {
@@ -134,18 +161,7 @@ void render_framebuffer(gb_system_t *gb)
             }
         }
 
-        // Clear the window
-        SDL_SetRenderDrawColor(lcd_ren, 0, 0, 0, 255);
-        SDL_RenderClear(lcd_ren);
-
-        // Render the Gameboy screen
-        screen_texture = SDL_CreateTextureFromSurface(lcd_ren, screen_surface);
-        SDL_RenderCopy(lcd_ren, screen_texture, &screen_src, &screen_dst);
-        SDL_DestroyTexture(screen_texture);
-
-        // Update display and increment frame counter
-        SDL_RenderPresent(lcd_ren);
-        frames_per_second += 1;
+        render_frame(gb);
     }
     if ((++frameskip_counter) > frameskip)
         frameskip_counter = 0;
@@ -277,9 +293,7 @@ void emulate_clocks(gb_system_t *gb, float *audio_buffer)
 
 void update_windows(gb_system_t *gb)
 {
-    if (pause_emulation) {
-        update_window_title(lcd_win, "GameBoy (paused)");
-    } else if (audio_devid == 0) {
+    if (audio_devid == 0) {
         update_window_title(lcd_win, "GameBoy (%.06f MHz: %.02f%%, %u fps, audio off)",
             lcd_win_clock_freq,
             lcd_win_clock_speed,
@@ -395,13 +409,11 @@ void handle_events(gb_system_t *gb)
     }
 }
 
-// Main emulator loop (timed using framerate)
+// Main emulator loop (timed using elapsed time in milliseconds)
 int emulator_loop(gb_system_t *gb)
 {
-    Uint32 target_framerate = 60;
-    Uint32 frame_ms = 1000 / target_framerate;
     Uint32 frame_start;
-    Uint32 frame_time;
+    Uint32 frame_ticks;
 
     while (!stop_emulation) {
         frame_start = SDL_GetTicks();
@@ -411,12 +423,16 @@ int emulator_loop(gb_system_t *gb)
         update_windows(gb);
 
         // Calculate elapsed time in ms for a single frame
-        frame_time = SDL_GetTicks() - frame_start;
+        frame_ticks = SDL_GetTicks() - frame_start;
+
+        // If emulation is paused, render frames manually
+        if (pause_emulation)
+            render_frame(gb);
 
         // If a single frame takes less time than frame_ms, add a delay
         // to reach the target_framerate
-        if (!stop_emulation && frame_time < frame_ms)
-            SDL_Delay(frame_ms - frame_time);
+        if (!stop_emulation && frame_ticks < target_framerate_ticks)
+            SDL_Delay(target_framerate_ticks - frame_ticks);
     }
 
     return 0;
@@ -427,6 +443,7 @@ int emulator_audio_loop(gb_system_t *gb)
 {
     float *audio_buffer = xalloc(audio_buffer_size);
     Uint32 audio_pending, audio_delay;
+    Uint32 next_frame = 0;
 
     SDL_PauseAudioDevice(audio_devid, 0);
     while (!stop_emulation) {
@@ -439,6 +456,12 @@ int emulator_audio_loop(gb_system_t *gb)
             // Mute the audio when paused
             for (int i = 0; i < audio_buffer_samples; ++i)
                 audio_buffer[i] = 0;
+
+            // If emulation is paused, render frames manually
+            if (SDL_GetTicks() >= next_frame) {
+                next_frame = SDL_GetTicks() + target_framerate_ticks;
+                render_frame(gb);
+            }
         } else {
             // Fill any remaining samples
             while (audio_pos < audio_buffer_samples)
@@ -465,6 +488,10 @@ int emulator_audio_loop(gb_system_t *gb)
 int emulate_gameboy(gb_system_t *gb, bool enable_audio)
 {
     SDL_AudioSpec audiospec;
+
+    if (!(lcd_font = load_default_font()))
+        return -1;
+    lcd_font_height = TTF_FontHeight(lcd_font);
 
     memset(emu_windows, 0, EMU_WINDOWS_SIZE * sizeof(struct emu_windows));
     if (enable_audio) {
@@ -507,7 +534,7 @@ int emulate_gameboy(gb_system_t *gb, bool enable_audio)
         return -1;
     }
 
-    SDL_SetRenderDrawColor(lcd_ren, 0, 0, 0, 255);
+    SetRenderBackgroundColor(lcd_ren);
     SDL_RenderClear(lcd_ren);
     SDL_RenderPresent(lcd_ren);
     gb->screen.vblank_callback = &render_framebuffer;
@@ -532,5 +559,6 @@ int emulate_gameboy(gb_system_t *gb, bool enable_audio)
     SDL_DestroyRenderer(lcd_ren);
     SDL_DestroyWindow(lcd_win);
     SDL_FreeSurface(screen_surface);
+    TTF_CloseFont(lcd_font);
     return 0;
 }

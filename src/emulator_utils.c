@@ -73,6 +73,57 @@ void render_text(TTF_Font *font,
     SDL_DestroyTexture(texture);
 }
 
+// Render outlined text using *font
+void render_text_outline(TTF_Font *font,
+                         SDL_Renderer *ren,
+                         int x,
+                         int y,
+                         const char *format,
+                         ...)
+{
+    SDL_Surface *surface;
+    SDL_Texture *texture;
+    SDL_Rect rect;
+    char text[256];
+    va_list ap;
+
+    va_start(ap, format);
+    vsnprintf(text, sizeof(text), format, ap);
+    va_end(ap);
+
+    rect.x = x;
+    rect.y = y;
+    TTF_SetFontOutline(font, 1);
+    TTF_SizeText(font, text, &rect.w, &rect.h);
+    if (!(surface = TTF_RenderText_Solid(font, text, (SDL_Color) {0, 0, 0, 255}))) {
+        fprintf(stderr, "TTF_RenderText_Solid: %s\n", TTF_GetError());
+        return;
+    }
+    if (!(texture = SDL_CreateTextureFromSurface(ren, surface))) {
+        fprintf(stderr, "SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
+        SDL_FreeSurface(surface);
+        return;
+    }
+    SDL_RenderCopy(ren, texture, NULL, &rect);
+    SDL_FreeSurface(surface);
+    SDL_DestroyTexture(texture);
+
+    TTF_SetFontOutline(font, 0);
+    TTF_SizeText(font, text, &rect.w, &rect.h);
+    if (!(surface = TTF_RenderText_Solid(font, text, (SDL_Color) {220, 220, 220, 255}))) {
+        fprintf(stderr, "TTF_RenderText_Solid: %s\n", TTF_GetError());
+        return;
+    }
+    if (!(texture = SDL_CreateTextureFromSurface(ren, surface))) {
+        fprintf(stderr, "SDL_CreateTextureFromSurface: %s\n", SDL_GetError());
+        SDL_FreeSurface(surface);
+        return;
+    }
+    SDL_RenderCopy(ren, texture, NULL, &rect);
+    SDL_FreeSurface(surface);
+    SDL_DestroyTexture(texture);
+}
+
 // Load default TTF font
 // Returns NULL on error
 TTF_Font *load_default_font(void)
