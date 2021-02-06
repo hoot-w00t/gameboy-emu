@@ -37,7 +37,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define SetRenderBackgroundColor(ren) SDL_SetRenderDrawColor(ren, 32, 32, 32, 255)
 #define audio_sample_rate        (48000)
-#define audio_buffer_samples     (audio_sample_rate / 240)
+#define audio_buffer_samples     (audio_sample_rate / 60)
 #define audio_buffer_size        (audio_buffer_samples * sizeof(float))
 #define audio_sample_duration    (1.0 / (double) audio_sample_rate)
 #define audio_sample_duration_ms (1000.0 / (double) audio_sample_rate)
