@@ -31,8 +31,9 @@ static TCPsocket        server_socket = NULL;
 static IPaddress        client_ip     = {.host = INADDR_NONE, .port = 0};
 static TCPsocket        client_socket = NULL;
 static SDLNet_SocketSet client_set    = NULL;
-
 static byte_t           pkt_id        = 0;
+
+static char remote_addr[256];
 
 bool serial_server_opened(void)
 {
@@ -52,10 +53,7 @@ byte_t serial_pkt_id(void)
 // Returns a statically allocated buffer
 char *serial_remote_address(void)
 {
-    static char addr[64];
-
-    snprintf(addr, sizeof(addr), "%s:%u", SDLNet_ResolveIP(&client_ip), client_ip.port);
-    return addr;
+    return remote_addr;
 }
 
 // Disconnect and free link cable resources
@@ -73,6 +71,7 @@ void serial_quit(void)
 // Returns 0 on success, -1 on error
 int serial_init()
 {
+    memset(remote_addr, 0, sizeof(remote_addr));
     if (!(client_set = SDLNet_AllocSocketSet(1))) {
         fprintf(stderr, "SDLNet_AllocSocketSet: %s\n", SDLNet_GetError());
         return -1;
@@ -104,6 +103,8 @@ void serial_server_accept(void)
         if ((client_socket = SDLNet_TCP_Accept(server_socket))) {
             client_ip = *SDLNet_TCP_GetPeerAddress(client_socket);
             SDLNet_TCP_AddSocket(client_set, client_socket);
+            snprintf(remote_addr, sizeof(remote_addr), "%s:%u",
+                     SDLNet_ResolveIP(&client_ip), client_ip.port);
         }
     }
 }
@@ -117,6 +118,7 @@ void serial_disconnect(gb_system_t *gb)
     SDLNet_TCP_DelSocket(client_set, client_socket);
     SDLNet_TCP_Close(client_socket);
     client_socket = NULL;
+    snprintf(remote_addr, sizeof(remote_addr), "-");
 }
 
 // Connect to remote link cable server
@@ -133,6 +135,8 @@ bool serial_connect(const char *hostname)
             return false;
         }
         SDLNet_TCP_AddSocket(client_set, client_socket);
+        snprintf(remote_addr, sizeof(remote_addr), "%s:%u",
+                 SDLNet_ResolveIP(&client_ip), client_ip.port);
     }
     return true;
 }
