@@ -229,23 +229,31 @@ byte_t serial_reg_readb(uint16_t addr, gb_system_t *gb)
 
 bool serial_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
+    byte_t was_internal;
+
     switch (addr) {
         case SERIAL_SB:
             gb->serial.sb = value;
             return true;
 
         case SERIAL_SC:
+            was_internal = gb->serial.sc.internal_clock;
             *((byte_t *) &gb->serial.sc) = (value | 0x7C);
+            if (!gb->serial.sc.transfer_start) {
+                gb->serial.shift_clock = 0;
+                gb->serial.shifts = 0;
+            }
             if (client_socket) {
                 // Link cable is plugged
-                if (gb->serial.sc.internal_clock && gb->serial.sc.transfer_start)
-                    serial_transfer_internal(gb);
+                if (   gb->serial.sc.transfer_start
+                    && was_internal
+                    && gb->serial.sc.internal_clock
+                    && gb->serial.shift_clock > 0)
+                {
+                    logger(LOG_CRIT, "Conflicting serial transfers (shift clock: %u)", gb->serial.shift_clock);
+                }
             } else {
                 // Link cable is unplugged
-                if (!gb->serial.sc.transfer_start) {
-                    gb->serial.shift_clock = 0;
-                    gb->serial.shifts = 0;
-                }
                 gb->serial.clock_speed = gb->serial.sc.internal_clock ? SERIAL_CLOCKS(SERIAL_FREQ) : 0;
             }
             return true;
@@ -265,11 +273,13 @@ void serial_cycle(gb_system_t *gb)
 
     if (client_socket) {
         // Link cable is plugged
-        if (   !gb->serial.sc.internal_clock
-            &&  (gb->serial.shift_clock += 1) >= (SERIAL_CLOCKS(SERIAL_FREQ) * 8))
-        {
+        if ((gb->serial.shift_clock += 1) >= (SERIAL_CLOCKS(SERIAL_FREQ) * 8)) {
             gb->serial.shift_clock = 0;
-            serial_transfer_external(gb);
+            if (gb->serial.sc.internal_clock) {
+                serial_transfer_internal(gb);
+            } else {
+                serial_transfer_external(gb);
+            }
         }
     } else {
         // Link cable is not plugged
