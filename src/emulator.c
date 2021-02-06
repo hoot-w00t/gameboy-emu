@@ -82,6 +82,8 @@ static double            audio_volume      = 0.5;
 #define audio_amp         (audio_volume * 0.5)
 #define audio_muted       (audio_volume <= 0.0)
 
+static char text_input_buffer[512];
+
 // Scale audio volume by percent
 static inline void audio_scale(const double percent)
 {
@@ -138,6 +140,23 @@ void render_frame(__attribute__((unused)) gb_system_t *gb)
 
     if (pause_emulation) {
         render_text_outline(lcd_font, lcd_ren, 3, 3,  "Paused");
+    }
+
+    if (serial_connected()) {
+        render_text_outline(lcd_font, lcd_ren, 3, lcd_win_height - lcd_font_height - 3,
+                            serial_server_opened() ? "Server" : "Client");
+        render_text_outline(lcd_font, lcd_ren, 3, lcd_win_height - (lcd_font_height * 2) - 3,
+                            serial_remote_address());
+        render_text_outline(lcd_font, lcd_ren, 3, lcd_win_height - (lcd_font_height * 3) - 3,
+                            "%s (packet id: %u)", gb->serial.sc.internal_clock ? "INT" : "EXT",
+                            serial_pkt_id());
+    } else if (serial_server_opened()) {
+        render_text_outline(lcd_font, lcd_ren, 3, lcd_win_height - lcd_font_height - 3, "Server");
+        render_text_outline(lcd_font, lcd_ren, 3, lcd_win_height - (lcd_font_height * 2) - 3, "-");
+    }
+
+    if (SDL_IsTextInputActive()) {
+        render_text_outline(lcd_font, lcd_ren, 3, 3 + lcd_font_height, "> %s", text_input_buffer);
     }
 
     // Update display and increment frame counter
@@ -208,7 +227,7 @@ void emulate_clocks(gb_system_t *gb, float *audio_buffer)
 {
     static Uint32 last_ticks = 0;
     static double second_elapsed = 0.0;
-    Uint32 ticks = SDL_GetTicks();
+    Uint32 ticks;
     size_t audio_remaining_clocks;
     size_t audio_clock_delay;
     size_t lfsr_remaining;
@@ -219,6 +238,9 @@ void emulate_clocks(gb_system_t *gb, float *audio_buffer)
     // Initialize last_ticks
     if (last_ticks == 0)
         last_ticks = SDL_GetTicks();
+
+    // Get current ticks
+    ticks = SDL_GetTicks();
 
     // Calculate elapsed time since last call to emulate_clocks()
     elapsed = (double) (ticks - last_ticks) / 1000.0;
@@ -335,8 +357,20 @@ void lcd_event(SDL_Event *e, gb_system_t *gb)
             }
             break;
 
+        case SDL_TEXTINPUT:
+            if ((strlen(text_input_buffer) + strlen(e->text.text)) < (sizeof(text_input_buffer) - 1))
+                strcat(text_input_buffer, e->text.text);
+            break;
+
         case SDL_KEYDOWN:
-            if (e->key.keysym.scancode == emu_keymap.emu_exit) {
+            if (SDL_IsTextInputActive()) {
+                if (e->key.keysym.scancode == SDL_SCANCODE_RETURN) {
+                    SDL_StopTextInput();
+                    serial_connect(text_input_buffer);
+                } else if (e->key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+                    SDL_StopTextInput();
+                }
+            } else if (e->key.keysym.scancode == emu_keymap.emu_exit) {
                 stop_emulation = true;
             } else if (e->key.keysym.scancode == emu_keymap.emu_pause) {
                 pause_emulation = !pause_emulation;
@@ -371,13 +405,27 @@ void lcd_event(SDL_Event *e, gb_system_t *gb)
                 } else {
                     mmu_view_open();
                 }
+            } else if (e->key.keysym.scancode == emu_keymap.link_cable_server) {
+                if (serial_server_opened()) {
+                    serial_server_close();
+                } else {
+                    serial_server_open();
+                }
+            } else if (e->key.keysym.scancode == emu_keymap.link_cable_client) {
+                if (serial_connected()) {
+                    serial_disconnect(gb);
+                } else if (!SDL_IsTextInputActive()) {
+                    memset(text_input_buffer, 0, sizeof(text_input_buffer));
+                    SDL_StartTextInput();
+                }
             } else {
                 handle_joypad_input(e, true, gb);
             }
             break;
 
         case SDL_KEYUP:
-            if (e->key.keysym.scancode == emu_keymap.emu_speed || e->key.keysym.scancode == emu_keymap.emu_slow) {
+            if (SDL_IsTextInputActive()) {
+            } else if (e->key.keysym.scancode == emu_keymap.emu_speed || e->key.keysym.scancode == emu_keymap.emu_slow) {
                 set_clock_speed(CPU_CLOCK_SPEED);
                 audio_unscale();
             } else {
@@ -394,6 +442,7 @@ void handle_events(gb_system_t *gb)
 {
     SDL_Event e;
 
+    serial_server_accept();
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT) {
             stop_emulation = true;
@@ -542,6 +591,7 @@ int emulate_gameboy(gb_system_t *gb, bool enable_audio)
     if (gb->memory.mbc_battery)
         mmu_battery_load(gb);
 
+    SDL_StopTextInput();
     printf("Emulating: %s\n", gb->cartridge.title);
     if (audio_devid) {
         apu_initialize(audio_sample_rate, gb);

@@ -42,6 +42,8 @@ struct keymap {
     SDL_Scancode emu_vol_down;
     SDL_Scancode emu_cpu_view;
     SDL_Scancode emu_mmu_view;
+    SDL_Scancode link_cable_server;
+    SDL_Scancode link_cable_client;
 };
 
 struct emu_windows {

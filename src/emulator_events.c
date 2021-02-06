@@ -40,7 +40,9 @@ struct keymap emu_keymap = {
     .emu_vol_up    = SDL_SCANCODE_7,
     .emu_vol_down  = SDL_SCANCODE_6,
     .emu_cpu_view  = SDL_SCANCODE_1,
-    .emu_mmu_view  = SDL_SCANCODE_2
+    .emu_mmu_view  = SDL_SCANCODE_2,
+    .link_cable_server = SDL_SCANCODE_9,
+    .link_cable_client = SDL_SCANCODE_0
 };
 
 struct emu_windows emu_windows[EMU_WINDOWS_SIZE];

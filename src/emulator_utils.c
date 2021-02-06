@@ -18,8 +18,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "moderndos8x16_ttf.h"
+#include "serial.h"
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <SDL_net.h>
 
 // Initialize the required parts of the SDL, exit on error
 void initialize_sdl(void)
@@ -29,6 +31,17 @@ void initialize_sdl(void)
         exit(EXIT_FAILURE);
     }
     atexit(TTF_Quit);
+
+    if (SDLNet_Init() < 0) {
+        fprintf(stderr, "SDL_net initialization failed: %s\n", SDLNet_GetError());
+        exit(EXIT_FAILURE);
+    }
+    atexit(SDLNet_Quit);
+
+    if (serial_init() < 0) {
+        exit(EXIT_FAILURE);
+    }
+    atexit(serial_quit);
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
         fprintf(stderr, "SDL initialization failed: %s\n", SDL_GetError());

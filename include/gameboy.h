@@ -554,14 +554,13 @@ struct  __attribute__((packed)) serial_reg_sc {
 };
 
 struct serial_port {
-    byte_t sb_in; // Byte to be shifted in during transfers
-    byte_t sb;
-    struct serial_reg_sc sc;
+    byte_t sb_in;             // Data to be shifted in to SB during transfers
+    byte_t sb;                // Serial Data register
+    struct serial_reg_sc sc;  // Serial Control register
 
     byte_t shifts;            // # of shifts left
     uint32_t clock_speed;     // Serial Transfer clock speed (internal or external)
     uint32_t shift_clock;     // # of remaining clocks before shifting
-    bool plugged;             // Link Cable plugged
 };
 
 struct joypad {
