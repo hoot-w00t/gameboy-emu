@@ -27,68 +27,66 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 // TODO: Add support for MBC1m (Multi-Game Compilation Carts)
 
-void mbc1_rom_switch(gb_system_t *gb)
+void mbc1_update_mappings(gb_system_t *gb)
 {
-    byte_t bank_nb = mbc1_regs->rom_bank;
+    byte_t switchable_bank_nb;
 
-    if (mbc1_regs->large_rom && !mbc1_regs->ram_select)
-        bank_nb |= mbc1_regs->bank_upper_bits;
+    switchable_bank_nb = mbc1_regs->rom_bank % gb->memory.rom.banks_nb;
+    if (mbc1_regs->large_rom)
+        switchable_bank_nb |= (mbc1_regs->bank_upper_bits << 5);
 
-    rombank_switch_n(bank_nb, &gb->memory.rom);
-}
-
-void mbc1_ram_switch(gb_system_t *gb)
-{
-    byte_t bank_nb = 0;
-
-    if (mbc1_regs->large_rom && !mbc1_regs->large_ram && mbc1_regs->ram_select) {
-        rombank_switch_0(mbc1_regs->bank_upper_bits, &gb->memory.rom);
+    rombank_switch_n(switchable_bank_nb, &gb->memory.rom);
+    if (mbc1_regs->ram_select) {
+        if (mbc1_regs->large_rom) {
+            rombank_switch_0((mbc1_regs->bank_upper_bits << 5), &gb->memory.rom);
+        }
+        if (mbc1_regs->large_ram) {
+            if (gb->memory.ram.can_write) {
+                rambank_switch(mbc1_regs->bank_upper_bits, &gb->memory.ram);
+            } else {
+                rambank_switch(0, &gb->memory.ram);
+            }
+        }
     } else {
         rombank_switch_0(0, &gb->memory.rom);
+        if (rambank_exists(&gb->memory.ram))
+            rambank_switch(0, &gb->memory.ram);
     }
-
-    if (mbc1_regs->large_ram && mbc1_regs->ram_select)
-        bank_nb = (mbc1_regs->bank_upper_bits >> 5);
-
-    rambank_switch(bank_nb, &gb->memory.ram);
 }
 
 bool mbc1_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
-    if (addr <= 0x1FFF) {
-        if ((gb->memory.ram.can_write = ((value & 0xF) == 0xA))) {
-            logger(LOG_DEBUG, "mbc1: RAM banking enabled");
-            mbc1_ram_switch(gb);
-        } else {
-            logger(LOG_DEBUG, "mbc1: RAM banking disabled");
-        }
-        gb->memory.ram.can_read = gb->memory.ram.can_write;
+    switch ((addr & 0xF000)) {
+        case 0x0000:
+        case 0x1000:
+            if ((gb->memory.ram.can_write = ((value & 0xF) == 0xA))) {
+                logger(LOG_DEBUG, "mbc1: RAM banking enabled");
+            } else {
+                logger(LOG_DEBUG, "mbc1: RAM banking disabled");
+            }
+            gb->memory.ram.can_read = gb->memory.ram.can_write;
+            break;
 
-        return true;
+        case 0x2000:
+        case 0x3000:
+            mbc1_regs->rom_bank = (value & mbc1_regs->rom_mask);
+            if (mbc1_regs->rom_bank == 0)
+                mbc1_regs->rom_bank += 1;
+            break;
 
-    } else if (ADDR_IN_RANGE(addr, 0x2000, 0x3FFF)) {
-        mbc1_regs->rom_bank = (value & mbc1_regs->rom_mask);
-        if (mbc1_regs->rom_bank == 0)
-            mbc1_regs->rom_bank += 1;
+        case 0x4000:
+        case 0x5000:
+            mbc1_regs->bank_upper_bits = (value & 0x3);
+            break;
 
-        mbc1_rom_switch(gb);
-        return true;
+        case 0x6000:
+        case 0x7000:
+            mbc1_regs->ram_select = (value & 0x1);
+            break;
 
-    } else if (ADDR_IN_RANGE(addr, 0x4000, 0x5FFF)) {
-        mbc1_regs->bank_upper_bits = (value & 0x3) << 5;
-        mbc1_rom_switch(gb);
-        mbc1_ram_switch(gb);
-        return true;
-
-    } else if (ADDR_IN_RANGE(addr, 0x6000, 0x7FFF)) {
-        mbc1_regs->ram_select = (value & 0x1);
-        mbc1_ram_switch(gb);
-        return true;
-
-    } else if (ADDR_IN_RANGE(addr, RAM_BANK_N_LADDR, RAM_BANK_N_UADDR)) {
-        return false; // Let mmu_internal handle it
-
-    } else {
-        return false;
+        default: return false;
     }
+
+    mbc1_update_mappings(gb);
+    return true;
 }

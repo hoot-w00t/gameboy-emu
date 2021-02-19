@@ -231,6 +231,7 @@ bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb)
             gb->memory.mbc_regs = xzalloc(sizeof(mbc1_regs_t));
             ((mbc1_regs_t *) gb->memory.mbc_regs)->large_ram = (gb->memory.ram.bank_size * gb->memory.ram.banks_nb) > RAM_BANK_SIZE;
             ((mbc1_regs_t *) gb->memory.mbc_regs)->large_rom = (gb->cartridge.rom_banks > 32);
+            ((mbc1_regs_t *) gb->memory.mbc_regs)->rom_bank = 0x1;
             if (gb->cartridge.rom_banks <= 0x1) {
                 ((mbc1_regs_t *) gb->memory.mbc_regs)->rom_mask = 0x1;
             } else if (gb->cartridge.rom_banks <= 0x3) {
