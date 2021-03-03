@@ -273,11 +273,14 @@ void serial_cycle(gb_system_t *gb)
 
     if (client_socket) {
         // Link cable is plugged
-        if ((gb->serial.shift_clock += 1) >= (SERIAL_CLOCKS(SERIAL_FREQ) * 8)) {
-            gb->serial.shift_clock = 0;
-            if (gb->serial.sc.internal_clock) {
+        if (gb->serial.sc.internal_clock) {
+            if ((gb->serial.shift_clock += 1) >= (SERIAL_CLOCKS(SERIAL_FREQ) * 8)) {
+                gb->serial.shift_clock = 0;
                 serial_transfer_internal(gb);
-            } else {
+            }
+        } else {
+            if ((gb->serial.shift_clock += 1) >= SERIAL_CLOCKS(SERIAL_FREQ)) {
+                gb->serial.shift_clock = 0;
                 serial_transfer_external(gb);
             }
         }
