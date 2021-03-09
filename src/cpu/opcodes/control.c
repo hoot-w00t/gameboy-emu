@@ -59,49 +59,50 @@ int opcode_stop(const opcode_t *opcode, gb_system_t *gb)
 
 int opcode_daa(const opcode_t *opcode, gb_system_t *gb)
 {
-    uint16_t result = reg_readb(REG_A, gb);
+    uint16_t result = gb->regs.a;
 
-    if (reg_flag(FLAG_N, gb)) {
+    if (gb->regs.f.flags.n) {
         // Previous instruction was SUB/SBC
-        if (reg_flag(FLAG_H, gb)) result = (result - 0x06) & 0xFF;
-        if (reg_flag(FLAG_C, gb)) result -= 0x60;
+        if (gb->regs.f.flags.h)
+            result = (result - 0x06) & 0xFF;
+        if (gb->regs.f.flags.c)
+            result -= 0x60;
     } else {
         // Previous instruction was ADD/ADC
-        if (reg_flag(FLAG_H, gb) || (result & 0xF) > 9) result += 0x06;
-        if (reg_flag(FLAG_C, gb) || result > 0x9F) result += 0x60;
+        if (gb->regs.f.flags.h || (result & 0xF) > 9)
+            result += 0x06;
+        if (gb->regs.f.flags.c || result > 0x9F)
+            result += 0x60;
     }
 
-    ((byte_t) result) ? reg_flag_clear(FLAG_Z, gb) : reg_flag_set(FLAG_Z, gb);
-    reg_flag_clear(FLAG_H, gb);
-    if (result > 0xFF) reg_flag_set(FLAG_C, gb);
-    reg_writeb(REG_A, (byte_t) result, gb);
-
+    gb->regs.f.flags.z = (result & 0xFF) == 0;
+    gb->regs.f.flags.h = 0;
+    if (result > 0xFF)
+        gb->regs.f.flags.c = 1;
+    gb->regs.a = (result & 0xFF);
     return opcode->cycles_true;
 }
 
 int opcode_cpl(const opcode_t *opcode, gb_system_t *gb)
 {
-    reg_writeb(REG_A, reg_readb(REG_A, gb) ^ 0xFF, gb);
-    reg_flag_set(FLAG_N, gb);
-    reg_flag_set(FLAG_H, gb);
-
+    gb->regs.a ^= 0xFF;
+    gb->regs.f.flags.n = 1;
+    gb->regs.f.flags.h = 1;
     return opcode->cycles_true;
 }
 
 int opcode_ccf(const opcode_t *opcode, gb_system_t *gb)
 {
-    reg_flag_clear(FLAG_N, gb);
-    reg_flag_clear(FLAG_H, gb);
-    if (reg_flag(FLAG_C, gb)) reg_flag_clear(FLAG_C, gb); else reg_flag_set(FLAG_C, gb);
-
+    gb->regs.f.flags.n = 0;
+    gb->regs.f.flags.h = 0;
+    gb->regs.f.flags.c ^= 1;
     return opcode->cycles_true;
 }
 
 int opcode_scf(const opcode_t *opcode, gb_system_t *gb)
 {
-    reg_flag_clear(FLAG_N, gb);
-    reg_flag_clear(FLAG_H, gb);
-    reg_flag_set(FLAG_C, gb);
-
+    gb->regs.f.flags.n = 0;
+    gb->regs.f.flags.h = 0;
+    gb->regs.f.flags.c = 1;
     return opcode->cycles_true;
 }

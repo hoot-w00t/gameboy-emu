@@ -24,28 +24,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _GAMEBOY_H
 #define _GAMEBOY_H
 
-// Registers index in struct gb_system
-#define REG_A (0) // Accumulator
-#define REG_F (1) // Flags (read-only)
-#define REG_B (2)
-#define REG_C (3)
-#define REG_D (4)
-#define REG_E (5)
-#define REG_H (6)
-#define REG_L (7)
-
-#define REG_AF REG_A
-#define REG_BC REG_B
-#define REG_DE REG_D
-#define REG_HL REG_H
-
-// Register flags
-#define FLAG_Z  (7)      // Zero Flag Bit
-#define FLAG_N  (6)      // Add/Sub Flag Bit
-#define FLAG_H  (5)      // Half Carry Flag Bit
-#define FLAG_CY (4)      // Carry Flag Bit
-#define FLAG_C  FLAG_CY  // Carry Flag Bit
-
 // Screen and sprites
 #define SCREEN_WIDTH (160)
 #define SCREEN_HEIGHT (144)
@@ -649,6 +627,28 @@ struct timer {
     uint16_t tima_clock;  // TIMA Clock Select (divider)
 };
 
+struct __attribute__((packed)) cpu_flags {
+    byte_t _padding: 4;
+    byte_t c       : 1; // Carry Flag      (bit 4)
+    byte_t h       : 1; // Half Carry Flag (bit 5)
+    byte_t n       : 1; // Add/Sub Flag    (bit 6)
+    byte_t z       : 1; // Zero Flag Bit   (bit 7)
+};
+
+struct __attribute__((packed)) cpu_regs {
+    byte_t a; // Accumulator
+    union {
+        byte_t data;
+        struct cpu_flags flags;
+    } f; // Flags (read-only)
+    byte_t b;
+    byte_t c;
+    byte_t d;
+    byte_t e;
+    byte_t h;
+    byte_t l;
+};
+
 struct gb_system {
     char *rom_file;                    // Path to the ROM loaded
     char *sav_file;                    // Path to the battery file for the ROM
@@ -660,7 +660,7 @@ struct gb_system {
     struct timer timer;                // Built-in GameBoy timer
     struct joypad joypad;              // Joypad
     struct serial_port serial;         // Serial Port
-    byte_t registers[8];               // CPU Registers
+    struct cpu_regs regs;              // CPU Registers
     bool halt;                         // HALT (CPU halted until interrupt)
     bool stop;                         // STOP (CPU and LCD halted until button press)
     uint16_t pc;                       // Program Counter (Initialized with CARTRIDGE_HEADER_LADDR)

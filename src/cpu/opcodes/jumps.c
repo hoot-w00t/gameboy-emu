@@ -32,7 +32,7 @@ int opcode_jp(const opcode_t *opcode, gb_system_t *gb)
 
         // JP NZ,nn
         case 0xC2:
-            if (reg_flag(FLAG_Z, gb) == false) {
+            if (!gb->regs.f.flags.z) {
                 gb->pc = addr;
                 return opcode->cycles_true;
             } else {
@@ -41,7 +41,7 @@ int opcode_jp(const opcode_t *opcode, gb_system_t *gb)
 
         // JP Z,nn
         case 0xCA:
-            if (reg_flag(FLAG_Z, gb) == true) {
+            if (gb->regs.f.flags.z) {
                 gb->pc = addr;
                 return opcode->cycles_true;
             } else {
@@ -50,7 +50,7 @@ int opcode_jp(const opcode_t *opcode, gb_system_t *gb)
 
         // JP NC,nn
         case 0xD2:
-            if (reg_flag(FLAG_C, gb) == false) {
+            if (!gb->regs.f.flags.c) {
                 gb->pc = addr;
                 return opcode->cycles_true;
             } else {
@@ -59,7 +59,7 @@ int opcode_jp(const opcode_t *opcode, gb_system_t *gb)
 
         // JP C,nn
         case 0xDA:
-            if (reg_flag(FLAG_C, gb) == true) {
+            if (gb->regs.f.flags.c) {
                 gb->pc = addr;
                 return opcode->cycles_true;
             } else {
@@ -73,8 +73,7 @@ int opcode_jp(const opcode_t *opcode, gb_system_t *gb)
 // JP (HL) opcode
 int opcode_jp_hl(const opcode_t *opcode, gb_system_t *gb)
 {
-    gb->pc = reg_read_u16(REG_HL, gb);
-
+    gb->pc = reg_read_hl(gb);
     return opcode->cycles_true;
 }
 
@@ -90,7 +89,7 @@ int opcode_jr(const opcode_t *opcode, gb_system_t *gb)
 
         // JR NZ,n
         case 0x20:
-            if (reg_flag(FLAG_Z, gb) == false) {
+            if (!gb->regs.f.flags.z) {
                 gb->pc = addr;
                 return opcode->cycles_true;
             } else {
@@ -99,7 +98,7 @@ int opcode_jr(const opcode_t *opcode, gb_system_t *gb)
 
         // JR Z,n
         case 0x28:
-            if (reg_flag(FLAG_Z, gb) == true) {
+            if (gb->regs.f.flags.z) {
                 gb->pc = addr;
                 return opcode->cycles_true;
             } else {
@@ -108,7 +107,7 @@ int opcode_jr(const opcode_t *opcode, gb_system_t *gb)
 
         // JR NC,n
         case 0x30:
-            if (reg_flag(FLAG_C, gb) == false) {
+            if (!gb->regs.f.flags.c) {
                 gb->pc = addr;
                 return opcode->cycles_true;
             } else {
@@ -117,7 +116,7 @@ int opcode_jr(const opcode_t *opcode, gb_system_t *gb)
 
         // JR C,n
         case 0x38:
-            if (reg_flag(FLAG_C, gb) == true) {
+            if (gb->regs.f.flags.c) {
                 gb->pc = addr;
                 return opcode->cycles_true;
             } else {

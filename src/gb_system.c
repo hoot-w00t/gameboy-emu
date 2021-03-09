@@ -200,10 +200,10 @@ void gb_system_reset(bool enable_bootrom, gb_system_t *gb)
         gb->pc = CARTRIDGE_HEADER_LADDR;
 
         // Initialize registers
-        reg_write_u16(REG_AF, 0x01B0, gb);
-        reg_write_u16(REG_BC, 0x0013, gb);
-        reg_write_u16(REG_DE, 0x00D8, gb);
-        reg_write_u16(REG_HL, 0x014D, gb);
+        reg_write_af(0x01B0, gb);
+        reg_write_bc(0x0013, gb);
+        reg_write_de(0x00D8, gb);
+        reg_write_hl(0x014D, gb);
         gb->sp = HRAM_UADDR;
 
         // Initialize IO registers

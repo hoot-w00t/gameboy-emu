@@ -23,9 +23,9 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 static inline void cpu_test_bit(const byte_t target, const byte_t bit, gb_system_t *gb)
 {
-    if ((target & (1 << bit))) reg_flag_clear(FLAG_Z, gb); else reg_flag_set(FLAG_Z, gb);
-    reg_flag_clear(FLAG_N, gb);
-    reg_flag_set(FLAG_H, gb);
+    gb->regs.f.flags.z = !(target & (1 << bit));
+    gb->regs.f.flags.n = 0;
+    gb->regs.f.flags.h = 1;
 }
 
 // BIT b,n opcodes
@@ -34,14 +34,17 @@ int opcode_cb_bit(const opcode_t *opcode, gb_system_t *gb)
     const byte_t bit = (opcode->opcode - 0x40) / 8;
     const byte_t op_lo = opcode->opcode % 8;
 
-    if (op_lo == 6) {
-        cpu_test_bit(mmu_read_u16(reg_read_u16(REG_HL, gb), gb), bit, gb);
-    } else {
-        if (op_lo <= 5) {
-            cpu_test_bit(reg_readb(op_lo + REG_B, gb), bit, gb);
-        } else {
-            cpu_test_bit(reg_readb(REG_A, gb), bit, gb);
-        }
+    switch (op_lo) {
+        case 0: cpu_test_bit(gb->regs.b, bit, gb); return opcode->cycles_true;
+        case 1: cpu_test_bit(gb->regs.c, bit, gb); return opcode->cycles_true;
+        case 2: cpu_test_bit(gb->regs.d, bit, gb); return opcode->cycles_true;
+        case 3: cpu_test_bit(gb->regs.e, bit, gb); return opcode->cycles_true;
+        case 4: cpu_test_bit(gb->regs.h, bit, gb); return opcode->cycles_true;
+        case 5: cpu_test_bit(gb->regs.l, bit, gb); return opcode->cycles_true;
+        case 6:
+            cpu_test_bit(mmu_read_u16(reg_read_hl(gb), gb), bit, gb);
+            return opcode->cycles_true;
+        case 7: cpu_test_bit(gb->regs.a, bit, gb); return opcode->cycles_true;
+        default: return OPCODE_ILLEGAL;
     }
-    return opcode->cycles_true;
 }

@@ -22,12 +22,33 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _CPU_REGISTERS_H
 #define _CPU_REGISTERS_H
 
-byte_t reg_readb(byte_t reg, gb_system_t *gb);
-void reg_writeb(byte_t reg, byte_t value, gb_system_t *gb);
-uint16_t reg_read_u16(byte_t reg, gb_system_t *gb);
-void reg_write_u16(byte_t reg, uint16_t value, gb_system_t *gb);
-bool reg_flag(byte_t flag, gb_system_t *gb);
-void reg_flag_set(byte_t flag, gb_system_t *gb);
-void reg_flag_clear(byte_t flag, gb_system_t *gb);
+#define reg_read_af(gb) ((gb->regs.a << 8) | gb->regs.f.data)
+#define reg_read_bc(gb) ((gb->regs.b << 8) | gb->regs.c)
+#define reg_read_de(gb) ((gb->regs.d << 8) | gb->regs.e)
+#define reg_read_hl(gb) ((gb->regs.h << 8) | gb->regs.l)
+
+static inline void reg_write_af(uint16_t value, gb_system_t *gb)
+{
+    gb->regs.a = (value >> 8);
+    gb->regs.f.data = (value & 0xff);
+}
+
+static inline void reg_write_bc(uint16_t value, gb_system_t *gb)
+{
+    gb->regs.b = (value >> 8);
+    gb->regs.c = (value & 0xff);
+}
+
+static inline void reg_write_de(uint16_t value, gb_system_t *gb)
+{
+    gb->regs.d = (value >> 8);
+    gb->regs.e = (value & 0xff);
+}
+
+static inline void reg_write_hl(uint16_t value, gb_system_t *gb)
+{
+    gb->regs.h = (value >> 8);
+    gb->regs.l = (value & 0xff);
+}
 
 #endif

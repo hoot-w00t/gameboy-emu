@@ -30,13 +30,12 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 //     C carry from bit 7
 byte_t cpu_addb(const byte_t target, const byte_t value, gb_system_t *gb)
 {
-    byte_t hresult = (target & 0xF) + (value & 0xF);
-    uint16_t result = target + value;
+    const byte_t hresult = (target & 0xF) + (value & 0xF);
+    const uint16_t result = target + value;
 
-    reg_flag_clear(FLAG_N, gb);
-    if (hresult > 0xF) reg_flag_set(FLAG_H, gb); else reg_flag_clear(FLAG_H, gb);
-    if (result > 0xFF) reg_flag_set(FLAG_C, gb); else reg_flag_clear(FLAG_C, gb);
-
+    gb->regs.f.flags.n = 0;
+    gb->regs.f.flags.h = hresult > 0xF;
+    gb->regs.f.flags.c = result > 0xFF;
     return (byte_t) (result & 0xFF);
 }
 
@@ -47,13 +46,12 @@ byte_t cpu_addb(const byte_t target, const byte_t value, gb_system_t *gb)
 //     C carry from bit 15
 uint16_t cpu_add_u16(const uint16_t target, const uint16_t value, gb_system_t *gb)
 {
-    uint16_t hresult = (target & 0xFFF) + (value & 0xFFF);
-    uint32_t result = target + value;
+    const uint16_t hresult = (target & 0xFFF) + (value & 0xFFF);
+    const uint32_t result = target + value;
 
-    reg_flag_clear(FLAG_N, gb);
-    if (hresult > 0xFFF) reg_flag_set(FLAG_H, gb); else reg_flag_clear(FLAG_H, gb);
-    if (result > 0xFFFF) reg_flag_set(FLAG_C, gb); else reg_flag_clear(FLAG_C, gb);
-
+    gb->regs.f.flags.n = 0;
+    gb->regs.f.flags.h = hresult > 0xFFF;
+    gb->regs.f.flags.c = result > 0xFFFF;
     return (uint16_t) (result & 0xFFFF);
 }
 
@@ -65,21 +63,12 @@ uint16_t cpu_add_u16(const uint16_t target, const uint16_t value, gb_system_t *g
 //     C carry/borrow from bit 7
 uint16_t cpu_add_sp_e(const sbyte_t e, gb_system_t *gb)
 {
-    uint16_t result = gb->sp + e;
+    const uint16_t result = gb->sp + e;
 
-    if ((result & 0xF) < (gb->sp & 0xF)) {
-        reg_flag_set(FLAG_H, gb);
-    } else {
-        reg_flag_clear(FLAG_H, gb);
-    }
-    if ((result & 0xFF) < (gb->sp & 0xFF)) {
-        reg_flag_set(FLAG_C, gb);
-    } else {
-        reg_flag_clear(FLAG_C, gb);
-    }
-    reg_flag_clear(FLAG_Z, gb);
-    reg_flag_clear(FLAG_N, gb);
-
+    gb->regs.f.flags.h = (result & 0xF) < (gb->sp & 0xF);
+    gb->regs.f.flags.c = (result & 0xFF) < (gb->sp & 0xFF);
+    gb->regs.f.flags.z = 0;
+    gb->regs.f.flags.n = 0;
     return result;
 }
 
@@ -88,29 +77,24 @@ uint16_t cpu_add_sp_e(const sbyte_t e, gb_system_t *gb)
 int opcode_add_a_n(const opcode_t *opcode, gb_system_t *gb)
 {
     byte_t value;
-    byte_t result;
 
     switch (opcode->opcode) {
         // ADD A,n
-        case 0x87: value = reg_readb(REG_A, gb); break;
-        case 0x80: value = reg_readb(REG_B, gb); break;
-        case 0x81: value = reg_readb(REG_C, gb); break;
-        case 0x82: value = reg_readb(REG_D, gb); break;
-        case 0x83: value = reg_readb(REG_E, gb); break;
-        case 0x84: value = reg_readb(REG_H, gb); break;
-        case 0x85: value = reg_readb(REG_L, gb); break;
+        case 0x87: value = gb->regs.a; break;
+        case 0x80: value = gb->regs.b; break;
+        case 0x81: value = gb->regs.c; break;
+        case 0x82: value = gb->regs.d; break;
+        case 0x83: value = gb->regs.e; break;
+        case 0x84: value = gb->regs.h; break;
+        case 0x85: value = gb->regs.l; break;
         case 0xC6: value = cpu_fetchb(gb); break;
 
         // ADD A,(HL)
-        case 0x86: value = mmu_readb(reg_read_u16(REG_HL, gb), gb); break;
-
+        case 0x86: value = mmu_readb(reg_read_hl(gb), gb); break;
         default: return OPCODE_ILLEGAL;
     }
-
-    result = cpu_addb(reg_readb(REG_A, gb), value, gb);
-    if (result == 0) reg_flag_set(FLAG_Z, gb); else reg_flag_clear(FLAG_Z, gb);
-    reg_writeb(REG_A, result, gb);
-
+    gb->regs.a = cpu_addb(gb->regs.a, value, gb);
+    gb->regs.f.flags.z = gb->regs.a == 0;
     return opcode->cycles_true;
 }
 
@@ -118,25 +102,20 @@ int opcode_add_a_n(const opcode_t *opcode, gb_system_t *gb)
 int opcode_add_hl_n(const opcode_t *opcode, gb_system_t *gb)
 {
     uint16_t value;
-    uint16_t result;
 
     switch (opcode->opcode) {
-        case 0x09: value = reg_read_u16(REG_BC, gb); break;
-        case 0x19: value = reg_read_u16(REG_DE, gb); break;
-        case 0x29: value = reg_read_u16(REG_HL, gb); break;
+        case 0x09: value = reg_read_bc(gb); break;
+        case 0x19: value = reg_read_de(gb); break;
+        case 0x29: value = reg_read_hl(gb); break;
         case 0x39: value = gb->sp; break;
         default: return OPCODE_ILLEGAL;
     }
-
-    result = cpu_add_u16(reg_read_u16(REG_HL, gb), value, gb);
-    reg_write_u16(REG_HL, result, gb);
-
+    reg_write_hl(cpu_add_u16(reg_read_hl(gb), value, gb), gb);
     return opcode->cycles_true;
 }
 
 int opcode_add_sp_n(const opcode_t *opcode, gb_system_t *gb)
 {
     gb->sp = cpu_add_sp_e((sbyte_t) cpu_fetchb(gb), gb);
-
     return opcode->cycles_true;
 }

@@ -26,35 +26,29 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 int opcode_and(const opcode_t *opcode, gb_system_t *gb)
 {
     byte_t value;
-    byte_t result;
 
     switch (opcode->opcode) {
         // AND r
-        case 0xA7: value = reg_readb(REG_A, gb); break;
-        case 0xA0: value = reg_readb(REG_B, gb); break;
-        case 0xA1: value = reg_readb(REG_C, gb); break;
-        case 0xA2: value = reg_readb(REG_D, gb); break;
-        case 0xA3: value = reg_readb(REG_E, gb); break;
-        case 0xA4: value = reg_readb(REG_H, gb); break;
-        case 0xA5: value = reg_readb(REG_L, gb); break;
+        case 0xA7: value = gb->regs.a; break;
+        case 0xA0: value = gb->regs.b; break;
+        case 0xA1: value = gb->regs.c; break;
+        case 0xA2: value = gb->regs.d; break;
+        case 0xA3: value = gb->regs.e; break;
+        case 0xA4: value = gb->regs.h; break;
+        case 0xA5: value = gb->regs.l; break;
 
         // AND n
         case 0xE6: value = cpu_fetchb(gb); break;
 
         // AND (HL)
-        case 0xA6: value = mmu_readb(reg_read_u16(REG_HL, gb), gb); break;
-
+        case 0xA6: value = mmu_readb(reg_read_hl(gb), gb); break;
         default: return OPCODE_ILLEGAL;
     }
 
-    result = reg_readb(REG_A, gb) & value;
-
-    if (result == 0) reg_flag_set(FLAG_Z, gb); else reg_flag_clear(FLAG_Z, gb);
-    reg_flag_clear(FLAG_N, gb);
-    reg_flag_set(FLAG_H, gb);
-    reg_flag_clear(FLAG_C, gb);
-
-    reg_writeb(REG_A, result, gb);
-
+    gb->regs.a &= value;
+    gb->regs.f.flags.z = gb->regs.a == 0;
+    gb->regs.f.flags.n = 0;
+    gb->regs.f.flags.h = 1;
+    gb->regs.f.flags.c = 0;
     return opcode->cycles_true;
 }

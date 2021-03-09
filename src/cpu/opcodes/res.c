@@ -26,21 +26,20 @@ int opcode_cb_res(const opcode_t *opcode, gb_system_t *gb)
 {
     const byte_t bit = (opcode->opcode - 0x80) / 8;
     const byte_t op_lo = opcode->opcode % 8;
-    byte_t reg = REG_A;
-    byte_t value;
+    uint16_t addr;
 
-    if (op_lo == 6) {
-        value = mmu_readb(reg_read_u16(REG_HL, gb), gb);
-    } else {
-        if (op_lo <= 5)
-            reg = REG_B + op_lo;
-        value = reg_readb(reg, gb);
+    switch (op_lo) {
+        case 0: gb->regs.b &= ~(1 << bit); return opcode->cycles_true;
+        case 1: gb->regs.c &= ~(1 << bit); return opcode->cycles_true;
+        case 2: gb->regs.d &= ~(1 << bit); return opcode->cycles_true;
+        case 3: gb->regs.e &= ~(1 << bit); return opcode->cycles_true;
+        case 4: gb->regs.h &= ~(1 << bit); return opcode->cycles_true;
+        case 5: gb->regs.l &= ~(1 << bit); return opcode->cycles_true;
+        case 6:
+            addr = reg_read_hl(gb);
+            mmu_writeb(addr, (mmu_readb(addr, gb) & ~(1 << bit)), gb);
+            return opcode->cycles_true;
+        case 7: gb->regs.a &= ~(1 << bit); return opcode->cycles_true;
+        default: return OPCODE_ILLEGAL;
     }
-    value &= ~(1 << bit);
-    if (op_lo == 6) {
-        mmu_writeb(reg_read_u16(REG_HL, gb), value, gb);
-    } else {
-        reg_writeb(reg, value, gb);
-    }
-    return opcode->cycles_true;
 }

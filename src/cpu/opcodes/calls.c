@@ -46,7 +46,7 @@ int opcode_call(const opcode_t *opcode, gb_system_t *gb)
 
         // CALL NZ,nn
         case 0xC4:
-            if (reg_flag(FLAG_Z, gb) == false) {
+            if (!gb->regs.f.flags.z) {
                 cpu_call(addr, gb);
                 return opcode->cycles_true;
             } else {
@@ -55,7 +55,7 @@ int opcode_call(const opcode_t *opcode, gb_system_t *gb)
 
         // CALL Z,nn
         case 0xCC:
-            if (reg_flag(FLAG_Z, gb) == true) {
+            if (gb->regs.f.flags.z) {
                 cpu_call(addr, gb);
                 return opcode->cycles_true;
             } else {
@@ -64,7 +64,7 @@ int opcode_call(const opcode_t *opcode, gb_system_t *gb)
 
         // CALL NC,nn
         case 0xD4:
-            if (reg_flag(FLAG_C, gb) == false) {
+            if (!gb->regs.f.flags.c) {
                 cpu_call(addr, gb);
                 return opcode->cycles_true;
             } else {
@@ -73,7 +73,7 @@ int opcode_call(const opcode_t *opcode, gb_system_t *gb)
 
         // CALL C,nn
         case 0xDC:
-            if (reg_flag(FLAG_C, gb) == true) {
+            if (gb->regs.f.flags.c) {
                 cpu_call(addr, gb);
                 return opcode->cycles_true;
             } else {
@@ -114,7 +114,7 @@ int opcode_ret(const opcode_t *opcode, gb_system_t *gb)
 
         // RET NZ
         case 0xC0:
-            if (reg_flag(FLAG_Z, gb) == false) {
+            if (!gb->regs.f.flags.z) {
                 cpu_ret(gb);
                 return opcode->cycles_true;
             } else {
@@ -123,7 +123,7 @@ int opcode_ret(const opcode_t *opcode, gb_system_t *gb)
 
         // RET Z
         case 0xC8:
-            if (reg_flag(FLAG_Z, gb) == true) {
+            if (gb->regs.f.flags.z) {
                 cpu_ret(gb);
                 return opcode->cycles_true;
             } else {
@@ -132,7 +132,7 @@ int opcode_ret(const opcode_t *opcode, gb_system_t *gb)
 
         // RET NC
         case 0xD0:
-            if (reg_flag(FLAG_C, gb) == false) {
+            if (!gb->regs.f.flags.c) {
                 cpu_ret(gb);
                 return opcode->cycles_true;
             } else {
@@ -141,7 +141,7 @@ int opcode_ret(const opcode_t *opcode, gb_system_t *gb)
 
         // RET C
         case 0xD8:
-            if (reg_flag(FLAG_C, gb) == true) {
+            if (gb->regs.f.flags.c) {
                 cpu_ret(gb);
                 return opcode->cycles_true;
             } else {

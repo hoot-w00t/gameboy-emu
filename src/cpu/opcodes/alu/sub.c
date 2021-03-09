@@ -29,20 +29,10 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 //     C if no borrow
 byte_t cpu_subb(const byte_t target, const byte_t value, gb_system_t *gb)
 {
-    byte_t result = target - value;
-
-    reg_flag_set(FLAG_N, gb);
-    if ((target & 0xF) < (value & 0xF)) {
-        reg_flag_set(FLAG_H, gb);
-    } else {
-        reg_flag_clear(FLAG_H, gb);
-    }
-    if (target < value) {
-        reg_flag_set(FLAG_C, gb);
-    } else {
-        reg_flag_clear(FLAG_C, gb);
-    }
-    return result;
+    gb->regs.f.flags.n = 1;
+    gb->regs.f.flags.h = (target & 0xF) < (value & 0xF);
+    gb->regs.f.flags.c = target < value;
+    return (byte_t) (target - value);
 }
 
 // Subtract two uint16
@@ -52,20 +42,10 @@ byte_t cpu_subb(const byte_t target, const byte_t value, gb_system_t *gb)
 //     C if no borrow
 uint16_t cpu_sub_u16(const uint16_t target, const uint16_t value, gb_system_t *gb)
 {
-    uint16_t result = target - value;
-
-    reg_flag_set(FLAG_N, gb);
-    if ((target & 0xFFF) < (value & 0xFFF)) {
-        reg_flag_set(FLAG_H, gb);
-    } else {
-        reg_flag_clear(FLAG_H, gb);
-    }
-    if (target < value) {
-        reg_flag_set(FLAG_C, gb);
-    } else {
-        reg_flag_clear(FLAG_C, gb);
-    }
-    return result;
+    gb->regs.f.flags.n = 1;
+    gb->regs.f.flags.h = (target & 0xFFF) < (value & 0xFFF);
+    gb->regs.f.flags.c = target < value;
+    return (byte_t) (target - value);
 }
 
 // SUB A,n opcodes
@@ -73,30 +53,26 @@ uint16_t cpu_sub_u16(const uint16_t target, const uint16_t value, gb_system_t *g
 int opcode_sub(const opcode_t *opcode, gb_system_t *gb)
 {
     byte_t value;
-    byte_t result;
 
     switch (opcode->opcode) {
         // SUB A,r
-        case 0x97: value = reg_readb(REG_A, gb); break;
-        case 0x90: value = reg_readb(REG_B, gb); break;
-        case 0x91: value = reg_readb(REG_C, gb); break;
-        case 0x92: value = reg_readb(REG_D, gb); break;
-        case 0x93: value = reg_readb(REG_E, gb); break;
-        case 0x94: value = reg_readb(REG_H, gb); break;
-        case 0x95: value = reg_readb(REG_L, gb); break;
+        case 0x97: value = gb->regs.a; break;
+        case 0x90: value = gb->regs.b; break;
+        case 0x91: value = gb->regs.c; break;
+        case 0x92: value = gb->regs.d; break;
+        case 0x93: value = gb->regs.e; break;
+        case 0x94: value = gb->regs.h; break;
+        case 0x95: value = gb->regs.l; break;
 
         // SUB A,n
         case 0xD6: value = cpu_fetchb(gb); break;
 
         // SUB A,(HL)
-        case 0x96: value = mmu_readb(reg_read_u16(REG_HL, gb), gb); break;
-
+        case 0x96: value = mmu_readb(reg_read_hl(gb), gb); break;
         default: return OPCODE_ILLEGAL;
     }
 
-    result = cpu_subb(reg_readb(REG_A, gb), value, gb);
-    if (result == 0) reg_flag_set(FLAG_Z, gb); else reg_flag_clear(FLAG_Z, gb);
-    reg_writeb(REG_A, result, gb);
-
+    gb->regs.a = cpu_subb(gb->regs.a, value, gb);
+    gb->regs.f.flags.z = gb->regs.a == 0;
     return opcode->cycles_true;
 }
