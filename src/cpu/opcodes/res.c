@@ -24,41 +24,23 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 // RES b,n opcodes
 int opcode_cb_res(const opcode_t *opcode, gb_system_t *gb)
 {
-    byte_t bit;
+    const byte_t bit = (opcode->opcode - 0x80) / 8;
+    const byte_t op_lo = opcode->opcode % 8;
+    byte_t reg = REG_A;
     byte_t value;
-    byte_t op_lo = 0x80;
 
-    for (bit = 0; bit < 8; ++bit, op_lo += 8) {
-        if (opcode->opcode >= op_lo && opcode->opcode <= op_lo + 7)
-            break;
+    if (op_lo == 6) {
+        value = mmu_readb(reg_read_u16(REG_HL, gb), gb);
+    } else {
+        if (op_lo <= 5)
+            reg = REG_B + op_lo;
+        value = reg_readb(reg, gb);
     }
-
-    if (bit > 7) return OPCODE_ILLEGAL;
-    switch (opcode->opcode - op_lo) {
-        case 0: value = reg_readb(REG_B, gb); break;
-        case 1: value = reg_readb(REG_C, gb); break;
-        case 2: value = reg_readb(REG_D, gb); break;
-        case 3: value = reg_readb(REG_E, gb); break;
-        case 4: value = reg_readb(REG_H, gb); break;
-        case 5: value = reg_readb(REG_L, gb); break;
-        case 6: value = mmu_readb(reg_read_u16(REG_HL, gb), gb); break;
-        case 7: value = reg_readb(REG_A, gb); break;
-        default: return OPCODE_ILLEGAL;
-    }
-
     value &= ~(1 << bit);
-
-    switch (opcode->opcode - op_lo) {
-        case 0: reg_writeb(REG_B, value, gb); break;
-        case 1: reg_writeb(REG_C, value, gb); break;
-        case 2: reg_writeb(REG_D, value, gb); break;
-        case 3: reg_writeb(REG_E, value, gb); break;
-        case 4: reg_writeb(REG_H, value, gb); break;
-        case 5: reg_writeb(REG_L, value, gb); break;
-        case 6: mmu_writeb(reg_read_u16(REG_HL, gb), value, gb); break;
-        case 7: reg_writeb(REG_A, value, gb); break;
-        default: return OPCODE_ILLEGAL;
+    if (op_lo == 6) {
+        mmu_writeb(reg_read_u16(REG_HL, gb), value, gb);
+    } else {
+        reg_writeb(reg, value, gb);
     }
-
     return opcode->cycles_true;
 }

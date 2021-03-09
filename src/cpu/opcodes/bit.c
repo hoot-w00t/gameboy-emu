@@ -31,26 +31,17 @@ static inline void cpu_test_bit(const byte_t target, const byte_t bit, gb_system
 // BIT b,n opcodes
 int opcode_cb_bit(const opcode_t *opcode, gb_system_t *gb)
 {
-    byte_t bit;
-    byte_t op_lo = 0x40;
+    const byte_t bit = (opcode->opcode - 0x40) / 8;
+    const byte_t op_lo = opcode->opcode % 8;
 
-    for (bit = 0; bit < 8; ++bit, op_lo += 8) {
-        if (opcode->opcode >= op_lo && opcode->opcode <= op_lo + 7)
-            break;
+    if (op_lo == 6) {
+        cpu_test_bit(mmu_read_u16(reg_read_u16(REG_HL, gb), gb), bit, gb);
+    } else {
+        if (op_lo <= 5) {
+            cpu_test_bit(reg_readb(op_lo + REG_B, gb), bit, gb);
+        } else {
+            cpu_test_bit(reg_readb(REG_A, gb), bit, gb);
+        }
     }
-
-    if (bit > 7) return OPCODE_ILLEGAL;
-    switch (opcode->opcode - op_lo) {
-        case 0: cpu_test_bit(reg_readb(REG_B, gb), bit, gb); break;
-        case 1: cpu_test_bit(reg_readb(REG_C, gb), bit, gb); break;
-        case 2: cpu_test_bit(reg_readb(REG_D, gb), bit, gb); break;
-        case 3: cpu_test_bit(reg_readb(REG_E, gb), bit, gb); break;
-        case 4: cpu_test_bit(reg_readb(REG_H, gb), bit, gb); break;
-        case 5: cpu_test_bit(reg_readb(REG_L, gb), bit, gb); break;
-        case 6: cpu_test_bit(mmu_readb(reg_read_u16(REG_HL, gb), gb), bit, gb); break;
-        case 7: cpu_test_bit(reg_readb(REG_A, gb), bit, gb); break;
-        default: return OPCODE_ILLEGAL;
-    }
-
     return opcode->cycles_true;
 }
