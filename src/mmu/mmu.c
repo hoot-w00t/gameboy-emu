@@ -229,6 +229,7 @@ bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb)
             gb->memory.mbc_readb = NULL;
             gb->memory.mbc_writeb = &mbc1_writeb;
             gb->memory.mbc_regs = xzalloc(sizeof(mbc1_regs_t));
+            gb->memory.mbc_regs_size = sizeof(mbc1_regs_t);
             ((mbc1_regs_t *) gb->memory.mbc_regs)->large_ram = (gb->memory.ram.bank_size * gb->memory.ram.banks_nb) > RAM_BANK_SIZE;
             ((mbc1_regs_t *) gb->memory.mbc_regs)->large_rom = (gb->cartridge.rom_banks > 32);
             ((mbc1_regs_t *) gb->memory.mbc_regs)->rom_bank = 0x1;
@@ -256,6 +257,7 @@ bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb)
             gb->memory.mbc_writeb = &mbc3_writeb;
             gb->memory.mbc_clock = &mbc3_clock;
             gb->memory.mbc_regs = xzalloc(sizeof(mbc3_regs_t));
+            gb->memory.mbc_regs_size = sizeof(mbc3_regs_t);
             return true;
 
         case 0x1C: // MBC5 + Rumble
@@ -268,6 +270,7 @@ bool mmu_set_mbc(byte_t mbc_type, gb_system_t *gb)
         case 0x1B: // MBC5 + RAM + Battery
             gb->memory.mbc_writeb = &mbc5_writeb;
             gb->memory.mbc_regs = xzalloc(sizeof(mbc5_regs_t));
+            gb->memory.mbc_regs_size = sizeof(mbc5_regs_t);
             gb->memory.mbc_battery = (mbc_type == 0x1E || mbc_type == 0x1B);
             return true;
 

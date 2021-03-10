@@ -599,6 +599,7 @@ struct mmu {
     byte_t hram[HRAM_SIZE];      // HRAM
     bool mbc_battery;            // Is there a battery on the cartridge
     void *mbc_regs;              // Pointer to MBC specific registers
+    size_t mbc_regs_size;        // Size of the data pointed by *mbc_regs
     mbc_readb_t mbc_readb;       // mbc_readb function pointer
     mbc_writeb_t mbc_writeb;     // mbc_writeb function pointer
     mbc_clock_t mbc_clock;       // mbc_clock function pointer
