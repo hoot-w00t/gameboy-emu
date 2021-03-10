@@ -22,9 +22,24 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _CPU_INTERRUPTS_H
 #define _CPU_INTERRUPTS_H
 
-bool cpu_int_flag(byte_t int_bit, gb_system_t *gb);
-void cpu_int_flag_set(byte_t int_bit, gb_system_t *gb);
-void cpu_int_flag_clear(byte_t int_bit, gb_system_t *gb);
+// Return true if interrupt bit is set, false otherwise
+static inline bool cpu_int_flag(byte_t int_bit, gb_system_t *gb)
+{
+    return (gb->interrupts.if_reg & (1 << int_bit));
+}
+
+// Set Interrupt Flag bit
+static inline void cpu_int_flag_set(byte_t int_bit, gb_system_t *gb)
+{
+    gb->interrupts.if_reg |= (1 << int_bit);
+}
+
+// Clear Interrupt Flag bit
+static inline void cpu_int_flag_clear(byte_t int_bit, gb_system_t *gb)
+{
+    gb->interrupts.if_reg &= ~(1 << int_bit);
+}
+
 int cpu_int_isr(gb_system_t *gb);
 
 #endif

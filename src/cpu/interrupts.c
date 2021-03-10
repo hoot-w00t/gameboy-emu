@@ -18,26 +18,8 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "logger.h"
-#include "gameboy.h"
+#include "cpu/interrupts.h"
 #include "cpu/opcodes/calls.h"
-
-// Return true if interrupt bit is set, false otherwise
-bool cpu_int_flag(byte_t int_bit, gb_system_t *gb)
-{
-    return (gb->interrupts.if_reg & (1 << int_bit));
-}
-
-// Set Interrupt Flag bit
-void cpu_int_flag_set(byte_t int_bit, gb_system_t *gb)
-{
-    gb->interrupts.if_reg |= (1 << int_bit);
-}
-
-// Clear Interrupt Flag bit
-void cpu_int_flag_clear(byte_t int_bit, gb_system_t *gb)
-{
-    gb->interrupts.if_reg &= ~(1 << int_bit);
-}
 
 // Execute the prioritary requested interrupt (if enabled)
 // Returns 0 if no ISR is executed
