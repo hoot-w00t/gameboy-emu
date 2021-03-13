@@ -67,23 +67,18 @@ ifdef WINDOWS
 	endif
 endif
 
-.PHONY:	all	clean	fclean	re
+.PHONY:	all	clean
 
 all:	$(BIN_NAME)
 
 $(BIN_NAME):	$(OBJ)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-obj/%.o:	src/%.c
-	@mkdir -p "$(shell dirname $@)"
-	$(CC) -c $< -o $@ -MMD $(CFLAGS)
-
 clean:
 	rm -rf obj
 
-fclean:	clean
-	rm -f $(BIN_NAME)
-
-re:	fclean	all
+obj/%.o:	src/%.c
+	@mkdir -p $(shell dirname $@)
+	$(CC) -MMD $(CFLAGS) -o $@	-c $<
 
 -include $(DEP)
