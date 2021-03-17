@@ -82,7 +82,8 @@ static double            audio_volume      = 0.5;
 #define audio_amp         (audio_volume * 0.5)
 #define audio_muted       (audio_volume <= 0.0)
 
-static char text_input_buffer[512];
+static char text_input_buffer[128];
+static size_t text_input_idx = 0;
 
 // Scale audio volume by percent
 static inline void audio_scale(const double percent)
@@ -358,8 +359,8 @@ void lcd_event(SDL_Event *e, gb_system_t *gb)
             break;
 
         case SDL_TEXTINPUT:
-            if ((strlen(text_input_buffer) + strlen(e->text.text)) < (sizeof(text_input_buffer) - 1))
-                strcat(text_input_buffer, e->text.text);
+            for (size_t i = 0; e->text.text[i] && text_input_idx < (sizeof(text_input_buffer) - 1); ++i)
+                text_input_buffer[text_input_idx++] = e->text.text[i];
             break;
 
         case SDL_KEYDOWN:
@@ -369,6 +370,12 @@ void lcd_event(SDL_Event *e, gb_system_t *gb)
                     serial_connect(text_input_buffer);
                 } else if (e->key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
                     SDL_StopTextInput();
+                } else if (e->key.keysym.scancode == SDL_SCANCODE_BACKSPACE) {
+                    if (text_input_idx == 0) {
+                        SDL_StopTextInput();
+                    } else {
+                        text_input_buffer[--text_input_idx] = '\0';
+                    }
                 }
             } else if (e->key.keysym.scancode == emu_keymap.emu_exit) {
                 stop_emulation = true;
@@ -416,6 +423,7 @@ void lcd_event(SDL_Event *e, gb_system_t *gb)
                     serial_disconnect(gb);
                 } else if (!SDL_IsTextInputActive()) {
                     memset(text_input_buffer, 0, sizeof(text_input_buffer));
+                    text_input_idx = 0;
                     SDL_StartTextInput();
                 }
             } else {
@@ -424,8 +432,10 @@ void lcd_event(SDL_Event *e, gb_system_t *gb)
             break;
 
         case SDL_KEYUP:
-            if (SDL_IsTextInputActive()) {
-            } else if (e->key.keysym.scancode == emu_keymap.emu_speed || e->key.keysym.scancode == emu_keymap.emu_slow) {
+            if (SDL_IsTextInputActive())
+                break;
+
+            if (e->key.keysym.scancode == emu_keymap.emu_speed || e->key.keysym.scancode == emu_keymap.emu_slow) {
                 set_clock_speed(CPU_CLOCK_SPEED);
                 audio_unscale();
             } else {
