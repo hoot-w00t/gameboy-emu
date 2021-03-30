@@ -49,7 +49,7 @@ static const Uint32 surface_amask = 0xff000000;
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define SetRenderBackgroundColor(ren) SDL_SetRenderDrawColor(ren, 32, 32, 32, 255)
 #define audio_sample_rate        (48000)
-#define audio_buffer_samples     (audio_sample_rate / 60)
+#define audio_buffer_samples     (audio_sample_rate / 60) // ~16.6ms latency
 #define audio_buffer_size        (audio_buffer_samples * sizeof(float))
 #define audio_sample_duration    (1.0 / (double) audio_sample_rate)
 #define audio_sample_duration_ms (1000.0 / (double) audio_sample_rate)
@@ -91,7 +91,6 @@ static double            audio_prev_volume = 0.5;
 static bool              audio_scaled      = false;
 static double            audio_volume      = 0.5;
 #define audio_volume_step (0.05)
-#define audio_amp         (audio_volume * 0.5)
 #define audio_muted       (audio_volume <= 0.0)
 
 // Scale audio volume by percent
@@ -296,7 +295,7 @@ void emulate_clocks(gb_system_t *gb, float *audio_buffer)
                     audio_remaining_clocks -= 1;
                 } else if (audio_pos < audio_buffer_samples) {
                     audio_remaining_clocks = audio_clock_delay;
-                    audio_buffer[audio_pos++] = (float) apu_generate_sample(audio_time(), audio_amp, gb);
+                    audio_buffer[audio_pos++] = (float) (apu_generate_sample(audio_time(), gb) * audio_volume);
                 }
             }
 
@@ -486,7 +485,7 @@ int emulator_audio_loop(gb_system_t *gb)
         } else {
             // Fill any remaining samples
             while (audio_pos < audio_buffer_samples)
-                audio_buffer[audio_pos++] = (float) apu_generate_sample(audio_time(), audio_amp, gb);
+                audio_buffer[audio_pos++] = (float) (apu_generate_sample(audio_time(), gb) * audio_volume);
         }
 
         // Wait for the queue to be empty before queuing more samples

@@ -25,8 +25,6 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #define PI        (3.14159265358979323846)
 #define PI_HALF   (1.57079632679489661923)
-#define AMP_HIGH  (1.0)
-#define AMP_LOW   (-1.0)
 
 // Apply the volume envelope
 // vol is the 4-bit volume value
@@ -103,13 +101,11 @@ static inline double pulse_sample(const double atime,
                                   const double frequency,
                                   const double duty)
 {
-    return sin(frequency * 2 * PI * atime) > duty ? AMP_HIGH : AMP_LOW;
+    return sin(frequency * 2 * PI * atime) > duty ? 1.0 : -1.0;
 }
 
 void apu_lfsr_clock(gb_system_t *gb);
-double apu_generate_sample(const double atime,
-                           const double amplitude,
-                           gb_system_t *gb);
+double apu_generate_sample(const double atime, gb_system_t *gb);
 void apu_initialize(const uint32_t sample_rate, gb_system_t *gb);
 
 #endif

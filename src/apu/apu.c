@@ -20,7 +20,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "apu/apu.h"
 
-static inline double ch1_sample(const double atime, gb_system_t *gb)
+static double ch1_sample(const double atime, gb_system_t *gb)
 {
     if (gb->apu.regs.nr14.initial) {
         gb->apu.regs.nr14.initial = 0;
@@ -61,7 +61,7 @@ static inline double ch1_sample(const double atime, gb_system_t *gb)
     return apu_volume_percent(gb->apu.ch1.volume) * pulse_sample(atime, gb->apu.ch1.freq, gb->apu.ch1.duty);
 }
 
-static inline double ch2_sample(const double atime, gb_system_t *gb)
+static double ch2_sample(const double atime, gb_system_t *gb)
 {
     if (gb->apu.regs.nr24.initial) {
         gb->apu.regs.nr24.initial = 0;
@@ -82,7 +82,7 @@ static inline double ch2_sample(const double atime, gb_system_t *gb)
     return apu_volume_percent(gb->apu.ch2.volume) * pulse_sample(atime, gb->apu.ch2.freq, gb->apu.ch2.duty);
 }
 
-static inline double ch3_sample(const double atime, gb_system_t *gb)
+static double ch3_sample(const double atime, gb_system_t *gb)
 {
     if (gb->apu.regs.nr34.initial) {
         gb->apu.regs.nr34.initial = 0;
@@ -111,10 +111,11 @@ static inline double ch3_sample(const double atime, gb_system_t *gb)
     } else {
         gb->apu.ch3.sample_out = 0;
     }
-    return apu_wave_audio_sample(gb->apu.ch3.sample_out) * AMP_HIGH;
+
+    return apu_wave_audio_sample(gb->apu.ch3.sample_out);
 }
 
-static inline double ch4_sample(const double atime, gb_system_t *gb)
+static double ch4_sample(const double atime, gb_system_t *gb)
 {
     if (gb->apu.regs.nr44.initial) {
         gb->apu.regs.nr44.initial = 0;
@@ -134,7 +135,8 @@ static inline double ch4_sample(const double atime, gb_system_t *gb)
 
     if ((gb->apu.lfsr & 0x1))
         return 0.0;
-    return apu_volume_percent(gb->apu.ch4.volume) * AMP_HIGH;
+
+    return apu_volume_percent(gb->apu.ch4.volume);
 }
 
 void apu_lfsr_clock(gb_system_t *gb)
@@ -155,13 +157,11 @@ void apu_lfsr_clock(gb_system_t *gb)
     }
 }
 
-double apu_generate_sample(const double atime,
-                           const double amplitude,
-                           gb_system_t *gb)
+double apu_generate_sample(const double atime, gb_system_t *gb)
 {
     double sample = 0.0;
-    double so1_volume = apu_so_volume_percent(gb->apu.regs.nr50.so1_volume);
-    double so2_volume = apu_so_volume_percent(gb->apu.regs.nr50.so2_volume);
+    const double so1_volume = apu_so_volume_percent(gb->apu.regs.nr50.so1_volume);
+    const double so2_volume = apu_so_volume_percent(gb->apu.regs.nr50.so2_volume);
 
     if (!gb->apu.regs.nr52.sound_on)
         return 0.0;
@@ -190,7 +190,7 @@ double apu_generate_sample(const double atime,
         sample += so2_volume * ch4_sample(atime, gb);
     }
 
-    return sample * amplitude;
+    return sample / 4.0;
 }
 
 void apu_initialize(const uint32_t sample_rate, gb_system_t *gb)
