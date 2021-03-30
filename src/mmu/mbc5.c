@@ -28,30 +28,31 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 bool mbc5_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
-    if (addr <= 0x1FFF) {
-        if ((gb->memory.ram.can_write = ((value & 0xF) == 0xA))) {
-            logger(LOG_DEBUG, "mbc5: RAM banking enabled");
-        } else {
-            logger(LOG_DEBUG, "mbc5: RAM banking disabled");
-        }
-        gb->memory.ram.can_read = gb->memory.ram.can_write;
-        return true;
+    switch (addr >> 12) {
+        case 0x0:
+        case 0x1:
+            if ((gb->memory.ram.can_write = ((value & 0xF) == 0xA))) {
+                logger(LOG_DEBUG, "mbc5: RAM banking enabled");
+            } else {
+                logger(LOG_DEBUG, "mbc5: RAM banking disabled");
+            }
+            gb->memory.ram.can_read = gb->memory.ram.can_write;
+            return true;
 
-    } else if (ADDR_IN_RANGE(addr, 0x2000, 0x2FFF)) {
-        mbc5_regs->rom_bank_lo = value;
-        mbc5_switch_rom();
-        return true;
+        case 0x2:
+            mbc5_regs->rom_bank_lo = value;
+            mbc5_switch_rom();
+            return true;
 
-    } else if (ADDR_IN_RANGE(addr, 0x3000, 0x3FFF)) {
-        mbc5_regs->rom_bank_hi = value;
-        mbc5_switch_rom();
-        return true;
+        case 0x3:
+            mbc5_regs->rom_bank_hi = value;
+            mbc5_switch_rom();
+            return true;
 
-    } else if (ADDR_IN_RANGE(addr, 0x4000, 0x5FFF)) {
-        rambank_switch((value & 0x0F), &gb->memory.ram);
-        return true;
+        case 0x4:
+            rambank_switch((value & 0xF), &gb->memory.ram);
+            return true;
 
-    } else {
-        return false;
+        default: return false;
     }
 }

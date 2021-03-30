@@ -27,7 +27,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 // TODO: Add support for MBC1m (Multi-Game Compilation Carts)
 
-void mbc1_update_mappings(gb_system_t *gb)
+static void mbc1_update_mappings(gb_system_t *gb)
 {
     byte_t switchable_bank_nb;
 
@@ -56,9 +56,9 @@ void mbc1_update_mappings(gb_system_t *gb)
 
 bool mbc1_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
-    switch ((addr & 0xF000)) {
-        case 0x0000:
-        case 0x1000:
+    switch (addr >> 12) {
+        case 0x0:
+        case 0x1:
             if ((gb->memory.ram.can_write = ((value & 0xF) == 0xA))) {
                 logger(LOG_DEBUG, "mbc1: RAM banking enabled");
             } else {
@@ -67,20 +67,20 @@ bool mbc1_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
             gb->memory.ram.can_read = gb->memory.ram.can_write;
             break;
 
-        case 0x2000:
-        case 0x3000:
+        case 0x2:
+        case 0x3:
             mbc1_regs->rom_bank = (value & mbc1_regs->rom_mask);
             if (mbc1_regs->rom_bank == 0)
                 mbc1_regs->rom_bank += 1;
             break;
 
-        case 0x4000:
-        case 0x5000:
+        case 0x4:
+        case 0x5:
             mbc1_regs->bank_upper_bits = (value & 0x3);
             break;
 
-        case 0x6000:
-        case 0x7000:
+        case 0x6:
+        case 0x7:
             mbc1_regs->ram_select = (value & 0x1);
             break;
 
