@@ -22,12 +22,34 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "mmu/mbc3.h"
 #include "mmu/rombanks.h"
 #include "mmu/rambanks.h"
+#include <string.h>
 
 #define mbc3_regs ((mbc3_regs_t *) gb->memory.mbc_regs)
 
-void mbc3_clock(__attribute__((unused)) gb_system_t *gb)
+static void mbc3_rtc_tick(gb_system_t *gb)
 {
-    // TODO: Tick Real-Time Clock
+    if ((mbc3_regs->rtc.rtc_s += 1) >= 60) {
+        mbc3_regs->rtc.rtc_s = 0;
+        if ((mbc3_regs->rtc.rtc_m += 1) >= 60) {
+            mbc3_regs->rtc.rtc_m = 0;
+            if ((mbc3_regs->rtc.rtc_h += 1) >= 24) {
+                mbc3_regs->rtc.rtc_h = 0;
+                if ((mbc3_regs->rtc.rtc_dl += 1) == 0) {
+                    mbc3_regs->rtc.rtc_dh.d.upper_bit ^= 1;
+                    mbc3_regs->rtc.rtc_dh.d.carry ^= mbc3_regs->rtc.rtc_dh.d.upper_bit;
+                }
+            }
+        }
+    }
+}
+
+void mbc3_clock(gb_system_t *gb)
+{
+    if ((mbc3_regs->clocks += 1) >= CPU_CLOCK_SPEED) {
+        mbc3_regs->clocks = 0;
+        if (!mbc3_regs->rtc.rtc_dh.d.halt)
+            mbc3_rtc_tick(gb);
+    }
 }
 
 int16_t mbc3_readb(uint16_t addr, gb_system_t *gb)
@@ -37,16 +59,13 @@ int16_t mbc3_readb(uint16_t addr, gb_system_t *gb)
             return -1; // Let mmu_internal handle it
 
         switch (mbc3_regs->ram_bank) {
-            case RTC_S:
-            case RTC_M:
-            case RTC_H:
-            case RTC_DL:
-            case RTC_DH:
-                logger(LOG_WARN, "mbc3_readb: address $%04X: RTC not implemented yet, returning 0", addr);
-                return MMU_UNMAPPED_ADDR_VALUE;
-
+            case RTC_S : return mbc3_regs->latch.rtc_s;
+            case RTC_M : return mbc3_regs->latch.rtc_m;
+            case RTC_H : return mbc3_regs->latch.rtc_h;
+            case RTC_DL: return mbc3_regs->latch.rtc_dl;
+            case RTC_DH: return mbc3_regs->latch.rtc_dh.b | 0b00111110;
             default:
-                logger(LOG_ERROR, "mbc3_readb: address $%04X: invalid register $%02X", addr, mbc3_regs->ram_bank);
+                logger(LOG_ERROR, "mbc3_readb: $%04X: invalid RTC $%02X", addr, mbc3_regs->ram_bank);
                 return MMU_UNMAPPED_ADDR_VALUE;
         }
     } else {
@@ -81,7 +100,17 @@ bool mbc3_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 
         case 0x6:
         case 0x7:
-            logger(LOG_WARN, "mbc3_writeb: address $%04X: Latch not implemented yet", addr);
+            if (mbc3_regs->latch_reg == 0x0 && value == 0x1) {
+                memcpy(&mbc3_regs->latch, &mbc3_regs->rtc, sizeof(struct rtc_regs));
+                logger(LOG_ALL, "mbc3: Latched RTC: day %u, %02u:%02u:%02u (halt=%u, carry=%u)",
+                    mbc3_regs->latch.rtc_dl | (mbc3_regs->latch.rtc_dh.d.upper_bit << 8),
+                    mbc3_regs->latch.rtc_h,
+                    mbc3_regs->latch.rtc_m,
+                    mbc3_regs->latch.rtc_s,
+                    mbc3_regs->latch.rtc_dh.d.halt,
+                    mbc3_regs->latch.rtc_dh.d.carry);
+            }
+            mbc3_regs->latch_reg = value;
             return true;
 
         case 0xA:
@@ -89,19 +118,20 @@ bool mbc3_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
             if (mbc3_regs->ram_bank <= 0x03)
                 return false; // Let mmu_internal handle it
 
-            switch (mbc3_regs->ram_bank) {
-                case RTC_S:
-                case RTC_M:
-                case RTC_H:
-                case RTC_DL:
-                case RTC_DH:
-                    logger(LOG_WARN, "mbc3_writeb: address $%04X: RTC not implemented yet", addr);
-                    break;
-
-                default:
-                    logger(LOG_ERROR, "mbc3_writeb: address $%04X: invalid register $%02X",
-                        addr, mbc3_regs->ram_bank);
-                    break;
+            if (gb->memory.ram.can_write) {
+                logger(LOG_ALL, "mbc3_writeb: $%02X to RTC $%02X", value, mbc3_regs->ram_bank);
+                switch (mbc3_regs->ram_bank) {
+                    case RTC_S : mbc3_regs->rtc.rtc_s = value; break;
+                    case RTC_M : mbc3_regs->rtc.rtc_m = value; break;
+                    case RTC_H : mbc3_regs->rtc.rtc_h = value; break;
+                    case RTC_DL: mbc3_regs->rtc.rtc_dl = value; break;
+                    case RTC_DH: *((byte_t *) &mbc3_regs->rtc.rtc_dh) = value; break;
+                    default:
+                        logger(LOG_ERROR, "mbc3_writeb: $%04X: invalid RTC $%02X", addr, mbc3_regs->ram_bank);
+                        break;
+                }
+            } else {
+                logger(LOG_ERROR, "mbc3_writeb failed: $%02X to RTC $%02X: Writing is disabled", value, mbc3_regs->ram_bank);
             }
             return true;
 
