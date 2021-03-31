@@ -125,7 +125,7 @@ bool mbc3_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
                     case RTC_M : mbc3_regs->rtc.rtc_m = value; break;
                     case RTC_H : mbc3_regs->rtc.rtc_h = value; break;
                     case RTC_DL: mbc3_regs->rtc.rtc_dl = value; break;
-                    case RTC_DH: *((byte_t *) &mbc3_regs->rtc.rtc_dh) = value; break;
+                    case RTC_DH: mbc3_regs->rtc.rtc_dh.b = value; break;
                     default:
                         logger(LOG_ERROR, "mbc3_writeb: $%04X: invalid RTC $%02X", addr, mbc3_regs->ram_bank);
                         break;
