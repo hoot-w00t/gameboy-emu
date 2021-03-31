@@ -65,8 +65,9 @@ static void mbc3_rtc_tick(gb_system_t *gb)
             if ((mbc3_regs->rtc.rtc_h += 1) >= 24) {
                 mbc3_regs->rtc.rtc_h = 0;
                 if ((mbc3_regs->rtc.rtc_dl += 1) == 0) {
+                    if (mbc3_regs->rtc.rtc_dh.d.upper_bit)
+                        mbc3_regs->rtc.rtc_dh.d.carry = 1;
                     mbc3_regs->rtc.rtc_dh.d.upper_bit ^= 1;
-                    mbc3_regs->rtc.rtc_dh.d.carry ^= mbc3_regs->rtc.rtc_dh.d.upper_bit;
                 }
             }
         }
@@ -75,10 +76,9 @@ static void mbc3_rtc_tick(gb_system_t *gb)
 
 void mbc3_clock(gb_system_t *gb)
 {
-    if ((mbc3_regs->clocks += 1) >= CPU_CLOCK_SPEED) {
+    if (!mbc3_regs->rtc.rtc_dh.d.halt && (mbc3_regs->clocks += 1) >= CPU_CLOCK_SPEED) {
         mbc3_regs->clocks = 0;
-        if (!mbc3_regs->rtc.rtc_dh.d.halt)
-            mbc3_rtc_tick(gb);
+        mbc3_rtc_tick(gb);
     }
 }
 
@@ -93,7 +93,7 @@ int16_t mbc3_readb(uint16_t addr, gb_system_t *gb)
             case RTC_M : return mbc3_regs->latch.rtc_m;
             case RTC_H : return mbc3_regs->latch.rtc_h;
             case RTC_DL: return mbc3_regs->latch.rtc_dl;
-            case RTC_DH: return mbc3_regs->latch.rtc_dh.b | 0b00111110;
+            case RTC_DH: return mbc3_regs->latch.rtc_dh.b;
             default:
                 logger(LOG_ERROR, "mbc3_readb: $%04X: invalid RTC $%02X", addr, mbc3_regs->ram_bank);
                 return MMU_UNMAPPED_ADDR_VALUE;
@@ -130,8 +130,14 @@ bool mbc3_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 
         case 0x6:
         case 0x7:
-            if (mbc3_regs->latch_reg == 0x0 && value == 0x1) {
-                memcpy(&mbc3_regs->latch, &mbc3_regs->rtc, sizeof(struct rtc_regs));
+            value &= 0x1;
+            if (mbc3_regs->latch_reg == 0x0 && value) {
+                mbc3_regs->latch.rtc_s = mbc3_regs->rtc.rtc_s & 0x3F;
+                mbc3_regs->latch.rtc_m = mbc3_regs->rtc.rtc_m & 0x3F;
+                mbc3_regs->latch.rtc_h = mbc3_regs->rtc.rtc_h & 0x1F;
+                mbc3_regs->latch.rtc_dl = mbc3_regs->rtc.rtc_dl;
+                mbc3_regs->latch.rtc_dh.b = mbc3_regs->rtc.rtc_dh.b & 0xC1;
+
                 logger(LOG_ALL, "mbc3: Latched RTC: day %u, %02u:%02u:%02u (halt=%u, carry=%u)",
                     mbc3_regs->latch.rtc_dl | (mbc3_regs->latch.rtc_dh.d.upper_bit << 8),
                     mbc3_regs->latch.rtc_h,
@@ -155,7 +161,11 @@ bool mbc3_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
                     case RTC_M : mbc3_regs->rtc.rtc_m = value; break;
                     case RTC_H : mbc3_regs->rtc.rtc_h = value; break;
                     case RTC_DL: mbc3_regs->rtc.rtc_dl = value; break;
-                    case RTC_DH: mbc3_regs->rtc.rtc_dh.b = value; break;
+                    case RTC_DH:
+                        mbc3_regs->rtc.rtc_dh.b = value;
+                        if (mbc3_regs->rtc.rtc_dh.d.halt)
+                            mbc3_regs->clocks = 0;
+                        break;
                     default:
                         logger(LOG_ERROR, "mbc3_writeb: $%04X: invalid RTC $%02X", addr, mbc3_regs->ram_bank);
                         break;
