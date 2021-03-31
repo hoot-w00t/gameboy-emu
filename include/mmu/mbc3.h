@@ -18,6 +18,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "gameboy.h"
+#include <time.h>
 
 #ifndef _MMU_MBC3_H
 #define _MMU_MBC3_H
@@ -55,8 +56,10 @@ struct mbc3_regs {
     byte_t latch_reg;
     byte_t ram_bank;
     size_t clocks;
+    time_t last_tick;
 };
 
+void mbc3_rtc_tick_timestamp(gb_system_t *gb);
 void mbc3_clock(gb_system_t *gb);
 int16_t mbc3_readb(uint16_t addr, gb_system_t *gb);
 bool mbc3_writeb(uint16_t addr, byte_t value, gb_system_t *gb);

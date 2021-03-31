@@ -26,8 +26,38 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 #define mbc3_regs ((mbc3_regs_t *) gb->memory.mbc_regs)
 
+void mbc3_rtc_tick_timestamp(gb_system_t *gb)
+{
+    time_t current_tick = time(NULL);
+    time_t elapsed = current_tick - mbc3_regs->last_tick;
+    time_t total_d;
+
+    if (elapsed > 0) {
+        logger(LOG_ALL, "mbc3: Ticking %li seconds", elapsed);
+        total_d = elapsed / 60 / 60 / 24;
+        if ((mbc3_regs->rtc.rtc_s += (elapsed % 60)) >= 60) {
+            mbc3_regs->rtc.rtc_m += mbc3_regs->rtc.rtc_s / 60;
+            mbc3_regs->rtc.rtc_s %= 60;
+        }
+        if ((mbc3_regs->rtc.rtc_m += (elapsed / 60 % 60)) >= 60) {
+            mbc3_regs->rtc.rtc_h += mbc3_regs->rtc.rtc_m / 60;
+            mbc3_regs->rtc.rtc_m %= 60;
+        }
+        if ((mbc3_regs->rtc.rtc_h += (elapsed / 60 / 60 % 24)) >= 24) {
+            total_d += mbc3_regs->rtc.rtc_h / 24;
+            mbc3_regs->rtc.rtc_h %= 24;
+        }
+        total_d += mbc3_regs->rtc.rtc_dl | (mbc3_regs->rtc.rtc_dh.d.upper_bit << 8);
+        mbc3_regs->rtc.rtc_dl = total_d & 0xFF;
+        mbc3_regs->rtc.rtc_dh.d.upper_bit = (total_d >> 8) & 0x1;
+        mbc3_regs->rtc.rtc_dh.d.carry = (total_d % 512) & 0x1;
+    }
+    mbc3_regs->last_tick = current_tick;
+}
+
 static void mbc3_rtc_tick(gb_system_t *gb)
 {
+    mbc3_regs->last_tick = time(NULL);
     if ((mbc3_regs->rtc.rtc_s += 1) >= 60) {
         mbc3_regs->rtc.rtc_s = 0;
         if ((mbc3_regs->rtc.rtc_m += 1) >= 60) {

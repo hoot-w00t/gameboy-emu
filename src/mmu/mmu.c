@@ -184,6 +184,21 @@ bool mmu_battery_save(gb_system_t *gb)
             offset += n;
         }
     }
+
+    switch (gb->cartridge.mbc_type) {
+        case 0x0F: // MBC3 + Timer + Battery
+        case 0x10: // MBC3 + Timer + RAM + Battery
+            write(fd, &((mbc3_regs_t *) gb->memory.mbc_regs)->rtc.rtc_s, 1);
+            write(fd, &((mbc3_regs_t *) gb->memory.mbc_regs)->rtc.rtc_m, 1);
+            write(fd, &((mbc3_regs_t *) gb->memory.mbc_regs)->rtc.rtc_h, 1);
+            write(fd, &((mbc3_regs_t *) gb->memory.mbc_regs)->rtc.rtc_dl, 1);
+            write(fd, &((mbc3_regs_t *) gb->memory.mbc_regs)->rtc.rtc_dh.b, 1);
+            write(fd, &((mbc3_regs_t *) gb->memory.mbc_regs)->last_tick, sizeof(time_t));
+            logger(LOG_DEBUG, "Saved MBC3 RTC registers");
+
+        default: break;
+    }
+
     logger(LOG_INFO, "Saved battery to %s", gb->sav_file);
 
     close(fd);
@@ -216,6 +231,28 @@ bool mmu_battery_load(gb_system_t *gb)
             offset += n;
         }
     }
+
+    switch (gb->cartridge.mbc_type) {
+        case 0x0F: // MBC3 + Timer + Battery
+        case 0x10: // MBC3 + Timer + RAM + Battery
+            if (   read(fd, &((mbc3_regs_t *) gb->memory.mbc_regs)->rtc.rtc_s, 1) != 1
+                || read(fd, &((mbc3_regs_t *) gb->memory.mbc_regs)->rtc.rtc_m, 1) != 1
+                || read(fd, &((mbc3_regs_t *) gb->memory.mbc_regs)->rtc.rtc_h, 1) != 1
+                || read(fd, &((mbc3_regs_t *) gb->memory.mbc_regs)->rtc.rtc_dl, 1) != 1
+                || read(fd, &((mbc3_regs_t *) gb->memory.mbc_regs)->rtc.rtc_dh.b, 1) != 1
+                || read(fd, &((mbc3_regs_t *) gb->memory.mbc_regs)->last_tick, sizeof(time_t)) != sizeof(time_t))
+            {
+                logger(LOG_ERROR, "read(): %s: Failed to load MBC3 RTC registers: %s", gb->sav_file, strerror(errno));
+                memset(gb->memory.mbc_regs, 0, sizeof(mbc3_regs_t));
+            } else {
+                logger(LOG_DEBUG, "Loaded MBC3 RTC registers");
+                mbc3_rtc_tick_timestamp(gb);
+            }
+            break;
+
+        default: break;
+    }
+
     logger(LOG_INFO, "Loaded battery from %s", gb->sav_file);
 
     close(fd);
