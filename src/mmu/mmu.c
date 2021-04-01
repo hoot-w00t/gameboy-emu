@@ -92,7 +92,7 @@ byte_t mmu_readb(uint16_t addr, gb_system_t *gb)
         return mmu_bootrom_readb(addr, gb);
 
     if (gb->memory.mbc_readb) {
-        if ((value = (*gb->memory.mbc_readb)(addr, gb)) > 0) {
+        if ((value = (*gb->memory.mbc_readb)(addr, gb)) >= 0) {
             logger(LOG_ALL, "mmu_readb: read $%02X from address $%04X", (byte_t) value, addr);
             return (byte_t) value;
         }
@@ -111,7 +111,7 @@ byte_t mmu_readb_nolog(uint16_t addr, gb_system_t *gb)
         return mmu_bootrom_readb(addr, gb);
 
     if (gb->memory.mbc_readb) {
-        if ((value = (*gb->memory.mbc_readb)(addr, gb)) > 0) {
+        if ((value = (*gb->memory.mbc_readb)(addr, gb)) >= 0) {
             return (byte_t) value;
         }
     }
