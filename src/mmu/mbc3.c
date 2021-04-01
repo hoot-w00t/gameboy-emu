@@ -85,10 +85,13 @@ void mbc3_clock(gb_system_t *gb)
 int16_t mbc3_readb(uint16_t addr, gb_system_t *gb)
 {
     if (ADDR_IN_RANGE(addr, RAM_BANK_N_LADDR, RAM_BANK_N_UADDR)) {
-        if (mbc3_regs->ram_bank <= 0x03)
-            return -1; // Let mmu_internal handle it
-
         switch (mbc3_regs->ram_bank) {
+            case 0x0:
+            case 0x1:
+            case 0x2:
+            case 0x3:
+                return -1; // Let mmu_internal handle it
+
             case RTC_S : return mbc3_regs->latch.rtc_s;
             case RTC_M : return mbc3_regs->latch.rtc_m;
             case RTC_H : return mbc3_regs->latch.rtc_h;
