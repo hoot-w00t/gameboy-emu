@@ -61,6 +61,7 @@ int mmu_load_bootrom(const char *filename)
     }
 
     total = 0;
+    n = 0;
     while (total < s.st_size && (n = read(fd, &bootrom[total], s.st_size - total)) > 0)
         total += n;
     close(fd);

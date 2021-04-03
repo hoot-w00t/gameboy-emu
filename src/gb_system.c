@@ -69,6 +69,7 @@ byte_t *load_file(const char *filename, int *size)
 
     data = xzalloc(sizeof(byte_t) * inf.st_size);
     total = 0;
+    n = 0;
     while (total < inf.st_size && (n = read(fd, &data[total], inf.st_size - total)) > 0) {
         total += n;
     }
