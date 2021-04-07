@@ -121,7 +121,7 @@ bool mbc3_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 
         case 0x2:
         case 0x3:
-            rombank_switch_n((value & 0x7F), &gb->memory.rom);
+            rombank_switch_n((value & 0x7F) ?: 0x01, &gb->memory.rom);
             return true;
 
         case 0x4:
