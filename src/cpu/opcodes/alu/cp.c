@@ -30,28 +30,21 @@ int opcode_cp(const opcode_t *opcode, gb_system_t *gb)
 
     switch (opcode->opcode) {
         // CP A,r
-        case 0xBF: value = reg_readb(REG_A, gb); break;
-        case 0xB8: value = reg_readb(REG_B, gb); break;
-        case 0xB9: value = reg_readb(REG_C, gb); break;
-        case 0xBA: value = reg_readb(REG_D, gb); break;
-        case 0xBB: value = reg_readb(REG_E, gb); break;
-        case 0xBC: value = reg_readb(REG_H, gb); break;
-        case 0xBD: value = reg_readb(REG_L, gb); break;
+        case 0xBF: value = gb->regs.a; break;
+        case 0xB8: value = gb->regs.b; break;
+        case 0xB9: value = gb->regs.c; break;
+        case 0xBA: value = gb->regs.d; break;
+        case 0xBB: value = gb->regs.e; break;
+        case 0xBC: value = gb->regs.h; break;
+        case 0xBD: value = gb->regs.l; break;
 
         // CP A,n
         case 0xFE: value = cpu_fetchb(gb); break;
 
         // CP A,(HL)
-        case 0xBE: value = mmu_readb(reg_read_u16(REG_HL, gb), gb); break;
-
+        case 0xBE: value = mmu_readb(reg_read_hl(gb), gb); break;
         default: return OPCODE_ILLEGAL;
     }
-
-    if (cpu_subb(reg_readb(REG_A, gb), value, gb) == 0) {
-        reg_flag_set(FLAG_Z, gb);
-    } else {
-        reg_flag_clear(FLAG_Z, gb);
-    }
-
+    gb->regs.f.flags.z = cpu_subb(gb->regs.a, value, gb) == 0;
     return opcode->cycles_true;
 }

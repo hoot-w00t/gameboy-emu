@@ -18,6 +18,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "gameboy.h"
+#include <time.h>
 
 #ifndef _MMU_MBC3_H
 #define _MMU_MBC3_H
@@ -37,20 +38,28 @@ struct rtc_regs {
     byte_t rtc_s;
     byte_t rtc_m;
     byte_t rtc_h;
-    uint16_t rtc_d : 9;
-    byte_t halt_flag : 1;
-    byte_t day_counter_carry : 1;
+    byte_t rtc_dl;
+    union {
+        struct __attribute__((packed)) rtc_dh {
+            byte_t upper_bit : 1;
+            byte_t _padding  : 5;
+            byte_t halt      : 1;
+            byte_t carry     : 1;
+        } d;
+        byte_t b;
+    } rtc_dh;
 };
 
 struct mbc3_regs {
     struct rtc_regs rtc;
-    struct rtc_regs rtc_latched;
+    struct rtc_regs latch;
     byte_t latch_reg;
     byte_t ram_bank;
-    uint16_t clocks;
-    uint16_t clocks_per_second;
+    size_t clocks;
+    time_t last_tick;
 };
 
+void mbc3_rtc_tick_timestamp(gb_system_t *gb);
 void mbc3_clock(gb_system_t *gb);
 int16_t mbc3_readb(uint16_t addr, gb_system_t *gb);
 bool mbc3_writeb(uint16_t addr, byte_t value, gb_system_t *gb);

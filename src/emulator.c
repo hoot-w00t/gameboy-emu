@@ -34,10 +34,22 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include <SDL_audio.h>
 #include <SDL_ttf.h>
 
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+static const Uint32 surface_rmask = 0xff000000;
+static const Uint32 surface_gmask = 0x00ff0000;
+static const Uint32 surface_bmask = 0x0000ff00;
+static const Uint32 surface_amask = 0x000000ff;
+#else
+static const Uint32 surface_rmask = 0x000000ff;
+static const Uint32 surface_gmask = 0x0000ff00;
+static const Uint32 surface_bmask = 0x00ff0000;
+static const Uint32 surface_amask = 0xff000000;
+#endif
+
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 #define SetRenderBackgroundColor(ren) SDL_SetRenderDrawColor(ren, 32, 32, 32, 255)
 #define audio_sample_rate        (48000)
-#define audio_buffer_samples     (audio_sample_rate / 60)
+#define audio_buffer_samples     (audio_sample_rate / 60) // ~16.6ms latency
 #define audio_buffer_size        (audio_buffer_samples * sizeof(float))
 #define audio_sample_duration    (1.0 / (double) audio_sample_rate)
 #define audio_sample_duration_ms (1000.0 / (double) audio_sample_rate)
@@ -79,7 +91,6 @@ static double            audio_prev_volume = 0.5;
 static bool              audio_scaled      = false;
 static double            audio_volume      = 0.5;
 #define audio_volume_step (0.05)
-#define audio_amp         (audio_volume * 0.5)
 #define audio_muted       (audio_volume <= 0.0)
 
 static char text_input_buffer[128];
@@ -169,15 +180,24 @@ void render_frame(__attribute__((unused)) gb_system_t *gb)
 void render_framebuffer(gb_system_t *gb)
 {
     static uint32_t frameskip_counter = 0;
+    uint32_t color;
 
     if (frameskip_counter == 0) {
         for (byte_t y = 0; y < SCREEN_HEIGHT; ++y) {
             for (byte_t x = 0; x < SCREEN_WIDTH; ++x) {
-                ((uint32_t *) screen_surface->pixels)[(x + (y * SCREEN_WIDTH))] =
-                      0xff000000
-                    | (gb->screen.framebuffer[y][x].r << 16)
-                    | (gb->screen.framebuffer[y][x].g << 8)
-                    | (gb->screen.framebuffer[y][x].b << 0);
+
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+                color =   (gb->screen.framebuffer[y][x].r << 24)
+                        | (gb->screen.framebuffer[y][x].g << 16)
+                        | (gb->screen.framebuffer[y][x].b << 8)
+                        |  0xff;
+#else
+                color =    0xff000000
+                        | (gb->screen.framebuffer[y][x].b << 16)
+                        | (gb->screen.framebuffer[y][x].g << 8)
+                        | (gb->screen.framebuffer[y][x].r << 0);
+#endif
+                ((uint32_t *) screen_surface->pixels)[(x + (y * SCREEN_WIDTH))] = color;
             }
         }
 
@@ -298,7 +318,7 @@ void emulate_clocks(gb_system_t *gb, float *audio_buffer)
                     audio_remaining_clocks -= 1;
                 } else if (audio_pos < audio_buffer_samples) {
                     audio_remaining_clocks = audio_clock_delay;
-                    audio_buffer[audio_pos++] = (float) apu_generate_sample(audio_time(), audio_amp, gb);
+                    audio_buffer[audio_pos++] = (float) (apu_generate_sample(audio_time(), gb) * audio_volume);
                 }
             }
 
@@ -524,7 +544,7 @@ int emulator_audio_loop(gb_system_t *gb)
         } else {
             // Fill any remaining samples
             while (audio_pos < audio_buffer_samples)
-                audio_buffer[audio_pos++] = (float) apu_generate_sample(audio_time(), audio_amp, gb);
+                audio_buffer[audio_pos++] = (float) (apu_generate_sample(audio_time(), gb) * audio_volume);
         }
 
         // Wait for the queue to be empty before queuing more samples
@@ -583,12 +603,9 @@ int emulate_gameboy(gb_system_t *gb, bool enable_audio)
     update_window_title(lcd_win, "GameBoy");
     update_window_size();
 
-    if (!(screen_surface = SDL_CreateRGBSurface(0,
-                                                SCREEN_WIDTH, SCREEN_HEIGHT,
-                                                32,
-                                                0x00ff0000, 0x0000ff00,
-                                                0x000000ff, 0xff000000)))
-    {
+    screen_surface = SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32,
+                     surface_rmask, surface_gmask, surface_bmask, surface_amask);
+    if (!screen_surface) {
         fprintf(stderr, "SDL_CreateRGBSurface: %s\n", SDL_GetError());
         return -1;
     }

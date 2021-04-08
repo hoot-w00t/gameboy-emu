@@ -22,6 +22,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _MMU_MMU_H
 #define _MMU_MMU_H
 
+int mmu_load_bootrom(const char *filename);
 byte_t mmu_bootrom_readb(byte_t addr, gb_system_t *gb);
 byte_t mmu_readb(uint16_t addr, gb_system_t *gb);
 byte_t mmu_readb_nolog(uint16_t addr, gb_system_t *gb);

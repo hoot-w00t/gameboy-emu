@@ -264,7 +264,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 12,
         .cycles_false = 12,
         .comment      = "Jump to PC+n (signed)",
-        .handler      = &opcode_jr
+        .handler      = &opcode_jr_n
     },
     {
         .mnemonic     = "ADD HL,DE",
@@ -336,7 +336,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 12,
         .cycles_false = 8,
         .comment      = "Jump to PC+n (signed) if Z is reset",
-        .handler      = &opcode_jr
+        .handler      = &opcode_jr_nz_n
     },
     {
         .mnemonic     = "LD HL,nn",
@@ -408,7 +408,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 12,
         .cycles_false = 8,
         .comment      = "Jump to PC+n (signed) if Z is set",
-        .handler      = &opcode_jr
+        .handler      = &opcode_jr_z_n
     },
     {
         .mnemonic     = "ADD HL,HL",
@@ -480,7 +480,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 12,
         .cycles_false = 8,
         .comment      = "Jump to PC+n (signed) if C is reset",
-        .handler      = &opcode_jr
+        .handler      = &opcode_jr_nc_n
     },
     {
         .mnemonic     = "LD SP,nn",
@@ -552,7 +552,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 12,
         .cycles_false = 8,
         .comment      = "Jump to PC+n (signed) if C is set",
-        .handler      = &opcode_jr
+        .handler      = &opcode_jr_c_n
     },
     {
         .mnemonic     = "ADD HL,SP",
@@ -1794,7 +1794,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 16,
         .cycles_false = 12,
         .comment      = "Jump to nn if Z if reset",
-        .handler      = &opcode_jp
+        .handler      = &opcode_jp_nz_nn
     },
     {
         .mnemonic     = "JP nn",
@@ -1803,7 +1803,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 16,
         .cycles_false = 16,
         .comment      = "Jump to nn",
-        .handler      = &opcode_jp
+        .handler      = &opcode_jp_nn
     },
     {
         .mnemonic     = "CALL NZ,nn",
@@ -1866,7 +1866,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 16,
         .cycles_false = 12,
         .comment      = "Jump to nn if Z if set",
-        .handler      = &opcode_jp
+        .handler      = &opcode_jp_z_nn
     },
     {
         .mnemonic     = "PREFIX CB",
@@ -1938,7 +1938,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 16,
         .cycles_false = 12,
         .comment      = "Jump to nn if C if reset",
-        .handler      = &opcode_jp
+        .handler      = &opcode_jp_nc_nn
     },
     {NULL, 0, 0, 0, 0, NULL, NULL},
     {
@@ -2002,7 +2002,7 @@ const opcode_t opcode_table[256] = {
         .cycles_true  = 16,
         .cycles_false = 12,
         .comment      = "Jump to nn if C if set",
-        .handler      = &opcode_jp
+        .handler      = &opcode_jp_c_nn
     },
     {NULL, 0, 0, 0, 0, NULL, NULL}, // $DB doesn't exist, empty element for alignment
     {

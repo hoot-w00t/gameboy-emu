@@ -23,13 +23,12 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 static inline byte_t cpu_shift_left(const byte_t target, gb_system_t *gb)
 {
-    byte_t result = target << 1;
+    const byte_t result = target << 1;
 
-    if (result == 0) reg_flag_set(FLAG_Z, gb); else reg_flag_clear(FLAG_Z, gb);
-    reg_flag_clear(FLAG_N, gb);
-    reg_flag_clear(FLAG_H, gb);
-    if (target & 0x80) reg_flag_set(FLAG_C, gb); else reg_flag_clear(FLAG_C, gb);
-
+    gb->regs.f.flags.z = result == 0;
+    gb->regs.f.flags.n = 0;
+    gb->regs.f.flags.h = 0;
+    gb->regs.f.flags.c = target >> 7;
     return result;
 }
 
@@ -38,95 +37,93 @@ static inline byte_t cpu_shift_right(const byte_t target, const bool keep_msb, g
 {
     byte_t result = target >> 1;
 
-    if (keep_msb && (target & 0x80)) result |= 0x80;
-
-    if (result == 0) reg_flag_set(FLAG_Z, gb); else reg_flag_clear(FLAG_Z, gb);
-    reg_flag_clear(FLAG_N, gb);
-    reg_flag_clear(FLAG_H, gb);
-    if (target & 1) reg_flag_set(FLAG_C, gb); else reg_flag_clear(FLAG_C, gb);
-
+    if (keep_msb && (target & 0x80))
+        result |= 0x80;
+    gb->regs.f.flags.z = result == 0;
+    gb->regs.f.flags.n = 0;
+    gb->regs.f.flags.h = 0;
+    gb->regs.f.flags.c = (target & 1);
     return result;
 }
 
 // SLA/SRA/SRL (HL)
 int opcode_cb_shift_hl(const opcode_t *opcode, gb_system_t *gb)
 {
-    uint16_t addr = reg_read_u16(REG_HL, gb);
-    byte_t result;
+    uint16_t addr = reg_read_hl(gb);
 
     switch (opcode->opcode) {
         // SLA (HL)
-        case 0x26: result = cpu_shift_left(mmu_readb(addr, gb), gb); break;
+        case 0x26:
+            mmu_writeb(addr, cpu_shift_left(mmu_readb(addr, gb), gb), gb);
+            return opcode->cycles_true;
 
         // SRA (HL)
-        case 0x2E: result = cpu_shift_right(mmu_readb(addr, gb), true, gb); break;
+        case 0x2E:
+            mmu_writeb(addr, cpu_shift_right(mmu_readb(addr, gb), true, gb), gb);
+            return opcode->cycles_true;
 
         // SRL (HL)
-        case 0x3E: result = cpu_shift_right(mmu_readb(addr, gb), false, gb); break;
+        case 0x3E:
+            mmu_writeb(addr, cpu_shift_right(mmu_readb(addr, gb), false, gb), gb);
+            return opcode->cycles_true;;
 
         default: return OPCODE_ILLEGAL;
     }
-
-    mmu_writeb(addr, result, gb);
-    return opcode->cycles_true;
 }
 
 // SLA r
 int opcode_cb_sla_r(const opcode_t *opcode, gb_system_t *gb)
 {
-    byte_t reg;
+    byte_t *reg;
 
     switch (opcode->opcode) {
-        case 0x27: reg = REG_A; break;
-        case 0x20: reg = REG_B; break;
-        case 0x21: reg = REG_C; break;
-        case 0x22: reg = REG_D; break;
-        case 0x23: reg = REG_E; break;
-        case 0x24: reg = REG_H; break;
-        case 0x25: reg = REG_L; break;
+        case 0x27: reg = &gb->regs.a; break;
+        case 0x20: reg = &gb->regs.b; break;
+        case 0x21: reg = &gb->regs.c; break;
+        case 0x22: reg = &gb->regs.d; break;
+        case 0x23: reg = &gb->regs.e; break;
+        case 0x24: reg = &gb->regs.h; break;
+        case 0x25: reg = &gb->regs.l; break;
         default: return OPCODE_ILLEGAL;
     }
-
-    reg_writeb(reg, cpu_shift_left(reg_readb(reg, gb), gb), gb);
+    *reg = cpu_shift_left(*reg, gb);
     return opcode->cycles_true;
 }
 
 // SRA r
 int opcode_cb_sra_r(const opcode_t *opcode, gb_system_t *gb)
 {
-    byte_t reg;
+    byte_t *reg;
 
     switch (opcode->opcode) {
-        case 0x2F: reg = REG_A; break;
-        case 0x28: reg = REG_B; break;
-        case 0x29: reg = REG_C; break;
-        case 0x2A: reg = REG_D; break;
-        case 0x2B: reg = REG_E; break;
-        case 0x2C: reg = REG_H; break;
-        case 0x2D: reg = REG_L; break;
+        case 0x2F: reg = &gb->regs.a; break;
+        case 0x28: reg = &gb->regs.b; break;
+        case 0x29: reg = &gb->regs.c; break;
+        case 0x2A: reg = &gb->regs.d; break;
+        case 0x2B: reg = &gb->regs.e; break;
+        case 0x2C: reg = &gb->regs.h; break;
+        case 0x2D: reg = &gb->regs.l; break;
         default: return OPCODE_ILLEGAL;
     }
-
-    reg_writeb(reg, cpu_shift_right(reg_readb(reg, gb), true, gb), gb);
+    *reg = cpu_shift_right(*reg, true, gb);
     return opcode->cycles_true;
 }
 
 // SRL r
 int opcode_cb_srl_r(const opcode_t *opcode, gb_system_t *gb)
 {
-    byte_t reg;
+    byte_t *reg;
 
     switch (opcode->opcode) {
-        case 0x3F: reg = REG_A; break;
-        case 0x38: reg = REG_B; break;
-        case 0x39: reg = REG_C; break;
-        case 0x3A: reg = REG_D; break;
-        case 0x3B: reg = REG_E; break;
-        case 0x3C: reg = REG_H; break;
-        case 0x3D: reg = REG_L; break;
+        case 0x3F: reg = &gb->regs.a; break;
+        case 0x38: reg = &gb->regs.b; break;
+        case 0x39: reg = &gb->regs.c; break;
+        case 0x3A: reg = &gb->regs.d; break;
+        case 0x3B: reg = &gb->regs.e; break;
+        case 0x3C: reg = &gb->regs.h; break;
+        case 0x3D: reg = &gb->regs.l; break;
         default: return OPCODE_ILLEGAL;
     }
-
-    reg_writeb(reg, cpu_shift_right(reg_readb(reg, gb), false, gb), gb);
+    *reg = cpu_shift_right(*reg, false, gb);
     return opcode->cycles_true;
 }

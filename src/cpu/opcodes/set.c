@@ -24,41 +24,22 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 // SET b,n opcodes
 int opcode_cb_set(const opcode_t *opcode, gb_system_t *gb)
 {
-    byte_t bit;
-    byte_t value;
-    byte_t op_lo = 0xC0;
+    const byte_t bit = (opcode->opcode - 0xC0) / 8;
+    const byte_t op_lo = opcode->opcode % 8;
+    uint16_t addr;
 
-    for (bit = 0; bit < 8; ++bit, op_lo += 8) {
-        if (opcode->opcode >= op_lo && opcode->opcode <= op_lo + 7)
-            break;
-    }
-
-    if (bit > 7) return OPCODE_ILLEGAL;
-    switch (opcode->opcode - op_lo) {
-        case 0: value = reg_readb(REG_B, gb); break;
-        case 1: value = reg_readb(REG_C, gb); break;
-        case 2: value = reg_readb(REG_D, gb); break;
-        case 3: value = reg_readb(REG_E, gb); break;
-        case 4: value = reg_readb(REG_H, gb); break;
-        case 5: value = reg_readb(REG_L, gb); break;
-        case 6: value = mmu_readb(reg_read_u16(REG_HL, gb), gb); break;
-        case 7: value = reg_readb(REG_A, gb); break;
+    switch (op_lo) {
+        case 0: gb->regs.b |= (1 << bit); return opcode->cycles_true;
+        case 1: gb->regs.c |= (1 << bit); return opcode->cycles_true;
+        case 2: gb->regs.d |= (1 << bit); return opcode->cycles_true;
+        case 3: gb->regs.e |= (1 << bit); return opcode->cycles_true;
+        case 4: gb->regs.h |= (1 << bit); return opcode->cycles_true;
+        case 5: gb->regs.l |= (1 << bit); return opcode->cycles_true;
+        case 6:
+            addr = reg_read_hl(gb);
+            mmu_writeb(addr, (mmu_readb(addr, gb) | (1 << bit)), gb);
+            return opcode->cycles_true;
+        case 7: gb->regs.a |= (1 << bit); return opcode->cycles_true;
         default: return OPCODE_ILLEGAL;
     }
-
-    value |= (1 << bit);
-
-    switch (opcode->opcode - op_lo) {
-        case 0: reg_writeb(REG_B, value, gb); break;
-        case 1: reg_writeb(REG_C, value, gb); break;
-        case 2: reg_writeb(REG_D, value, gb); break;
-        case 3: reg_writeb(REG_E, value, gb); break;
-        case 4: reg_writeb(REG_H, value, gb); break;
-        case 5: reg_writeb(REG_L, value, gb); break;
-        case 6: mmu_writeb(reg_read_u16(REG_HL, gb), value, gb); break;
-        case 7: reg_writeb(REG_A, value, gb); break;
-        default: return OPCODE_ILLEGAL;
-    }
-
-    return opcode->cycles_true;
 }

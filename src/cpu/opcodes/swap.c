@@ -24,46 +24,37 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 // SWAP r
 int opcode_cb_swap_r(const opcode_t *opcode, gb_system_t *gb)
 {
-    byte_t reg;
-    byte_t value;
-    byte_t result;
+    byte_t *reg;
 
     switch (opcode->opcode) {
-        case 0x37: reg = REG_A; break;
-        case 0x30: reg = REG_B; break;
-        case 0x31: reg = REG_C; break;
-        case 0x32: reg = REG_D; break;
-        case 0x33: reg = REG_E; break;
-        case 0x34: reg = REG_H; break;
-        case 0x35: reg = REG_L; break;
+        case 0x37: reg = &gb->regs.a; break;
+        case 0x30: reg = &gb->regs.b; break;
+        case 0x31: reg = &gb->regs.c; break;
+        case 0x32: reg = &gb->regs.d; break;
+        case 0x33: reg = &gb->regs.e; break;
+        case 0x34: reg = &gb->regs.h; break;
+        case 0x35: reg = &gb->regs.l; break;
         default: return OPCODE_ILLEGAL;
     }
-
-    value = reg_readb(reg, gb);
-    result = (value >> 4) | (value << 4);
-    reg_writeb(reg, result, gb);
-
-    if (result == 0) reg_flag_set(FLAG_Z, gb); else reg_flag_clear(FLAG_Z, gb);
-    reg_flag_clear(FLAG_N, gb);
-    reg_flag_clear(FLAG_H, gb);
-    reg_flag_clear(FLAG_C, gb);
-
+    *reg = ((*reg) >> 4) | ((*reg) << 4);
+    gb->regs.f.flags.z = (*reg) == 0;
+    gb->regs.f.flags.n = 0;
+    gb->regs.f.flags.h = 0;
+    gb->regs.f.flags.c = 0;
     return opcode->cycles_true;
 }
 
 // SWAP (HL)
 int opcode_cb_swap_n(const opcode_t *opcode, gb_system_t *gb)
 {
-    uint16_t addr = reg_read_u16(REG_HL, gb);
-    byte_t value = mmu_readb(addr, gb);
-    byte_t result = (value >> 4) | (value << 4);
+    const uint16_t addr = reg_read_hl(gb);
+    const byte_t value = mmu_readb(addr, gb);
+    const byte_t result = (value >> 4) | (value << 4);
 
     mmu_writeb(addr, result, gb);
-
-    if (result == 0) reg_flag_set(FLAG_Z, gb); else reg_flag_clear(FLAG_Z, gb);
-    reg_flag_clear(FLAG_N, gb);
-    reg_flag_clear(FLAG_H, gb);
-    reg_flag_clear(FLAG_C, gb);
-
+    gb->regs.f.flags.z = result == 0;
+    gb->regs.f.flags.n = 0;
+    gb->regs.f.flags.h = 0;
+    gb->regs.f.flags.c = 0;
     return opcode->cycles_true;
 }

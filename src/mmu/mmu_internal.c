@@ -30,179 +30,187 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 
 byte_t mmu_internal_readb(uint16_t addr, gb_system_t *gb)
 {
-    if (addr <= ROM_BANK_0_UADDR) {
-        return gb->memory.rom.banks[gb->memory.rom.bank_0][addr];
+    switch (addr >> 8) {
+        case 0x00 ... 0x3F: // ROM 0
+            return gb->memory.rom.banks[gb->memory.rom.bank_0][addr];
 
-    } else if (ADDR_IN_RANGE(addr, ROM_BANK_N_LADDR, ROM_BANK_N_UADDR)) {
-        return gb->memory.rom.banks[gb->memory.rom.bank_n][addr - ROM_BANK_N_LADDR];
+        case 0x40 ... 0x7F: // ROM Bank
+            return gb->memory.rom.banks[gb->memory.rom.bank_n][addr - ROM_BANK_N_LADDR];
 
-    } else if (ADDR_IN_RANGE(addr, VRAM_LADDR, VRAM_UADDR)) {
-        if (mmu_vram_blocked(gb)) {
-            logger(LOG_ERROR, "mmu_readb failed: address $%04X: VRAM is not accessible", addr);
-            return MMU_UNMAPPED_ADDR_VALUE;
-        }
+        case 0x80 ... 0x9F: // VRAM
+            if (mmu_vram_blocked(gb)) {
+                logger(LOG_ERROR, "mmu_readb failed: address $%04X: VRAM is not accessible", addr);
+                return MMU_UNMAPPED_ADDR_VALUE;
+            }
+            return gb->memory.vram[addr - VRAM_LADDR];
 
-        return gb->memory.vram[addr - VRAM_LADDR];
+        case 0xA0 ... 0xBF: // RAM Bank
+            if (!rambank_exists(&gb->memory.ram)) {
+                logger(LOG_ERROR, "mmu_readb failed: address $%04X: No RAM banks are available", addr);
+                return MMU_UNMAPPED_ADDR_VALUE;
+            }
+            if (!gb->memory.ram.can_read) {
+                logger(LOG_ERROR, "mmu_readb failed: address $%04X: Reading is disabled for RAM banks", addr);
+                return MMU_UNMAPPED_ADDR_VALUE;
+            }
+            if ((addr - RAM_BANK_N_LADDR) >= gb->memory.ram.bank_size) {
+                logger(LOG_WARN, "mmu_readb failed: address $%04X: Out of bounds, bank only has %u bytes",
+                    addr, gb->memory.ram.bank_size);
+                return MMU_UNMAPPED_ADDR_VALUE;
+            }
+            return gb->memory.ram.banks[gb->memory.ram.bank][addr - RAM_BANK_N_LADDR];
 
-    } else if (ADDR_IN_RANGE(addr, RAM_BANK_0_LADDR, RAM_BANK_0_UADDR)) {
-        return gb->memory.wram[addr - RAM_BANK_0_LADDR];
+        case 0xC0 ... 0xDF: // Work RAM
+            return gb->memory.wram[addr - RAM_BANK_0_LADDR];
 
-    } else if (ADDR_IN_RANGE(addr, RAM_ECHO_LADDR, RAM_ECHO_UADDR)) {
-        return gb->memory.wram[addr - RAM_ECHO_LADDR];
+        case 0xE0 ... 0xFD: // Echo RAM
+            return gb->memory.wram[addr - RAM_ECHO_LADDR];
 
-    } else if (ADDR_IN_RANGE(addr, RAM_BANK_N_LADDR, RAM_BANK_N_UADDR)) {
-        if (!rambank_exists(&gb->memory.ram)) {
-            logger(LOG_ERROR, "mmu_readb failed: address $%04X: No RAM banks are available", addr);
-            return MMU_UNMAPPED_ADDR_VALUE;
-        }
-        if (!gb->memory.ram.can_read) {
-            logger(LOG_ERROR, "mmu_readb failed: address $%04X: Reading is disabled for RAM banks", addr);
-            return MMU_UNMAPPED_ADDR_VALUE;
-        }
-        if ((addr - RAM_BANK_N_LADDR) >= gb->memory.ram.bank_size) {
-            logger(LOG_WARN, "mmu_readb failed: address $%04X: Out of bounds, bank only has %u bytes",
-                addr, gb->memory.ram.bank_size);
-            return MMU_UNMAPPED_ADDR_VALUE;
-        }
-        return gb->memory.ram.banks[gb->memory.ram.bank][addr - RAM_BANK_N_LADDR];
+        case 0xFE: // OAM
+                if (addr <= OAM_UADDR) {
+                    if (mmu_oam_blocked(gb)) {
+                        logger(LOG_ERROR, "mmu_readb failed: address $%04X: OAM is not accessible", addr);
+                        return MMU_UNMAPPED_ADDR_VALUE;
+                    }
+                    return gb->memory.oam[addr & 0xFF];
+                } else {
+                    return mmu_oam_blocked(gb) ? 0xFF : 0x00;
+                }
 
-    } else if (ADDR_IN_RANGE(addr, OAM_LADDR, OAM_UADDR)) {
-        if (mmu_oam_blocked(gb)) {
-            logger(LOG_ERROR, "mmu_readb failed: address $%04X: OAM is not accessible", addr);
-            return MMU_UNMAPPED_ADDR_VALUE;
-        }
+        case 0xFF:
+            switch (addr & 0xFF) {
+                case 0x00:
+                    return joypad_reg_readb(gb);
 
-        return gb->memory.oam[addr - OAM_LADDR];
+                case 0x01:
+                case 0x02:
+                    return serial_reg_readb(addr, gb);
 
-    } else if (ADDR_IN_RANGE(addr, HRAM_LADDR, HRAM_UADDR)) {
-        return gb->memory.hram[addr - HRAM_LADDR];
+                case 0x04 ... 0x07:
+                    return timer_reg_readb(addr, gb);
 
-    } else if (ADDR_IN_RANGE(addr, TIM_DIV, TIM_TAC)) {
-        return timer_reg_readb(addr, gb);
+                case 0x0F:
+                    return gb->interrupts.if_reg;
 
-    } else if (ADDR_IN_RANGE(addr, LCDC, LCDC_WX)) {
-        return lcd_reg_readb(addr, gb);
+                case 0x10 ... 0x14:
+                case 0x16 ... 0x19:
+                case 0x1A ... 0x1E:
+                case 0x20 ... 0x23:
+                case 0x24 ... 0x26:
+                case 0x30 ... 0x3F:
+                    return sound_reg_readb(addr, gb);
 
-    } else if (   ADDR_IN_RANGE(addr, SOUND_NR10, SOUND_NR14)
-               || ADDR_IN_RANGE(addr, SOUND_NR21, SOUND_NR24)
-               || ADDR_IN_RANGE(addr, SOUND_NR30, SOUND_NR34)
-               || ADDR_IN_RANGE(addr, SOUND_NR41, SOUND_NR44)
-               || ADDR_IN_RANGE(addr, SOUND_NR50, SOUND_NR52)
-               || ADDR_IN_RANGE(addr, SOUND_WAVE_PATTERN_LADDR,
-                      SOUND_WAVE_PATTERN_UADDR)) {
-        return sound_reg_readb(addr, gb);
+                case 0x40 ... 0x4B:
+                    return lcd_reg_readb(addr, gb);
 
-    } else if (addr == JOYPAD_REG) {
-        return joypad_reg_readb(gb);
+                case 0x50:
+                    return gb->memory.bootrom_reg;
 
-    } else if (addr == SERIAL_SB || addr == SERIAL_SC) {
-        return serial_reg_readb(addr, gb);
+                case 0x80 ... 0xFE: // HRAM
+                    return gb->memory.hram[addr - HRAM_LADDR];
 
-    } else if (addr == BOOTROM_REG_ADDR) {
-        return gb->memory.bootrom_reg;
-
-    } else if (addr == INTERRUPT_FLAG) {
-        return gb->interrupts.if_reg;
-
-    } else if (addr == INTERRUPT_ENABLE) {
-        return gb->interrupts.ie_reg;
-
-    } else {
-        logger(LOG_WARN, "mmu_readb failed: address $%04X", addr);
-        return MMU_UNMAPPED_ADDR_VALUE;
+                case 0xFF:
+                    return gb->interrupts.ie_reg;
+            }
     }
+    logger(LOG_WARN, "mmu_readb failed: address $%04X", addr);
+    return MMU_UNMAPPED_ADDR_VALUE;
 }
 
 bool mmu_internal_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
 {
-    if (addr <= ROM_BANK_N_UADDR) {
-        logger(LOG_ERROR, "mmu_writeb failed: address $%04X is read-only", addr);
-        return false;
-
-    } else if (ADDR_IN_RANGE(addr, VRAM_LADDR, VRAM_UADDR)) {
-        if (mmu_vram_blocked(gb)) {
-            logger(LOG_ERROR, "mmu_writeb failed: address $%04X: VRAM is not accessible", addr);
+    switch (addr >> 8) {
+        case 0x00 ... 0x7F: // ROM Banks
+            logger(LOG_ERROR, "mmu_writeb failed: address $%04X is read-only", addr);
             return false;
-        }
 
-        gb->memory.vram[addr - VRAM_LADDR] = value;
-        return true;
+        case 0x80 ... 0x9F: // VRAM
+            if (mmu_vram_blocked(gb)) {
+                logger(LOG_ERROR, "mmu_writeb failed: address $%04X: VRAM is not accessible", addr);
+                return false;
+            }
+            gb->memory.vram[addr - VRAM_LADDR] = value;
+            return true;
 
-    } else if (ADDR_IN_RANGE(addr, RAM_BANK_0_LADDR, RAM_BANK_0_UADDR)) {
-        gb->memory.wram[addr - RAM_BANK_0_LADDR] = value;
-        return true;
+        case 0xA0 ... 0xBF: // RAM Bank
+            if (!rambank_exists(&gb->memory.ram)) {
+                logger(LOG_ERROR, "mmu_writeb failed: address $%04X: No RAM banks are available", addr);
+                return false;
+            }
+            if (!gb->memory.ram.can_write) {
+                logger(LOG_ERROR, "mmu_writeb failed: address $%04X: Writing is disabled for RAM banks", addr);
+                return false;
+            }
+            if ((addr - RAM_BANK_N_LADDR) >= gb->memory.ram.bank_size) {
+                logger(LOG_WARN, "mmu_writeb failed: address $%04X: Out of bounds, bank only has %u bytes",
+                    addr, gb->memory.ram.bank_size);
+                return false;
+            }
+            gb->memory.ram.banks[gb->memory.ram.bank][addr - RAM_BANK_N_LADDR] = value;
+            return true;
 
-    } else if (ADDR_IN_RANGE(addr, RAM_ECHO_LADDR, RAM_ECHO_UADDR)) {
-        gb->memory.wram[addr - RAM_ECHO_LADDR] = value;
-        return true;
+        case 0xC0 ... 0xDF: // Work RAM
+            gb->memory.wram[addr - RAM_BANK_0_LADDR] = value;
+            return true;
 
-    } else if (ADDR_IN_RANGE(addr, RAM_BANK_N_LADDR, RAM_BANK_N_UADDR)) {
-        if (!rambank_exists(&gb->memory.ram)) {
-            logger(LOG_ERROR, "mmu_writeb failed: address $%04X: No RAM banks are available", addr);
-            return false;
-        }
-        if (!gb->memory.ram.can_write) {
-            logger(LOG_ERROR, "mmu_writeb failed: address $%04X: Writing is disabled for RAM banks", addr);
-            return false;
-        }
-        if ((addr - RAM_BANK_N_LADDR) >= gb->memory.ram.bank_size) {
-            logger(LOG_WARN, "mmu_writeb failed: address $%04X: Out of bounds, bank only has %u bytes",
-                addr, gb->memory.ram.bank_size);
-            return false;
-        }
-        gb->memory.ram.banks[gb->memory.ram.bank][addr - RAM_BANK_N_LADDR] = value;
-        return true;
+        case 0xE0 ... 0xFD: // Echo RAM
+            gb->memory.wram[addr - RAM_ECHO_LADDR] = value;
+                return true;
 
-    } else if (ADDR_IN_RANGE(addr, OAM_LADDR, OAM_UADDR)) {
-        if (mmu_oam_blocked(gb)) {
-            logger(LOG_ERROR, "mmu_writeb failed: address $%04X: OAM is not accessible", addr);
-            return false;
-        }
+        case 0xFE: // OAM
+                if (addr <= OAM_UADDR) {
+                    if (mmu_oam_blocked(gb)) {
+                        logger(LOG_ERROR, "mmu_writeb failed: address $%04X: OAM is not accessible", addr);
+                        return false;
+                    }
+                    gb->memory.oam[addr & 0xFF] = value;
 
-        gb->memory.oam[addr - OAM_LADDR] = value;
-        return true;
+                }
+                return true;
 
-    } else if (ADDR_IN_RANGE(addr, HRAM_LADDR, HRAM_UADDR)) {
-        gb->memory.hram[addr - HRAM_LADDR] = value;
-        return true;
+        case 0xFF:
+            switch (addr & 0xFF) {
+                case 0x00:
+                    return joypad_reg_writeb(value, gb);
 
-    } else if (ADDR_IN_RANGE(addr, TIM_DIV, TIM_TAC)) {
-        return timer_reg_writeb(addr, value, gb);
+                case 0x01:
+                case 0x02:
+                    return serial_reg_writeb(addr, value, gb);
 
-    } else if (ADDR_IN_RANGE(addr, LCDC, LCDC_WX)) {
-        return lcd_reg_writeb(addr, value, gb);
+                case 0x04 ... 0x07:
+                    return timer_reg_writeb(addr, value, gb);
 
-    } else if (   ADDR_IN_RANGE(addr, SOUND_NR10, SOUND_NR14)
-               || ADDR_IN_RANGE(addr, SOUND_NR21, SOUND_NR24)
-               || ADDR_IN_RANGE(addr, SOUND_NR30, SOUND_NR34)
-               || ADDR_IN_RANGE(addr, SOUND_NR41, SOUND_NR44)
-               || ADDR_IN_RANGE(addr, SOUND_NR50, SOUND_NR52)
-               || ADDR_IN_RANGE(addr, SOUND_WAVE_PATTERN_LADDR,
-                      SOUND_WAVE_PATTERN_UADDR)) {
-        return sound_reg_writeb(addr, value, gb);
+                case 0x0F:
+                    gb->interrupts.if_reg = value;
+                    return true;
 
-    } else if (addr == JOYPAD_REG) {
-        return joypad_reg_writeb(value, gb);
-    } else if (addr == SERIAL_SB || addr == SERIAL_SC) {
-        return serial_reg_writeb(addr, value, gb);
+                case 0x10 ... 0x14:
+                case 0x16 ... 0x19:
+                case 0x1A ... 0x1E:
+                case 0x20 ... 0x23:
+                case 0x24 ... 0x26:
+                case 0x30 ... 0x3F:
+                    return sound_reg_writeb(addr, value, gb);
 
-    } else if (addr == BOOTROM_REG_ADDR) {
-        if ((value & 0x1)) {
-            gb->memory.bootrom_reg = 1;
-            logger(LOG_INFO, "Bootrom disabled");
-        }
-        return true;
+                case 0x40 ... 0x4B:
+                    return lcd_reg_writeb(addr, value, gb);
 
-    } else if (addr == INTERRUPT_FLAG) {
-        gb->interrupts.if_reg = value;
-        return true;
+                case 0x50:
+                    if ((value & 0x1)) {
+                        gb->memory.bootrom_reg = 1;
+                        logger(LOG_INFO, "Bootrom disabled");
+                    }
+                    return true;
 
-    } else if (addr == INTERRUPT_ENABLE) {
-        gb->interrupts.ie_reg = value;
-        return true;
+                case 0x80 ... 0xFE: // HRAM
+                    gb->memory.hram[addr - HRAM_LADDR] = value;
+                    return true;
 
-    } else {
-        logger(LOG_WARN, "mmu_writeb failed: value $%02X at address $%04X", value, addr);
-        return false;
+                case 0xFF:
+                    gb->interrupts.ie_reg = value;
+                    return true;
+            }
     }
+    logger(LOG_WARN, "mmu_writeb failed: value $%02X at address $%04X", value, addr);
+    return false;
 }

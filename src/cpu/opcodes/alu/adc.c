@@ -30,15 +30,13 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 //     C carry from bit 7
 byte_t cpu_adc(const byte_t target, const byte_t value, gb_system_t *gb)
 {
-    byte_t cvalue = reg_flag(FLAG_C, gb) ? 1 : 0;
-    byte_t hresult = (target & 0xF) + (value & 0xF) + cvalue;
-    uint16_t result = target + value + cvalue;
+    const byte_t hresult = (target & 0xF) + (value & 0xF) + gb->regs.f.flags.c;
+    const uint16_t result = target + value + gb->regs.f.flags.c;
 
-    reg_flag_clear(FLAG_N, gb);
-    if (hresult > 0xF) reg_flag_set(FLAG_H, gb); else reg_flag_clear(FLAG_H, gb);
-    if (result > 0xFF) reg_flag_set(FLAG_C, gb); else reg_flag_clear(FLAG_C, gb);
-
-    return (byte_t) (result & 0xFF);
+    gb->regs.f.flags.n = 0;
+    gb->regs.f.flags.h = hresult > 0xF;
+    gb->regs.f.flags.c = result > 0xFF;
+    return (byte_t) result;
 }
 
 // ADC A,n and ADC A,(HL) opcodes
@@ -46,28 +44,23 @@ byte_t cpu_adc(const byte_t target, const byte_t value, gb_system_t *gb)
 int opcode_adc_a_n(const opcode_t *opcode, gb_system_t *gb)
 {
     byte_t value;
-    byte_t result;
 
     switch (opcode->opcode) {
         // ADC A,n
-        case 0x8F: value = reg_readb(REG_A, gb); break;
-        case 0x88: value = reg_readb(REG_B, gb); break;
-        case 0x89: value = reg_readb(REG_C, gb); break;
-        case 0x8A: value = reg_readb(REG_D, gb); break;
-        case 0x8B: value = reg_readb(REG_E, gb); break;
-        case 0x8C: value = reg_readb(REG_H, gb); break;
-        case 0x8D: value = reg_readb(REG_L, gb); break;
+        case 0x8F: value = gb->regs.a; break;
+        case 0x88: value = gb->regs.b; break;
+        case 0x89: value = gb->regs.c; break;
+        case 0x8A: value = gb->regs.d; break;
+        case 0x8B: value = gb->regs.e; break;
+        case 0x8C: value = gb->regs.h; break;
+        case 0x8D: value = gb->regs.l; break;
         case 0xCE: value = cpu_fetchb(gb); break;
 
         // ADC A,(HL)
-        case 0x8E: value = mmu_readb(reg_read_u16(REG_HL, gb), gb); break;
-
+        case 0x8E: value = mmu_readb(reg_read_hl(gb), gb); break;
         default: return OPCODE_ILLEGAL;
     }
-
-    result = cpu_adc(reg_readb(REG_A, gb), value, gb);
-    if (result == 0) reg_flag_set(FLAG_Z, gb); else reg_flag_clear(FLAG_Z, gb);
-    reg_writeb(REG_A, result, gb);
-
+    gb->regs.a = cpu_adc(gb->regs.a, value, gb);
+    gb->regs.f.flags.z = gb->regs.a == 0;
     return opcode->cycles_true;
 }

@@ -21,109 +21,119 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cpu/cpu.h"
 #include "cpu/registers.h"
 
-// JP nn and JP cc,nn opcodes
-int opcode_jp(const opcode_t *opcode, gb_system_t *gb)
+// JP nn
+int opcode_jp_nn(const opcode_t *opcode, gb_system_t *gb)
 {
-    uint16_t addr = cpu_fetch_u16(gb);
+    gb->pc = cpu_fetch_u16(gb);
+    return opcode->cycles_true;
+}
 
-    switch (opcode->opcode) {
-        // JP nn
-        case 0xC3: gb->pc = addr; return opcode->cycles_true;
+// JP NZ,nn
+int opcode_jp_nz_nn(const opcode_t *opcode, gb_system_t *gb)
+{
+    const uint16_t addr = cpu_fetch_u16(gb);
 
-        // JP NZ,nn
-        case 0xC2:
-            if (reg_flag(FLAG_Z, gb) == false) {
-                gb->pc = addr;
-                return opcode->cycles_true;
-            } else {
-                return opcode->cycles_false;
-            }
-
-        // JP Z,nn
-        case 0xCA:
-            if (reg_flag(FLAG_Z, gb) == true) {
-                gb->pc = addr;
-                return opcode->cycles_true;
-            } else {
-                return opcode->cycles_false;
-            }
-
-        // JP NC,nn
-        case 0xD2:
-            if (reg_flag(FLAG_C, gb) == false) {
-                gb->pc = addr;
-                return opcode->cycles_true;
-            } else {
-                return opcode->cycles_false;
-            }
-
-        // JP C,nn
-        case 0xDA:
-            if (reg_flag(FLAG_C, gb) == true) {
-                gb->pc = addr;
-                return opcode->cycles_true;
-            } else {
-                return opcode->cycles_false;
-            }
-
-        default: return OPCODE_ILLEGAL;
+    if (!gb->regs.f.flags.z) {
+        gb->pc = addr;
+        return opcode->cycles_true;
     }
+    return opcode->cycles_false;
+}
+
+// JP Z,nn
+int opcode_jp_z_nn(const opcode_t *opcode, gb_system_t *gb)
+{
+    const uint16_t addr = cpu_fetch_u16(gb);
+
+    if (gb->regs.f.flags.z) {
+        gb->pc = addr;
+        return opcode->cycles_true;
+    }
+    return opcode->cycles_false;
+}
+
+// JP NC,nn
+int opcode_jp_nc_nn(const opcode_t *opcode, gb_system_t *gb)
+{
+    const uint16_t addr = cpu_fetch_u16(gb);
+
+    if (!gb->regs.f.flags.c) {
+        gb->pc = addr;
+        return opcode->cycles_true;
+    }
+    return opcode->cycles_false;
+}
+
+// JP C,nn
+int opcode_jp_c_nn(const opcode_t *opcode, gb_system_t *gb)
+{
+    const uint16_t addr = cpu_fetch_u16(gb);
+
+    if (gb->regs.f.flags.c) {
+        gb->pc = addr;
+        return opcode->cycles_true;
+    }
+    return opcode->cycles_false;
 }
 
 // JP (HL) opcode
 int opcode_jp_hl(const opcode_t *opcode, gb_system_t *gb)
 {
-    gb->pc = reg_read_u16(REG_HL, gb);
-
+    gb->pc = reg_read_hl(gb);
     return opcode->cycles_true;
 }
 
-// JR n and JR cc,n opcodes
-int opcode_jr(const opcode_t *opcode, gb_system_t *gb)
+// JR n
+int opcode_jr_n(const opcode_t *opcode, gb_system_t *gb)
 {
-    sbyte_t n = (sbyte_t) cpu_fetchb(gb);
-    uint16_t addr = gb->pc + n;
+    gb->pc += (sbyte_t) cpu_fetchb(gb);
+    return opcode->cycles_true;
+}
 
-    switch (opcode->opcode) {
-        // JR n
-        case 0x18: gb->pc = addr; return opcode->cycles_true;
+// JR NZ,n
+int opcode_jr_nz_n(const opcode_t *opcode, gb_system_t *gb)
+{
+    const sbyte_t n = (sbyte_t) cpu_fetchb(gb);
 
-        // JR NZ,n
-        case 0x20:
-            if (reg_flag(FLAG_Z, gb) == false) {
-                gb->pc = addr;
-                return opcode->cycles_true;
-            } else {
-                return opcode->cycles_false;
-            }
-
-        // JR Z,n
-        case 0x28:
-            if (reg_flag(FLAG_Z, gb) == true) {
-                gb->pc = addr;
-                return opcode->cycles_true;
-            } else {
-                return opcode->cycles_false;
-            }
-
-        // JR NC,n
-        case 0x30:
-            if (reg_flag(FLAG_C, gb) == false) {
-                gb->pc = addr;
-                return opcode->cycles_true;
-            } else {
-                return opcode->cycles_false;
-            }
-
-        // JR C,n
-        case 0x38:
-            if (reg_flag(FLAG_C, gb) == true) {
-                gb->pc = addr;
-                return opcode->cycles_true;
-            } else {
-                return opcode->cycles_false;
-            }
-
-        default: return OPCODE_ILLEGAL;
+    if (!gb->regs.f.flags.z) {
+        gb->pc += n;
+        return opcode->cycles_true;
     }
+    return opcode->cycles_false;
+}
+
+// JR Z,n
+int opcode_jr_z_n(const opcode_t *opcode, gb_system_t *gb)
+{
+    const sbyte_t n = (sbyte_t) cpu_fetchb(gb);
+
+    if (gb->regs.f.flags.z) {
+        gb->pc += n;
+        return opcode->cycles_true;
+    }
+    return opcode->cycles_false;
+}
+
+// JR NC,n
+int opcode_jr_nc_n(const opcode_t *opcode, gb_system_t *gb)
+{
+    const sbyte_t n = (sbyte_t) cpu_fetchb(gb);
+
+    if (!gb->regs.f.flags.c) {
+        gb->pc += n;
+        return opcode->cycles_true;
+    }
+    return opcode->cycles_false;
+}
+
+// JR C,n
+int opcode_jr_c_n(const opcode_t *opcode, gb_system_t *gb)
+{
+    const sbyte_t n = (sbyte_t) cpu_fetchb(gb);
+
+    if (gb->regs.f.flags.c) {
+        gb->pc += n;
+        return opcode->cycles_true;
+    }
+    return opcode->cycles_false;
 }

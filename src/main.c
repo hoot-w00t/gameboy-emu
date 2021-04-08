@@ -22,6 +22,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "emulator.h"
 #include "cartridge.h"
 #include "emulator_utils.h"
+#include "mmu/mmu.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,7 +56,7 @@ void print_help(const char *cmd)
 
 void parse_args(int ac, char **av)
 {
-    const char shortopts[] = "hl:bdn";
+    const char shortopts[] = "hl:b:dn";
     int opt;
 
     // Default values
@@ -80,7 +81,8 @@ void parse_args(int ac, char **av)
                 break;
 
             case 'b':
-                args.enable_bootrom = true;
+                if (mmu_load_bootrom(optarg) > 0)
+                    args.enable_bootrom = true;
                 break;
 
             case 'd':

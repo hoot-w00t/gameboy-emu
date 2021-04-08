@@ -28,45 +28,33 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 //     H carry from bit 3
 byte_t cpu_incb(const byte_t target, gb_system_t *gb)
 {
-    byte_t result = target + 1;
-
-    if (result == 0) reg_flag_set(FLAG_Z, gb); else reg_flag_clear(FLAG_Z, gb);
-    reg_flag_clear(FLAG_N, gb);
-    if ((target & 0xF) == 0xF) reg_flag_set(FLAG_H, gb); else reg_flag_clear(FLAG_H, gb);
-
-    return result;
+    gb->regs.f.flags.z = target == 0xFF;
+    gb->regs.f.flags.n = 0;
+    gb->regs.f.flags.h = (target & 0xF) == 0xF;
+    return (byte_t) (target + 1);
 }
 
 // INC n opcodes (registers only)
 int opcode_inc_n_r(const opcode_t *opcode, gb_system_t *gb)
 {
-    byte_t reg;
-    byte_t result;
-
     switch (opcode->opcode) {
-        case 0x3C: reg = REG_A; break;
-        case 0x04: reg = REG_B; break;
-        case 0x0C: reg = REG_C; break;
-        case 0x14: reg = REG_D; break;
-        case 0x1C: reg = REG_E; break;
-        case 0x24: reg = REG_H; break;
-        case 0x2C: reg = REG_L; break;
+        case 0x3C: gb->regs.a = cpu_incb(gb->regs.a, gb); return opcode->cycles_true;
+        case 0x04: gb->regs.b = cpu_incb(gb->regs.b, gb); return opcode->cycles_true;
+        case 0x0C: gb->regs.c = cpu_incb(gb->regs.c, gb); return opcode->cycles_true;
+        case 0x14: gb->regs.d = cpu_incb(gb->regs.d, gb); return opcode->cycles_true;
+        case 0x1C: gb->regs.e = cpu_incb(gb->regs.e, gb); return opcode->cycles_true;
+        case 0x24: gb->regs.h = cpu_incb(gb->regs.h, gb); return opcode->cycles_true;
+        case 0x2C: gb->regs.l = cpu_incb(gb->regs.l, gb); return opcode->cycles_true;
         default: return OPCODE_ILLEGAL;
     }
-
-    result = cpu_incb(reg_readb(reg, gb), gb);
-    reg_writeb(reg, result, gb);
-
-    return opcode->cycles_true;
 }
 
 // INC (HL)
 int opcode_inc_n_hl(const opcode_t *opcode, gb_system_t *gb)
 {
-    uint16_t addr = reg_read_u16(REG_HL, gb);
-    byte_t result = cpu_incb(mmu_readb(addr, gb), gb);
+    const uint16_t addr = reg_read_hl(gb);
 
-    mmu_writeb(addr, result, gb);
+    mmu_writeb(addr, cpu_incb(mmu_readb(addr, gb), gb), gb);
     return opcode->cycles_true;
 }
 
@@ -74,11 +62,10 @@ int opcode_inc_n_hl(const opcode_t *opcode, gb_system_t *gb)
 int opcode_inc_nn(const opcode_t *opcode, gb_system_t *gb)
 {
     switch (opcode->opcode) {
-        case 0x03: reg_write_u16(REG_BC, reg_read_u16(REG_BC, gb) + 1, gb); break;
-        case 0x13: reg_write_u16(REG_DE, reg_read_u16(REG_DE, gb) + 1, gb); break;
-        case 0x23: reg_write_u16(REG_HL, reg_read_u16(REG_HL, gb) + 1, gb); break;
-        case 0x33: gb->sp += 1; break;
+        case 0x03: reg_write_bc(reg_read_bc(gb) + 1, gb); return opcode->cycles_true;
+        case 0x13: reg_write_de(reg_read_de(gb) + 1, gb); return opcode->cycles_true;
+        case 0x23: reg_write_hl(reg_read_hl(gb) + 1, gb); return opcode->cycles_true;
+        case 0x33: gb->sp += 1; return opcode->cycles_true;
         default: return OPCODE_ILLEGAL;
     }
-    return opcode->cycles_true;
 }

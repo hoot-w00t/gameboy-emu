@@ -22,8 +22,16 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #ifndef _CPU_OPCODE_JUMPS_H
 #define _CPU_OPCODE_JUMPS_H
 
-int opcode_jp(const opcode_t *opcode, gb_system_t *gb);
+int opcode_jp_nn(const opcode_t *opcode, gb_system_t *gb);
+int opcode_jp_nz_nn(const opcode_t *opcode, gb_system_t *gb);
+int opcode_jp_z_nn(const opcode_t *opcode, gb_system_t *gb);
+int opcode_jp_nc_nn(const opcode_t *opcode, gb_system_t *gb);
+int opcode_jp_c_nn(const opcode_t *opcode, gb_system_t *gb);
 int opcode_jp_hl(const opcode_t *opcode, gb_system_t *gb);
-int opcode_jr(const opcode_t *opcode, gb_system_t *gb);
+int opcode_jr_n(const opcode_t *opcode, gb_system_t *gb);
+int opcode_jr_nz_n(const opcode_t *opcode, gb_system_t *gb);
+int opcode_jr_z_n(const opcode_t *opcode, gb_system_t *gb);
+int opcode_jr_nc_n(const opcode_t *opcode, gb_system_t *gb);
+int opcode_jr_c_n(const opcode_t *opcode, gb_system_t *gb);
 
 #endif

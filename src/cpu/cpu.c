@@ -155,28 +155,21 @@ void cpu_dump(gb_system_t *gb)
     }
 
     printf("\nA: $%02X    F: $%02X\n",
-           reg_readb(REG_A, gb),
-           reg_readb(REG_F, gb));
+           gb->regs.a,
+           gb->regs.f.data);
     printf("B: $%02X    C: $%02X\n",
-           reg_readb(REG_B, gb),
-           reg_readb(REG_C, gb));
+           gb->regs.b,
+           gb->regs.c);
     printf("D: $%02X    E: $%02X\n",
-           reg_readb(REG_D, gb),
-           reg_readb(REG_E, gb));
+           gb->regs.d,
+           gb->regs.e);
     printf("H: $%02X    L: $%02X\n\n",
-           reg_readb(REG_H, gb),
-           reg_readb(REG_L, gb));
-
-    printf("AF: $%04X    BC: $%04X\n",
-           reg_read_u16(REG_AF, gb),
-           reg_read_u16(REG_BC, gb));
-    printf("DE: $%04X    HL: $%04X\n",
-           reg_read_u16(REG_DE, gb),
-           reg_read_u16(REG_HL, gb));
+           gb->regs.h,
+           gb->regs.l);
 
     printf("Flags:\n");
-    printf("    Z: %c\n", reg_flag(FLAG_Z, gb) ? '1' : '0');
-    printf("    N: %c\n", reg_flag(FLAG_N, gb) ? '1' : '0');
-    printf("    H: %c\n", reg_flag(FLAG_H, gb) ? '1' : '0');
-    printf("    C: %c\n", reg_flag(FLAG_C, gb) ? '1' : '0');
+    printf("    Z: %u\n", gb->regs.f.flags.z);
+    printf("    N: %u\n", gb->regs.f.flags.n);
+    printf("    H: %u\n", gb->regs.f.flags.h);
+    printf("    C: %u\n", gb->regs.f.flags.c);
 }
