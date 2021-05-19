@@ -148,13 +148,14 @@ bool mmu_write_u16(uint16_t addr, uint16_t value, gb_system_t *gb)
 // Returns true if OAM is inaccessible to the CPU
 bool mmu_oam_blocked(gb_system_t *gb)
 {
-    return false; // TODO: Revert when timings are accurate
-    return (gb->screen.lcdc.enable && (gb->screen.lcd_stat.mode == LCDC_MODE_2 || gb->screen.lcd_stat.mode == LCDC_MODE_3));
+    return (   gb->screen.lcdc.enable
+            && (   gb->screen.lcd_stat.mode == LCDC_MODE_2
+                || gb->screen.lcd_stat.mode == LCDC_MODE_3));
 }
 
+// Returns true if VRAM is inaccessible to the CPU
 bool mmu_vram_blocked(gb_system_t *gb)
 {
-    return false; // TODO: Revert when timings are accurate
     return (gb->screen.lcdc.enable && gb->screen.lcd_stat.mode == LCDC_MODE_3);
 }
 
