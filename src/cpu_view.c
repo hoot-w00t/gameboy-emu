@@ -103,7 +103,7 @@ void cpu_view_render(gb_system_t *gb)
 
     SDL_SetRenderDrawColor(cpu_view_ren, 204, 255, 204, 255);
     SDL_RenderClear(cpu_view_ren);
-    render_text(cpu_view_font, cpu_view_ren, coll, line_height * 0, "Cycle #%lu", gb->cycle_nb);
+    render_text(cpu_view_font, cpu_view_ren, coll, line_height * 0, "Cycle #%zu", gb->cycle_nb);
     render_text(cpu_view_font, cpu_view_ren, coll, line_height * 1, "PC: $%04X", gb->pc);
     render_text(cpu_view_font, cpu_view_ren, colr, line_height * 1, "SP: $%04X", gb->sp);
     render_text(cpu_view_font, cpu_view_ren, coll, line_height * 2, "A: $%02X", gb->regs.a);

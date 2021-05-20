@@ -137,7 +137,7 @@ void cpu_dump(gb_system_t *gb)
     if (gb->halt || gb->stop) printf("CPU Halted (%s)\n", gb->halt ? "HALT" : "STOP");
 
     printf("PC: $%04X    SP: $%04X\n", gb->pc, gb->sp);
-    printf("Cycle #%lu (idle: %u)\n", gb->cycle_nb, gb->idle_cycles);
+    printf("Cycle #%zu (idle: %u)\n", gb->cycle_nb, gb->idle_cycles);
 
     printf("\nIME=%i\n", gb->interrupts.ime);
     printf("Bits:    7 6 5 4 3 2 1 0\n");

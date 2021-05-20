@@ -28,7 +28,7 @@ void *xalloc(size_t size)
     void *ptr;
 
     if (!(ptr = malloc(size))) {
-        fprintf(stderr, "%lu bytes memory allocation failed\n", size);
+        fprintf(stderr, "%zu bytes memory allocation failed\n", size);
         abort();
     }
 
@@ -41,7 +41,7 @@ void *xzalloc(size_t size)
     void *ptr;
 
     if (!(ptr = calloc(size, 1))) {
-        fprintf(stderr, "%lu bytes memory allocation failed\n", size);
+        fprintf(stderr, "%zu bytes memory allocation failed\n", size);
         abort();
     }
 
@@ -54,7 +54,7 @@ char *xstrdup(const char *s)
     char *dup;
 
     if (!(dup = strdup(s))) {
-        fprintf(stderr, "strdup(): %s (%lu bytes)\n", strerror(errno), strlen(s));
+        fprintf(stderr, "strdup(): %s (%zu bytes)\n", strerror(errno), strlen(s));
         abort();
     }
 
