@@ -26,7 +26,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 byte_t sound_reg_readb(uint16_t addr, gb_system_t *gb)
 {
     switch (addr) {
-        case SOUND_NR10: return (*((byte_t *) &gb->apu.regs.nr10));
+        case SOUND_NR10: return (*((byte_t *) &gb->apu.regs.nr10)) | 0x80;
         case SOUND_NR11: return (*((byte_t *) &gb->apu.regs.nr11)) & 0xC0; // Bits 7 and 6 only
         case SOUND_NR12: return (*((byte_t *) &gb->apu.regs.nr12));
         case SOUND_NR13: return MMU_UNMAPPED_ADDR_VALUE; // Write only
@@ -37,16 +37,16 @@ byte_t sound_reg_readb(uint16_t addr, gb_system_t *gb)
         case SOUND_NR23: return MMU_UNMAPPED_ADDR_VALUE; // Write only
         case SOUND_NR24: return (*((byte_t *) &gb->apu.regs.nr24)) & 0x40; // Bit 6 only
 
-        case SOUND_NR30: return (*((byte_t *) &gb->apu.regs.nr30));
+        case SOUND_NR30: return (*((byte_t *) &gb->apu.regs.nr30)) | 0x7F;
         case SOUND_NR31: return (*((byte_t *) &gb->apu.regs.nr31));
-        case SOUND_NR32: return (*((byte_t *) &gb->apu.regs.nr32));
+        case SOUND_NR32: return (*((byte_t *) &gb->apu.regs.nr32)) | 0x9F;
         case SOUND_NR33: return MMU_UNMAPPED_ADDR_VALUE; // Write Only
         case SOUND_NR34: return (*((byte_t *) &gb->apu.regs.nr34)) & 0x40; // Bit 6 only
 
-        case SOUND_NR41: return (*((byte_t *) &gb->apu.regs.nr41));
+        case SOUND_NR41: return (*((byte_t *) &gb->apu.regs.nr41)) | 0xC0;
         case SOUND_NR42: return (*((byte_t *) &gb->apu.regs.nr42));
         case SOUND_NR43: return (*((byte_t *) &gb->apu.regs.nr43));
-        case SOUND_NR44: return (*((byte_t *) &gb->apu.regs.nr44)) & 0x40; // Bit 6 only
+        case SOUND_NR44: return (*((byte_t *) &gb->apu.regs.nr44)) | 0xBF; // Bit 6 only
 
         case SOUND_NR50: return (*((byte_t *) &gb->apu.regs.nr50));
         case SOUND_NR51: return (*((byte_t *) &gb->apu.regs.nr51));

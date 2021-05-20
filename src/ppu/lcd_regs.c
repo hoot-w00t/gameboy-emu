@@ -25,7 +25,7 @@ byte_t lcd_reg_readb(uint16_t addr, gb_system_t *gb)
 {
     switch (addr) {
         case LCDC       : return (*((byte_t *) &gb->screen.lcdc));
-        case LCDC_STATUS: return (*((byte_t *) &gb->screen.lcd_stat));
+        case LCDC_STATUS: return (*((byte_t *) &gb->screen.lcd_stat)) | 0x80;
         case LCDC_SCY   : return gb->screen.scy;
         case LCDC_SCX   : return gb->screen.scx;
         case LCDC_LY    : return gb->screen.ly;

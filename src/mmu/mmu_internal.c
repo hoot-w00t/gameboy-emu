@@ -90,7 +90,7 @@ byte_t mmu_internal_readb(uint16_t addr, gb_system_t *gb)
                     return timer_reg_readb(addr, gb);
 
                 case 0x0F:
-                    return gb->interrupts.if_reg;
+                    return gb->interrupts.if_reg | 0xE0;
 
                 case 0x10 ... 0x14:
                 case 0x16 ... 0x19:
@@ -104,7 +104,7 @@ byte_t mmu_internal_readb(uint16_t addr, gb_system_t *gb)
                     return lcd_reg_readb(addr, gb);
 
                 case 0x50:
-                    return gb->memory.bootrom_reg;
+                    return gb->memory.bootrom_reg | 0xFE;
 
                 case 0x80 ... 0xFE: // HRAM
                     return gb->memory.hram[addr - HRAM_LADDR];

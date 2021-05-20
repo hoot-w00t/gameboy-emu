@@ -28,7 +28,7 @@ byte_t serial_reg_readb(uint16_t addr, gb_system_t *gb)
 {
     switch (addr) {
         case SERIAL_SB: return gb->serial.sb;
-        case SERIAL_SC: return *((byte_t *) &gb->serial.sc);
+        case SERIAL_SC: return *((byte_t *) &gb->serial.sc) | 0x7E;
         default:
             logger(LOG_ERROR, "serial_reg_readb failed: unhandled address $%04X", addr);
             return MMU_UNMAPPED_ADDR_VALUE;
@@ -43,7 +43,8 @@ bool serial_reg_writeb(uint16_t addr, byte_t value, gb_system_t *gb)
             return true;
 
         case SERIAL_SC:
-            *((byte_t *) &gb->serial.sc) = (value | 0x7C);
+            *((byte_t *) &gb->serial.sc) = value;
+
             if (!gb->serial.sc.transfer_start) {
                 gb->serial.shift_clock = 0;
                 gb->serial.shifts = 0;

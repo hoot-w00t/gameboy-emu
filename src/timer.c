@@ -42,7 +42,7 @@ byte_t timer_reg_readb(uint16_t addr, gb_system_t *gb)
         case TIM_DIV : return gb->timer.div;
         case TIM_TIMA: return gb->timer.tima;
         case TIM_TMA : return gb->timer.tma;
-        case TIM_TAC : return (*((byte_t *) &gb->timer.tac));
+        case TIM_TAC : return 0xFF;
         default:
             logger(LOG_ERROR, "timer_reg_readb failed: unhandled address $%04X", addr);
             return MMU_UNMAPPED_ADDR_VALUE;
