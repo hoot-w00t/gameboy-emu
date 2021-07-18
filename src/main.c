@@ -74,8 +74,8 @@ void parse_args(int ac, char **av)
                 exit(EXIT_SUCCESS);
 
             case 'l':
-                if (set_logger_level(optarg) < 0) {
-                    fprintf(stderr, "Invalid log level\n");
+                if (!logger_set_level_name(optarg)) {
+                    fprintf(stderr, "Invalid logging level: '%s'\n", optarg);
                     exit(EXIT_FAILURE);
                 }
                 break;

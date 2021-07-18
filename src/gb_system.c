@@ -85,7 +85,7 @@ byte_t *load_file(const char *filename, int *size)
     }
     if (total != inf.st_size) {
         logger(LOG_ERROR,
-               "%s: read %uB but expected %uB",
+               "%s: read %uB but expected %liB",
                filename,
                total,
                inf.st_size);

@@ -71,7 +71,7 @@ int mmu_load_bootrom(const char *filename)
         return -1;
     }
     if (total != s.st_size) {
-        logger(LOG_ERROR, "%s: read %u bytes but expected %u bytes", filename, total, s.st_size);
+        logger(LOG_ERROR, "%s: read %u bytes but expected %li bytes", filename, total, s.st_size);
         return -1;
     }
     return total;

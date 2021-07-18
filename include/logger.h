@@ -17,17 +17,27 @@ You should have received a copy of the GNU General Public License along with
 this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef _logger_attr
+#define _logger_attr __attribute__((format(printf, 2, 3)))
+#endif
+
 #ifndef _LOGGER_H
 #define _LOGGER_H
 
-#define LOG_ALL   0
-#define LOG_DEBUG 1
-#define LOG_INFO  2
-#define LOG_WARN  3
-#define LOG_ERROR 4
-#define LOG_CRIT  5
+#include <stdbool.h>
 
-int set_logger_level(const char *level);
-void logger(const int level, const char *format, ...);
+typedef enum loglevel {
+    LOG_ALL = 0,
+    LOG_DEBUG,
+    LOG_INFO,
+    LOG_WARN,
+    LOG_ERROR,
+    LOG_CRIT
+} loglevel_t;
+
+bool logger_set_level_name(const char *level_name);
+
+_logger_attr
+void logger(loglevel_t level, const char *format, ...);
 
 #endif
