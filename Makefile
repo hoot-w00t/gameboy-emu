@@ -1,9 +1,9 @@
 CC	=	cc
-INCLUDE	=	-Iinclude $(shell sdl2-config --cflags)
-CFLAGS	=	-W -Wall -Wextra -O2 -pipe $(INCLUDE)
-LDFLAGS	=	$(shell sdl2-config --libs) -lSDL2_ttf -lm
 
-BIN_NAME	=	gameboy
+CFLAGS	=	-Wall -Wextra -Wshadow -O2 -g -pipe
+CFLAGS	+=	-Iinclude $(shell sdl2-config --cflags)
+
+LDFLAGS	=	$(shell sdl2-config --libs) -lSDL2_ttf -lm
 
 SRC	=	logger.c				\
 		xalloc.c				\
@@ -56,23 +56,18 @@ SRC	=	logger.c				\
 OBJ	=	$(SRC:%.c=obj/%.o)
 DEP	=	$(OBJ:.o=.d)
 
-ifdef DEBUG
-	CFLAGS	+=	-g
-endif
+BIN	=	gameboy
 
 ifdef WINDOWS
-	CFLAGS	+=	-Wno-format -DSDL_MAIN_HANDLED
-	ifdef WINDOWS_NOCONSOLE
-		LDFLAGS	+=	-Wl,-subsystem,windows
-	endif
+	CFLAGS	+=	-DSDL_MAIN_HANDLED
+endif
+ifdef WINDOWS_NOCONSOLE
+	LDFLAGS	+=	-Wl,-subsystem,windows
 endif
 
 .PHONY:	all	clean
 
-all:	$(BIN_NAME)
-
-$(BIN_NAME):	$(OBJ)
-	$(CC) -o $@ $^ $(LDFLAGS)
+all:	$(BIN)
 
 clean:
 	rm -rf obj
@@ -80,5 +75,8 @@ clean:
 obj/%.o:	src/%.c
 	@mkdir -p $(shell dirname $@)
 	$(CC) -MMD $(CFLAGS) -o $@	-c $<
+
+$(BIN):	$(OBJ)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 -include $(DEP)
