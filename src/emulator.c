@@ -133,6 +133,28 @@ void update_window_size()
     screen_dst.y = (lcd_win_height - screen_dst.h) / 2;
 }
 
+static void update_emulator_window_title(gb_system_t *gb)
+{
+    static char audio_fmt[32];
+
+    if (audio_devid == 0) {
+        snprintf(audio_fmt, sizeof(audio_fmt), "audio off");
+    } else if (audio_muted) {
+        snprintf(audio_fmt, sizeof(audio_fmt), "volume: muted");
+    } else {
+        snprintf(audio_fmt, sizeof(audio_fmt), "volume: %.f%%",
+            (float) (audio_volume * 100.0));
+    }
+
+    update_window_title(lcd_win,
+        "Gameboy (%s) (%.06f MHz: %.02f%%, %u fps, %s)",
+        gb->cartridge.title,
+        lcd_win_clock_freq,
+        lcd_win_clock_speed,
+        lcd_win_framerate,
+        audio_fmt);
+}
+
 // Render a frame
 void render_frame(__attribute__((unused)) gb_system_t *gb)
 {
@@ -313,24 +335,7 @@ void emulate_clocks(gb_system_t *gb, float *audio_buffer)
 
 void update_windows(gb_system_t *gb)
 {
-    if (audio_devid == 0) {
-        update_window_title(lcd_win, "GameBoy (%.06f MHz: %.02f%%, %u fps, audio off)",
-            lcd_win_clock_freq,
-            lcd_win_clock_speed,
-            lcd_win_framerate);
-    } else if (audio_muted) {
-        update_window_title(lcd_win, "GameBoy (%.06f MHz: %.02f%%, %u fps, volume: muted)",
-            lcd_win_clock_freq,
-            lcd_win_clock_speed,
-            lcd_win_framerate);
-    } else {
-        update_window_title(lcd_win, "GameBoy (%.06f MHz: %.02f%%, %u fps, volume: %.f%%)",
-            lcd_win_clock_freq,
-            lcd_win_clock_speed,
-            lcd_win_framerate,
-            (float) (audio_volume * 100.0));
-    }
-
+    update_emulator_window_title(gb);
     if (emu_windows[EMU_WINDOWS_CPU_VIEW].win)
         cpu_view_render(gb);
     if (emu_windows[EMU_WINDOWS_MMU_VIEW].win)
@@ -541,7 +546,7 @@ int emulate_gameboy(gb_system_t *gb, bool enable_audio)
     }
 
     emu_windows_set(EMU_WINDOWS_LCD, lcd_win, &lcd_event);
-    update_window_title(lcd_win, "GameBoy");
+    update_emulator_window_title(gb);
     update_window_size();
 
     screen_surface = SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, 32,
