@@ -23,6 +23,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "cartridge.h"
 #include "emulator_utils.h"
 #include "mmu/mmu.h"
+#include "version.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,16 +48,22 @@ void print_help(const char *cmd)
     printf("\nDescription:\n");
     printf("    filename        GameBoy ROM to emulate\n\n");
     printf("    -h              Show this help message\n");
+    printf("    -V              Show the version of the emulator\n\n");
     printf("    -l level        Set logging to level (default: warn)\n");
     printf("                    Options: crit, error, warn, info, debug, all\n");
-    printf("    -b              Enable DMG bootrom\n");
+    printf("    -b bootrom      Enable and load DMG bootrom\n");
     printf("    -d              Run in debugging mode\n");
     printf("    -n              Disable audio\n");
 }
 
+void print_version(void)
+{
+    printf("Gameboy Emulator - %s\n", GAMEBOY_VERSION_STR);
+}
+
 void parse_args(int ac, char **av)
 {
-    const char shortopts[] = "hl:b:dn";
+    const char shortopts[] = "hVl:b:dn";
     int opt;
 
     // Default values
@@ -71,6 +78,10 @@ void parse_args(int ac, char **av)
         switch (opt) {
             case 'h':
                 print_help(av[0]);
+                exit(EXIT_SUCCESS);
+
+            case 'V':
+                print_version();
                 exit(EXIT_SUCCESS);
 
             case 'l':

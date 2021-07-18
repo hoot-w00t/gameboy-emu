@@ -21,3 +21,5 @@ roms/
 
 vgcore.*
 callgrind.out.*
+
+include/version_git.h

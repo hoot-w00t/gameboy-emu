@@ -5,6 +5,10 @@ CFLAGS	+=	-Iinclude $(shell sdl2-config --cflags)
 
 LDFLAGS	=	$(shell sdl2-config --libs) -lSDL2_ttf -lm
 
+VERSION_GIT_H	=	include/version_git.h
+VERSION_GIT	=	$(strip $(shell cat $(VERSION_GIT_H) 2>/dev/null))
+HEAD_COMMIT	=	$(strip $(shell git describe --always --tags --abbrev=10))
+
 SRC	=	logger.c				\
 		xalloc.c				\
 		main.c					\
@@ -65,9 +69,15 @@ ifdef WINDOWS_NOCONSOLE
 	LDFLAGS	+=	-Wl,-subsystem,windows
 endif
 
-.PHONY:	all	clean
+.PHONY:	all	update_version_git	clean
 
-all:	$(BIN)
+all:	update_version_git	$(BIN)
+
+update_version_git:
+ifneq ($(findstring $(HEAD_COMMIT), $(VERSION_GIT)), $(HEAD_COMMIT))
+	@echo Updating $(VERSION_GIT_H) with commit hash $(HEAD_COMMIT)
+	@echo "#define GAMEBOY_COMMIT_HASH \"$(HEAD_COMMIT)\"" > $(VERSION_GIT_H)
+endif
 
 clean:
 	rm -rf obj
