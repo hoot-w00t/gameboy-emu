@@ -20,6 +20,7 @@ this program. If not, see <https://www.gnu.org/licenses/>.
 #include "moderndos8x16_ttf.h"
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <string.h>
 
 // Initialize the required parts of the SDL, exit on error
 void initialize_sdl(void)
@@ -200,7 +201,7 @@ char *ask_for_file_drop(void)
                         goto drop_end;
                     break;
                 case SDL_DROPFILE:
-                    filename = SDL_strdup(e.drop.file);
+                    filename = strdup(e.drop.file);
                     goto drop_end;
                 default: break;
             }
