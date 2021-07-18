@@ -536,8 +536,8 @@ int emulate_gameboy(gb_system_t *gb, bool enable_audio)
         }
     }
 
-    if (SDL_CreateWindowAndRenderer(SCREEN_WIDTH * 4,
-                                    SCREEN_HEIGHT * 4,
+    if (SDL_CreateWindowAndRenderer(SCREEN_WIDTH * 2,
+                                    SCREEN_HEIGHT * 2,
                                     SDL_WINDOW_RESIZABLE,
                                     &lcd_win, &lcd_ren) < 0)
     {
