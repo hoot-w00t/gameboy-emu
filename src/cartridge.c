@@ -154,11 +154,11 @@ char *cartridge_mbc_type(cartridge_hdr_t *cr)
 bool cartridge_decode_hdr(byte_t *data, cartridge_hdr_t *cr)
 {
     // Color GameBoy is not supported
-    if (data[CR_CGB_FLAG_ADDR] == 0x80) {
-        logger(LOG_WARN, "Color GameBoy functions are not supported");
-    } else if (data[CR_CGB_FLAG_ADDR] == 0xC0) {
-        logger(LOG_ERROR, "Color GameBoy is not supported");
-        return false;
+    if (   data[CR_CGB_FLAG_ADDR] == 0x80
+        || data[CR_CGB_FLAG_ADDR] == 0xC0)
+    {
+        // TODO: Remove this warning when CGB is emulated
+        logger(LOG_WARN, "CGB emulation is not supported yet");
     }
 
     // Read Nintendo Logo bitmap
